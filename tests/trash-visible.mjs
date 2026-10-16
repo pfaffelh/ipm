@@ -1,0 +1,25 @@
+// While a block is dragged onto the trash can, it must stay visible (simulated phone).
+import { chromium } from 'playwright-core'
+const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })
+const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 })
+const page = await ctx.newPage()
+await page.goto((process.env.BASE ?? 'http://127.0.0.1:8002/') + 'Session-2___-Implication/')
+await page.evaluate(() => localStorage.clear()); await page.reload()
+const t = page.locator('.ipm-task').nth(0)
+await t.locator('.ipm-menu-item[title^="→E"]').dispatchEvent('click'); await page.waitForTimeout(200)
+await t.locator('.ipm-board').scrollIntoViewIfNeeded()
+const cdp = await ctx.newCDPSession(page)
+const touch = (type, x, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] })
+const r = await t.locator('.ipm-canvas .ipm-rule rect').boundingBox()
+const s = { x: r.x + r.width / 2, y: r.y + r.height / 2 }
+await touch('touchStart', s.x, s.y); await touch('touchMove', s.x + 10, s.y + 10)
+const tr = await t.locator('.ipm-trash').boundingBox(), dest = { x: tr.x + tr.width / 2, y: tr.y + tr.height / 2 }
+for (let k = 1; k <= 10; k++) await touch('touchMove', s.x + (dest.x - s.x) * k / 10, s.y + (dest.y - s.y) * k / 10)
+await page.waitForTimeout(250)
+const info = await t.locator('.ipm-canvas .ipm-rule').evaluate(g => ({ opacity: getComputedStyle(g).opacity, doomed: g.classList.contains('ipm-doomed'), box: g.getBoundingClientRect().toJSON() }))
+const canvas = await t.locator('.ipm-canvas').evaluate(c => getComputedStyle(c).overflow)
+console.log(`over the trash: doomed ${info.doomed}, opacity ${info.opacity}, block at y ${Math.round(info.box.y)}–${Math.round(info.box.bottom)}, board overflow ${canvas}`)
+await page.screenshot({ path: process.env.SHOT ?? 'trash-visible.png' })
+await touch('touchEnd'); await page.waitForTimeout(200)
+console.log('after drop:', await t.locator('.ipm-canvas .ipm-rule').count(), 'rule block(s)')
+await browser.close()

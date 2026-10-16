@@ -13,7 +13,7 @@ const tapAt = async l => { const b = await l.boundingBox(); await page.touchscre
 await tapAt(t.locator('.ipm-conclusion rect')); await tapAt(t.locator('.ipm-assumption rect'))
 console.log('connected:', await t.locator('.ipm-status').innerText(), '| lines:', await t.locator('.ipm-conn').count())
 // tap the line (its middle), then the ✕
-const p = await t.locator('.ipm-conn path:not(.ipm-conn-hit)').evaluate(path => { const l = path.getTotalLength(); const q = path.getPointAtLength(l / 2); const m = path.ownerSVGElement.getScreenCTM(); return { x: q.x * m.a + m.e, y: q.y * m.d + m.f } })
+const p = await t.locator('.ipm-conn path:not(.ipm-conn-hit):not(.ipm-conn-halo)').evaluate(path => { const l = path.getTotalLength(); const q = path.getPointAtLength(l / 2); const m = path.ownerSVGElement.getScreenCTM(); return { x: q.x * m.a + m.e, y: q.y * m.d + m.f } })
 await page.touchscreen.tap(p.x + 4, p.y); await page.waitForTimeout(150)
 console.log('line selected:', await t.locator('.ipm-conn-selected').count(), '| ✕ shown:', await t.locator('.ipm-conn-remove').count())
 await tapAt(t.locator('.ipm-conn-remove circle'))

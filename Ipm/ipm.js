@@ -571,8 +571,17 @@
       const fit = Math.min(1, (this.canvas.clientWidth || view[2]) / view[2], 640 / view[2])
       root.style.width = `${Math.round(view[2] * fit * this.zoom)}px`
       root.style.maxWidth = 'none'
+      // Only a zoomed-in picture scrolls (and is clipped); otherwise blocks may be dragged past the edge.
+      this.canvas.style.overflow = this.zoom > 1 ? 'auto' : 'visible'
       this.svgRoot = root
       const paths = []  // connection paths, to follow a dragged block
+      this.arrowId ??= `ipm-arrow-${Math.random().toString(36).slice(2)}`
+      const marker = svg('marker', { id: this.arrowId, viewBox: '0 0 10 10', refX: 19, refY: 5,
+        markerWidth: 9, markerHeight: 9, markerUnits: 'userSpaceOnUse', orient: 'auto' })
+      marker.append(svg('path', { d: 'M0,0 L10,5 L0,10 z', class: 'ipm-arrow' }))
+      const defs = svg('defs')
+      defs.append(marker)
+      root.append(defs)
       // The box of each local hypothesis: around the blocks that use it, and the top of its block.
       for (const sc of this.analysis.scopes) {
         const x = pos[sc.block]
@@ -591,8 +600,12 @@
         const path = svg('path', { d: curve(a, b, up) })
         paths.push({ path, c, a, b, up })
         const hit = svg('path', { d: path.getAttribute('d'), class: 'ipm-conn-hit' })
-        paths.push({ path: hit, c, a, b, up })
-        g.append(hit, path)
+        // A white seam: where a line passes under a port or crosses another line, a gap shows that
+        // it does not end there. An arrowhead marks the input where it does end.
+        const halo = svg('path', { d: path.getAttribute('d'), class: 'ipm-conn-halo' })
+        path.setAttribute('marker-end', `url(#${this.arrowId})`)
+        paths.push({ path: hit, c, a, b, up }, { path: halo, c, a, b, up })
+        g.append(hit, halo, path)
         g.addEventListener('click', ev => {
           if (ev.target.closest('.ipm-skull, .ipm-conn-remove')) return
           this.selectedConn = this.selectedConn === c.id ? null : c.id
