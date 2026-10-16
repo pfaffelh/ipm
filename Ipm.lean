@@ -2,6 +2,9 @@ import VersoManual
 import Ipm.Task
 import Ipm.Sessions.Conjunction
 import Ipm.Sessions.Implication
+import Ipm.Sessions.Disjunction
+import Ipm.Sessions.Falsity
+import Ipm.Sessions.Classical
 
 open Verso.Genre Manual
 
@@ -31,3 +34,9 @@ You are done when no red circle is left. Your progress is kept in your browser.
 {include 1 Ipm.Sessions.Conjunction}
 
 {include 1 Ipm.Sessions.Implication}
+
+{include 1 Ipm.Sessions.Disjunction}
+
+{include 1 Ipm.Sessions.Falsity}
+
+{include 1 Ipm.Sessions.Classical}

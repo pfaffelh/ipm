@@ -103,6 +103,13 @@
     conjE: { label: '∧E', name: '∧-elimination', vars: ['A', 'B'], inputs: ['A∧B'], outputs: ['A', 'B'] },
     impI: { label: '→I', name: '→-introduction', vars: ['A', 'B'], inputs: ['B'], outputs: ['A→B', 'A'], local: { 1: 0 } },
     impE: { label: '→E', name: '→-elimination', vars: ['A', 'B'], inputs: ['A→B', 'A'], outputs: ['B'] },
+    disjI1: { label: '∨I₁', name: '∨-introduction (left)', vars: ['A', 'B'], inputs: ['A'], outputs: ['A∨B'] },
+    disjI2: { label: '∨I₂', name: '∨-introduction (right)', vars: ['A', 'B'], inputs: ['B'], outputs: ['A∨B'] },
+    // Case distinction: from A ∨ B, prove C once with the hypothesis A and once with B.
+    disjE: { label: '∨E', name: '∨-elimination', vars: ['A', 'B', 'C'], inputs: ['A∨B', 'C', 'C'],
+             outputs: ['C', 'A', 'B'], local: { 1: 1, 2: 2 } },
+    falseE: { label: '⊥E', name: '⊥-elimination', vars: ['A'], inputs: ['⊥'], outputs: ['A'] },
+    TND: { label: 'TND', name: 'tertium non datur', vars: ['A'], inputs: [], outputs: ['A∨(A→⊥)'] },
   }
 
   // Whether output `j` of block `b` is a local hypothesis.
@@ -207,7 +214,7 @@
           for (const c of this.connections)
             if (c.from.block === x.id && c.from.port === h) visit(c, [c])
           members.delete(x.id)
-          scopes.push({ block: x.id, members: [...members] })
+          scopes.push({ block: x.id, port: h, consumer: k, members: [...members] })
         })
       }
       const failed = this.connections.some(c => status[c.id] !== 'ok')
@@ -229,6 +236,9 @@
     const p = proof, s = analysis.s
     const assumptions = p.blocks.filter(b => b.kind === 'assumption')
     const names = {}, locals = {}
+    const lean = f => show(f, s).replace(/⊥/g, 'False')
+    const hyp = (b, j) => (locals[`${b.id}.${j}`] ??= localName(Object.keys(locals).length))
+    const app = (f, ...args) => args.reduce((t, a) => ({ k: 'app', f: t, a }), { k: 'var', n: f })
     assumptions.forEach((b, k) => { names[b.id] = 'h' + sub(k + 1) })
     // Terms: {k: 'var', n} | {k: 'sorry'} | {k: 'app', f, a} | {k: 'fun', x, body} | {k: 'pair', a, b} | {k: 'proj', a, i}
     const input = (b, i, depth) => {
@@ -237,14 +247,21 @@
     }
     const output = (b, j, depth) => {
       if (b.kind === 'assumption') return { k: 'var', n: names[b.id] }
+      if (isLocal(b, j)) return { k: 'var', n: hyp(b, j) }
       const arg = i => input(b, i, depth)
       switch (b.rule) {
         case 'conjI': return { k: 'pair', a: arg(0), b: arg(1) }
         case 'conjE': return { k: 'proj', a: arg(0), i: j + 1 }
         case 'impE': return { k: 'app', f: arg(0), a: arg(1) }
-        case 'impI':
-          if (!(b.id in locals)) locals[b.id] = localName(Object.keys(locals).length)
-          return j === 1 ? { k: 'var', n: locals[b.id] } : { k: 'fun', x: locals[b.id], body: arg(0) }
+        case 'impI': { const x = hyp(b, 1); return { k: 'fun', x, body: arg(0) } }
+        case 'disjI1': return app('Or.inl', arg(0))
+        case 'disjI2': return app('Or.inr', arg(0))
+        case 'disjE': {
+          const h = arg(0), x = hyp(b, 1), y = hyp(b, 2)
+          return app('Or.elim', h, { k: 'fun', x, body: arg(1) }, { k: 'fun', x: y, body: arg(2) })
+        }
+        case 'falseE': return app('False.elim', arg(0))
+        case 'TND': return app('Classical.em', { k: 'var', n: '_' })
       }
     }
     // Printing, with as few parentheses as Lean needs.
@@ -275,10 +292,10 @@
       used.clear()
       use(term)
       const binders = [atoms.size ? `(${[...atoms].sort().join(' ')} : Prop)` : '',
-        ...assumptions.map(b => `(${named(names[b.id]) ? names[b.id] : '_'} : ${show(b.outputs[0], s)})`)]
+        ...assumptions.map(b => `(${named(names[b.id]) ? names[b.id] : '_'} : ${lean(b.outputs[0])})`)]
         .filter(x => x).join(' ')
       const t = pr(term)
-      return `example ${binders} : ${show(g.inputs[0], s)} :=\n  ${t}`
+      return `example ${binders} : ${lean(g.inputs[0])} :=\n  ${t}`
     }).join('\n\n')
   }
 
@@ -316,24 +333,48 @@
   // Size of a block, from its labels.
   function blockSize(b, s) {
     // Rule blocks show only the statements at their ports (15px), in a row on top and one below.
+    // Each port gets a slot as wide as its label; `topX` and `bottomX` are the slots' centres.
     const labelW = 9.2
-    const texts = [...b.inputs, ...b.outputs].map(f => show(f, s))
-    const top = [...b.outputs.filter((_, j) => isLocal(b, j)), ...b.inputs]
-    const bottom = b.outputs.filter((_, j) => !isLocal(b, j))
-    const inW = top.reduce((w, f) => w + show(f, s).length * labelW + portGap, 0)
-    const outW = bottom.reduce((w, f) => w + show(f, s).length * labelW + portGap, 0)
-    return { w: Math.max(56, inW, outW, ...texts.map(t => t.length * (b.kind === 'rule' ? labelW : charW) + 20)),
-             h: b.kind === 'rule' ? 52 : 34 }
+    if (b.kind !== 'rule') {
+      const t = show(b.kind === 'assumption' ? b.outputs[0] : b.inputs[0], s)
+      return { w: Math.max(56, t.length * charW + 20), h: 34 }
+    }
+    const port = key => (key.startsWith('in') ? b.inputs : b.outputs)[Number(key.slice(key.startsWith('in') ? 2 : 3))]
+    const top = topRow(b)
+    const bottom = b.outputs.map((_, j) => j).filter(j => !isLocal(b, j)).map(j => `out${j}`)
+    const slot = key => show(port(key), s).length * labelW + portGap
+    const width = keys => keys.reduce((w, k) => w + slot(k), 0)
+    const w = Math.max(56, width(top) + 12, width(bottom) + 12)
+    const centres = keys => {
+      const o = {}
+      let x = (w - width(keys)) / 2
+      for (const k of keys) { o[k] = x + slot(k) / 2; x += slot(k) }
+      return o
+    }
+    return { w, h: 52, topX: centres(top), bottomX: centres(bottom) }
+  }
+
+  // The ports in the top row: each input, preceded by the local hypotheses that lead back into it.
+  function topRow(b) {
+    const row = []
+    b.inputs.forEach((_, i) => {
+      b.outputs.forEach((_, j) => { if (isLocal(b, j) && consumer(b, j) === i) row.push(`out${j}`) })
+      row.push(`in${i}`)
+    })
+    return row
   }
 
   // Where port `i` (kind 'in' or 'out') of block `b` at position `q` sits.
-  // The top row holds the local hypotheses, then the inputs; the bottom row the other outputs.
+  // The top row holds the inputs and local hypotheses; the bottom row the other outputs.
   function portAt(q, b, kind, i) {
-    const locals = b.outputs.map((_, j) => j).filter(j => isLocal(b, j))
+    const key = kind + i
+    if (q.topX?.[key] !== undefined) return { x: q.x + q.topX[key], y: q.y }
+    if (q.bottomX?.[key] !== undefined) return { x: q.x + q.bottomX[key], y: q.y + q.h }
+    if (kind === 'in' || isLocal(b, i)) {
+      const row = topRow(b)
+      return { x: q.x + q.w * (row.indexOf(kind + i) + 1) / (row.length + 1), y: q.y }
+    }
     const plain = b.outputs.map((_, j) => j).filter(j => !isLocal(b, j))
-    const nTop = locals.length + b.inputs.length
-    if (kind === 'in') return { x: q.x + q.w * (locals.length + i + 1) / (nTop + 1), y: q.y }
-    if (isLocal(b, i)) return { x: q.x + q.w * (locals.indexOf(i) + 1) / (nTop + 1), y: q.y }
     return { x: q.x + q.w * (plain.indexOf(i) + 1) / (plain.length + 1), y: q.y + q.h }
   }
 
@@ -372,6 +413,11 @@
       width: size.w + 36, height: size.h + 36 })
     pic.append(drawBlock(b, q, {}, '', kind => (kind === 'in' ? 'ipm-open' : '')))
     return pic
+  }
+
+  function setCompact(menu, compact) {
+    menu.classList.toggle('ipm-compact', compact)
+    menu.querySelector('.ipm-menu-toggle').textContent = compact ? 'Show blocks ▾' : 'Names only ▴'
   }
 
   class Task {
@@ -427,6 +473,7 @@
         const o = this.ruleOptions()[k]
         const b = el('button', 'ipm-menu-item')
         b.type = 'button'
+        b.dataset.rule = name
         b.title = `${o.label} (${o.detail})`
         b.append(o.picture, el('span', 'ipm-menu-caption', RULES[name].label))
         b.addEventListener('mousedown', ev => ev.preventDefault())
@@ -443,6 +490,18 @@
       this.leanLink.target = '_blank'
       this.leanLink.rel = 'noopener'
       this.lean.append(el('summary', '', 'The proof in Lean'), this.leanCode, this.leanLink)
+      // Names only, or the pictures of the blocks: on phones names only, unless the player chose otherwise.
+      const toggle = el('button', 'ipm-menu-toggle')
+      toggle.type = 'button'
+      toggle.addEventListener('click', () => {
+        const compact = !this.menu.classList.contains('ipm-compact')
+        try { localStorage.setItem('ipm-verso:menu', compact ? 'compact' : 'pictures') } catch {}
+        for (const m of document.querySelectorAll('.ipm-menu')) setCompact(m, compact)
+      })
+      this.menu.append(toggle)
+      let pref = null
+      try { pref = localStorage.getItem('ipm-verso:menu') } catch {}
+      setCompact(this.menu, pref ? pref === 'compact' : window.matchMedia('(max-width: 600px)').matches)
       root.querySelector('.ipm-board').append(this.canvas, this.menu, tools, this.sheet, this.lean, this.trash)
       this.render()
     }
@@ -666,8 +725,10 @@
       root.append(defs)
       // The box of each local hypothesis: around the blocks that use it, and the top of its block.
       for (const sc of this.analysis.scopes) {
-        const x = pos[sc.block]
-        const qs = [...sc.members.map(id => pos[id]), { x: x.x, y: x.y, w: x.w, h: 26 }]
+        // The box starts at the hypothesis and the input it leads back into.
+        const x = pos[sc.block], xb = p.block(sc.block)
+        const a = portAt(x, xb, 'out', sc.port).x, c = portAt(x, xb, 'in', sc.consumer).x
+        const qs = [...sc.members.map(id => pos[id]), { x: Math.min(a, c) - 22, y: x.y, w: Math.abs(a - c) + 44, h: 26 }]
         const x0 = Math.min(...qs.map(q => q.x)) - 12, y0 = Math.min(...qs.map(q => q.y)) - 28
         const x1 = Math.max(...qs.map(q => q.x + q.w)) + 12, y1 = Math.max(...qs.map(q => q.y + q.h)) + 6
         root.append(svg('rect', { x: x0, y: y0, width: x1 - x0, height: y1 - y0, rx: 12, class: 'ipm-box' }))
@@ -923,8 +984,8 @@
       const p = this.proof, s = this.analysis.s
       this.openSheet('⚠ A local hypothesis escapes its box', [
         { label: 'Remove this connection', act: () => this.change(() => { p.connections = p.connections.filter(x => x !== c) }) },
-      ], 'What is derived from the hypothesis of an →I block may only be used to prove that block\'s ' +
-        `own input. This line leads, via ${show(p.block(c.from.block).outputs[c.from.port], s)}, to a goal outside.`)
+      ], 'What is derived from a local hypothesis (of an →I or ∨E block) may only be used to prove ' +
+        `the input of that block it belongs to. This line leads, via ${show(p.block(c.from.block).outputs[c.from.port], s)}, to a goal outside.`)
     }
 
     explain(c) {

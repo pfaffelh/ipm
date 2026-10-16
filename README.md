@@ -6,14 +6,16 @@ redone to be played by tapping — on a phone as well as with a mouse.
 **Play:** https://pfaffelh.github.io/ipm/
 
 Assumptions are at the top, goals at the bottom; a proof connects them through rule blocks of
-natural deduction. So far the site has the first two sessions of the Incredible Proof Machine:
-conjunction (12 tasks) and implication (14 tasks).
+natural deduction. So far the site has the first five sessions of the Incredible Proof Machine:
+conjunction (12 tasks), implication (14), disjunction (12), falsity and negation (15) and classical
+logic (9).
 
 ## How it is played
 
 * Tap a red circle (something to prove): everything in the picture that fits glows green; tap it to
   draw the line. It also works the other way round (tap an output first).
-* The rules are always available in a menu below the picture, drawn as the very blocks they add,
+* The rules are always available in a menu below the picture (on phones by name only; “Show blocks”
+  unfolds the pictures), drawn as the very blocks they add,
   with `?1`, `?2` for arbitrary statements; tapping one adds the block, which you then connect.
   Unification fills in `?1`, `?2`. Rule blocks you no longer need go into the trash can 🗑, which
   appears while you drag a block.

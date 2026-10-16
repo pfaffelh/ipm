@@ -129,7 +129,7 @@
 /* The rule menu below the picture; it sticks to the bottom of the task while scrolling. */
 .ipm-menu {
   position: sticky; bottom: 0; z-index: 5;
-  display: flex; align-items: center; gap: 0.4em; overflow-x: auto;
+  display: flex; align-items: center; gap: 0.4em; flex-wrap: wrap;
   margin-top: 0.4em; padding: 0.3em 0.5em;
   background: #eef2f7; border: 1px solid #c9d3e0; border-radius: 8px;
 }
@@ -141,7 +141,7 @@
 .ipm-menu-item .ipm-rule-picture { width: auto; height: 64px; }
 /* On narrow screens the rules are arranged in two columns, so that none is hidden. */
 @media (max-width: 600px) {
-  .ipm-menu { display: grid; grid-template-columns: 1fr 1fr; overflow-x: visible; }
+  .ipm-menu:not(.ipm-compact) { display: grid; grid-template-columns: 1fr 1fr; overflow-x: visible; }
   .ipm-menu-label { grid-column: 1 / -1; }
   .ipm-menu-item { display: flex; justify-content: center; }
   .ipm-menu-item .ipm-rule-picture { height: 56px; }
@@ -223,3 +223,13 @@
   header .header-title h1 { font-size: 0; }
   header .header-title h1::after { content: "The IPM in Lean"; font-size: 1.45rem; }
 }
+
+/* The compact menu (the default on phones): the rules by name only; "Show blocks" unfolds the pictures. */
+.ipm-menu.ipm-compact .ipm-rule-picture { display: none; }
+.ipm-menu.ipm-compact .ipm-menu-item { padding: 0.35em 0.6em; min-width: 3.2em; min-height: 40px; justify-content: center; }
+.ipm-menu.ipm-compact .ipm-menu-caption { font-size: 1.05em; color: #222; padding: 0; }
+.ipm-menu-toggle {
+  margin-left: auto; font: inherit; font-size: 0.8em; color: #3b6db3; background: none; border: none;
+  padding: 0.4em 0.2em; cursor: pointer; white-space: nowrap;
+}
+@media (max-width: 600px) { .ipm-menu:not(.ipm-compact) .ipm-menu-toggle { grid-column: 1 / -1; justify-self: end; } }
