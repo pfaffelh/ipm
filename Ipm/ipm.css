@@ -107,11 +107,11 @@
 .ipm-svg .ipm-block.ipm-dragging rect { stroke-width: 2.5; }
 
 /* Local hypotheses (→I) and their boxes */
-.ipm-port.ipm-local circle:not(.ipm-hit) { fill: #8e44ad; }
+.ipm-port.ipm-local circle:not(.ipm-hit) { fill: #3b6db3; stroke: #8e44ad; stroke-width: 3; }
 .ipm-local-label { fill: #8e44ad !important; font-style: italic; }
 .ipm-box { fill: rgba(142, 68, 173, 0.05); stroke: #8e44ad; stroke-width: 1.5; stroke-dasharray: 6 4; }
 .ipm-conn.ipm-escape path { stroke: #e67e22; stroke-dasharray: 2 4; }
-.ipm-rule-picture .ipm-port.ipm-local circle:not(.ipm-hit) { fill: #8e44ad; }
+.ipm-rule-picture .ipm-port.ipm-local circle:not(.ipm-hit) { fill: #3b6db3; stroke: #8e44ad; stroke-width: 3; }
 .ipm-conn.ipm-ok.ipm-from-local path { stroke: #8e44ad; }
 
 /* Trash can: shown while a rule block is dragged, fixed to the screen so that it is always reachable */
@@ -155,7 +155,7 @@
 .ipm-ghost .ipm-block rect { fill: white; stroke: #3b6db3; stroke-width: 2; }
 .ipm-ghost .ipm-port circle:not(.ipm-hit) { fill: #3b6db3; stroke: white; stroke-width: 2; }
 .ipm-ghost .ipm-port.ipm-in circle:not(.ipm-hit) { fill: white; stroke: #c0392b; stroke-width: 3; }
-.ipm-ghost .ipm-port.ipm-local circle:not(.ipm-hit) { fill: #8e44ad; }
+.ipm-ghost .ipm-port.ipm-local circle:not(.ipm-hit) { fill: #3b6db3; stroke: #8e44ad; stroke-width: 3; }
 .ipm-ghost .ipm-port .ipm-hit { fill: transparent; }
 .ipm-canvas.ipm-drop-target { outline: 2px dashed #3b6db3; outline-offset: -2px; border-radius: 8px; background: rgba(59, 109, 179, 0.05); }
 

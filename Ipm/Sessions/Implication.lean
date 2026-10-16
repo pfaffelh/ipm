@@ -16,8 +16,8 @@ Each task carries a Lean proof, checked when the site is built.
 Two new rules, for implication:
 
 * *→-elimination* (→E) uses `A → B` together with `A` to get `B`.
-* *→-introduction* (→I) proves `A → B`. It gives you a *local hypothesis* `A` (the purple dot on
-  top of the block), which you may use to prove the block's own input `B`. Everything that uses
+* *→-introduction* (→I) proves `A → B`. It gives you a *local hypothesis* `A`: the blue dot with a
+  purple ring on top of the block. Like every blue dot it is something you have, which you may use to prove the block's own input `B`. Everything that uses
   the hypothesis must lead back into that input; a dashed box shows this region. Using the
   hypothesis for anything outside the box is not allowed (⚠).
 
@@ -54,7 +54,7 @@ example (A : Prop) (a : A) (_ : A → A) : A := a
 ::::
 
 ::::task (assumptions := "A → B, B → C") (conclusions := "A → C")
-Your first →I. Add an →I block for the goal; then use its purple hypothesis `A`, and lead what
+Your first →I. Add an →I block for the goal; then use its local hypothesis `A` (the blue dot with the purple ring), and lead what
 you get from it into the block's input.
 
 ```lean -show

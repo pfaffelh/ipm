@@ -19,7 +19,8 @@ conjunction (12 tasks) and implication (14 tasks).
   appears while you drag a block.
 * A line that does not fit gets a ☠, a local hypothesis used outside its box a ⚠; tap them for an
   explanation.
-* →-introduction provides a local hypothesis (purple); a dashed box shows the part of the proof
+* Red circles are inputs (still to be proved), blue dots outputs (what you have).
+* →-introduction provides a local hypothesis (a blue dot with a purple ring, on top of the block); a dashed box shows the part of the proof
   that uses it, which must lead back into the block's own input.
 * Rules are dragged from the menu onto the board (or tapped). Blocks can be dragged with mouse or
   finger; tap a line to select it and ✕ to remove it. Undo, Start over, Tidy up (automatic layout)
