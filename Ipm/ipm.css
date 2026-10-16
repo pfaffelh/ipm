@@ -215,10 +215,9 @@
 /* (after the board sizes above) a locked task's board is only as large as its picture */
 .ipm-task.ipm-locked .ipm-canvas { min-height: 0; }
 
-/* On phones the long site title gets two lines and a narrower search box. */
+/* On phones the site title is shortened to "The IPM in Lean", next to a narrower search box. */
 @media screen and (max-width: 700px) {
-  :root #search-wrapper { --search-bar-width: 7.5rem; }
-  header .header-title { font-size: 1.05rem; line-height: 1.15; margin-right: 9rem; }
-  header .header-title h1 { text-wrap: balance; white-space: normal; }
-  header .header-title-wrapper { min-width: 0; }
+  :root #search-wrapper { --search-bar-width: 8.5rem; }
+  header .header-title h1 { font-size: 0; }
+  header .header-title h1::after { content: "The IPM in Lean"; font-size: 1.45rem; }
 }
