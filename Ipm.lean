@@ -5,7 +5,7 @@ import Ipm.Sessions.Implication
 
 open Verso.Genre Manual
 
-#doc (Manual) "Proof Graphs" =>
+#doc (Manual) "The Incredible Proof Machine in Lean" =>
 
 %%%
 authors := ["Peter Pfaffelhuber"]

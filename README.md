@@ -1,4 +1,4 @@
-# Proof graphs
+# The Incredible Proof Machine in Lean
 
 Proofs as pictures, after the [Incredible Proof Machine](https://incredible.pm) by Joachim Breitner,
 redone to be played by tapping — on a phone as well as with a mouse.
