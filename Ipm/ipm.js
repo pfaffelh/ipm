@@ -339,7 +339,10 @@
       tools.append(undo, reset, tidy, this.status)
       this.sheet = el('div', 'ipm-sheet')
       this.sheet.hidden = true
-      root.querySelector('.ipm-board').append(this.canvas, tools, this.sheet)
+      // The trash can appears while a rule block is dragged; dropping the block on it removes it.
+      this.trash = el('div', 'ipm-trash', '🗑')
+      this.trash.setAttribute('aria-hidden', 'true')
+      root.querySelector('.ipm-board').append(this.canvas, tools, this.sheet, this.trash)
       this.render()
     }
 
@@ -427,6 +430,14 @@
           if (!moved && Math.hypot(d.x, d.y) < 6) return
           moved = true
           g.classList.add('ipm-dragging')
+          if (b.kind === 'rule') {
+            this.trash.classList.add('ipm-trash-shown')
+            const r = this.trash.getBoundingClientRect(), m = 12
+            const over = e.clientX >= r.left - m && e.clientX <= r.right + m &&
+              e.clientY >= r.top - m && e.clientY <= r.bottom + m
+            this.trash.classList.toggle('ipm-trash-hot', over)
+            g.classList.toggle('ipm-doomed', over)
+          }
           g.setAttribute('transform', `translate(${d.x},${d.y})`)
           for (const { path, c, a, b: to, up } of paths) {
             const from = c.from.block === b.id ? { x: a.x + d.x, y: a.y + d.y } : a
@@ -444,6 +455,9 @@
           }
           this.justDragged = true
           setTimeout(() => { this.justDragged = false }, 0)
+          const trashed = this.trash.classList.contains('ipm-trash-hot') && e.type === 'pointerup'
+          this.trash.classList.remove('ipm-trash-shown', 'ipm-trash-hot')
+          if (trashed) return this.change(() => this.proof.removeBlock(b.id))
           this.undoStack.push(this.proof.snapshot())
           this.proof.moved = { ...(this.proof.moved ?? {}), [b.id]: { x: q.x + d.x, y: q.y + d.y } }
           this.render()

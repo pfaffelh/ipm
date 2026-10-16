@@ -111,3 +111,15 @@
 .ipm-conn.ipm-escape path { stroke: #e67e22; stroke-dasharray: 2 4; }
 .ipm-rule-picture .ipm-port.ipm-local circle:not(.ipm-hit) { fill: #8e44ad; }
 .ipm-conn.ipm-ok.ipm-from-local path { stroke: #8e44ad; }
+
+/* Trash can: shown while a rule block is dragged, fixed to the screen so that it is always reachable */
+.ipm-trash {
+  position: fixed; right: 18px; bottom: 24px; z-index: 30;
+  width: 64px; height: 64px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 30px;
+  background: #fdecec; border: 2px dashed #c0392b; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  opacity: 0; transform: scale(0.6); pointer-events: none; transition: opacity 0.15s, transform 0.15s;
+}
+.ipm-trash.ipm-trash-shown { opacity: 1; transform: scale(1); }
+.ipm-trash.ipm-trash-hot { transform: scale(1.3); background: #f5b7b1; border-style: solid; }
+.ipm-svg .ipm-block.ipm-doomed { opacity: 0.4; }
