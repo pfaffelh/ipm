@@ -393,7 +393,9 @@
 
     // ------------------------------------------------------------ layout and drawing
 
-    layout() {
+    // `board` = {w, h}: the size of the board in the picture's units; rows are centred in its width,
+    // and the picture covers at least the whole board.
+    layout(board = { w: 0, h: 0 }) {
       const p = this.proof
       const layer = {}
       const order = p.blocks.filter(b => b.kind !== 'conclusion')
@@ -412,7 +414,7 @@
       const pos = {}
       const rows = {}
       for (const b of p.blocks) (rows[layer[b.id]] ??= []).push(b)
-      let width = 320
+      let width = Math.max(320, board.w)
       const sizes = {}
       for (const b of p.blocks) sizes[b.id] = blockSize(b, s)
       for (const row of Object.values(rows)) width = Math.max(width, row.reduce((w, b) => w + sizes[b.id].w + 24, 24))
@@ -429,7 +431,8 @@
       const qs = Object.values(pos)
       const minX = Math.min(0, ...qs.map(q => q.x - 20)), minY = Math.min(0, ...qs.map(q => q.y - 20))
       const maxX = Math.max(width, ...qs.map(q => q.x + q.w + 20))
-      const maxY = Math.max(20 + (Math.max(...Object.keys(rows).map(Number)) + 1) * layerH, ...qs.map(q => q.y + q.h + 20))
+      const maxY = Math.max(20 + (Math.max(...Object.keys(rows).map(Number)) + 1) * layerH, board.h,
+        ...qs.map(q => q.y + q.h + 20))
       return { pos, view: [minX, minY, maxX - minX, maxY - minY] }
     }
 
@@ -564,12 +567,18 @@
     render() {
       const p = this.proof
       this.analysis = p.analyze()
-      const { pos, view } = this.layout()
+      // Scale: the natural picture fits the board's width, times the zoom. The
+      // picture then covers the whole board, so that blocks can be put anywhere on it.
+      const natural = this.layout().view
+      const cw = this.canvas.clientWidth || natural[2]
+      const ch = parseFloat(getComputedStyle(this.canvas).minHeight) || 0
+      // On a large board the picture is drawn larger (up to 1.4 times), so that it is easy to read.
+      const scale = Math.min(cw > 700 ? 1.4 : 1, cw / natural[2]) * this.zoom
+      const { pos, view } = this.layout({ w: cw / scale - 2, h: ch / scale - 2 })
       const s = this.analysis.s
       const root = svg('svg', { viewBox: view.join(' '), class: 'ipm-svg' })
       // Natural size: the picture's own units, at most the width of the page.
-      const fit = Math.min(1, (this.canvas.clientWidth || view[2]) / view[2], 640 / view[2])
-      root.style.width = `${Math.round(view[2] * fit * this.zoom)}px`
+      root.style.width = `${Math.round(view[2] * scale)}px`
       root.style.maxWidth = 'none'
       // Only a zoomed-in picture scrolls (and is clipped); otherwise blocks may be dragged past the edge.
       this.canvas.style.overflow = this.zoom > 1 ? 'auto' : 'visible'
