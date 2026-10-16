@@ -342,7 +342,19 @@
       // The trash can appears while a rule block is dragged; dropping the block on it removes it.
       this.trash = el('div', 'ipm-trash', '🗑')
       this.trash.setAttribute('aria-hidden', 'true')
-      root.querySelector('.ipm-board').append(this.canvas, tools, this.sheet, this.trash)
+      // The rule menu: always visible below the picture.
+      this.menu = el('div', 'ipm-menu')
+      this.menu.append(el('span', 'ipm-menu-label', 'Add a rule:'))
+      for (const o of this.ruleOptions()) {
+        const b = el('button', 'ipm-menu-item')
+        b.type = 'button'
+        b.title = `${o.label} (${o.detail})`
+        b.append(o.picture)
+        b.addEventListener('mousedown', ev => ev.preventDefault())
+        b.addEventListener('click', o.act)
+        this.menu.append(b)
+      }
+      root.querySelector('.ipm-board').append(this.canvas, this.menu, tools, this.sheet, this.trash)
       this.render()
     }
 
@@ -542,13 +554,16 @@
         })
         root.append(g)
       }
+      root.addEventListener('click', ev => {
+        if (ev.target === root && this.selected) { this.selected = null; this.render() }
+      })
       this.canvas.replaceChildren(root)
       const qed = this.analysis.qed
       this.root.classList.toggle('ipm-solved', qed)
       const n = this.analysis.openInputs.length
       this.status.textContent = qed ? 'Proof complete ✓' :
-        this.selected?.kind === 'in' ? 'Now tap a glowing green dot (or its box)' :
-        this.selected?.kind === 'out' ? 'Now tap a glowing green circle' :
+        this.selected?.kind === 'in' ? 'Now tap a glowing green dot, or add a rule from the menu' :
+        this.selected?.kind === 'out' ? 'Now tap a glowing green circle, or add a rule from the menu' :
         `${n} red circle${n === 1 ? '' : 's'} left — tap one`
       try { localStorage.setItem(this.key, JSON.stringify({ proof: this.proof.snapshot(), solved: qed })) } catch {}
       if (qed) this.onSolved?.()
@@ -673,20 +688,22 @@
       })
     }
 
+    // A selected input: the player taps an output in the picture or adds a rule from the menu. A
+    // sheet appears only to disconnect an input that is connected already.
     inputMenu(b, i) {
       const p = this.proof, s = this.analysis.s
-      const options = this.ruleOptions()
       const connected = p.connections.find(c => c.to.block === b.id && c.to.port === i)
-      if (connected) options.push({ label: 'Disconnect', act: () => { this.selected = null; this.change(() => { p.connections = p.connections.filter(c => c !== connected) }) } })
-      this.openSheet(`Prove ${show(b.inputs[i], s)}`, options,
-        'Tap a blue dot in the picture, or add a block and connect it:', false)
+      if (!connected) return this.hideSheet()
+      this.openSheet(`Prove ${show(b.inputs[i], s)}`, [{ label: 'Disconnect', act: () => {
+        this.selected = null
+        this.change(() => { p.connections = p.connections.filter(c => c !== connected) })
+      } }], 'This input is connected already.')
     }
 
-    outputMenu(b, j) {
-      const s = this.analysis.s
-      this.openSheet(`Use ${show(b.outputs[j], s)}`, this.ruleOptions(),
-        'Tap a red circle in the picture, or add a block and connect it:', false)
-    }
+    outputMenu() { this.hideSheet() }
+
+    // Hides the sheet but keeps the selection (unlike `closeSheet`).
+    hideSheet() { this.sheet.hidden = true; this.sheet.replaceChildren() }
 
     blockMenu(b) {
       this.openSheet(RULES[b.rule].name, [

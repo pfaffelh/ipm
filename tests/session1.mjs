@@ -27,9 +27,9 @@ await tap(t.locator('.ipm-conclusion rect').nth(0)); await tap(t.locator('.ipm-a
 await tap(t.locator('.ipm-conclusion rect').nth(1)); await tap(t.locator('.ipm-assumption rect').nth(0)); console.log('T3:', await state(t))
 await page.waitForTimeout(1600)
 t = task(3)  // A, B ⊢ A ∧ B: new block from the sheet, then direct taps
-await tap(t.locator('.ipm-conclusion .ipm-port.ipm-in')); console.log('T4 sheet:', await sheet(t))
-if (await t.locator('.ipm-sheet').evaluate(e => e.classList.contains('ipm-folded'))) await tap(t.locator('.ipm-sheet-head')); await tap(t.locator('.ipm-sheet .ipm-option-picture[title^="∧I"]')); await tap(t.locator('.ipm-rule .ipm-port.ipm-out').first())
-await tap(t.locator('.ipm-rule .ipm-port.ipm-in.ipm-open').nth(0)); await tap(t.locator('.ipm-assumption rect').nth(0))
-await tap(t.locator('.ipm-rule .ipm-port.ipm-in.ipm-open').nth(0)); await tap(t.locator('.ipm-assumption rect').nth(1)); console.log('T4:', await state(t))
+await tap(t.locator('.ipm-conclusion .ipm-port.ipm-in')); console.log('T4 menu:', await t.locator('.ipm-menu-item').evaluateAll(bs => bs.map(b => b.title)))
+await tap(t.locator('.ipm-menu-item[title^="∧I"]')); await tap(t.locator('.ipm-canvas .ipm-rule .ipm-port.ipm-out').first())
+await tap(t.locator('.ipm-canvas .ipm-rule .ipm-port.ipm-in.ipm-open').nth(0)); await tap(t.locator('.ipm-assumption rect').nth(0))
+await tap(t.locator('.ipm-canvas .ipm-rule .ipm-port.ipm-in.ipm-open').nth(0)); await tap(t.locator('.ipm-assumption rect').nth(1)); console.log('T4:', await state(t))
 await t.screenshot({ path: 'ipm2-t4.png' })
 await browser.close()

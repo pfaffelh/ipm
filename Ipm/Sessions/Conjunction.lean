@@ -43,8 +43,8 @@ example (A B : Prop) (a : A) (b : B) : B ∧ A := ⟨b, a⟩
 ::::
 
 ::::task (rules := "conjI, conjE") (assumptions := "A, B") (conclusions := "A ∧ B")
-Your first rule. Tap the red circle of the goal, unfold the list of rules below the picture and
-add *∧I*. A new block appears: connect its output to the goal, then fill its two red circles.
+Your first rule. Tap the red circle of the goal, then tap *∧I* in the menu below the picture. A new
+block appears: connect its output to the goal, then fill its two red circles.
 
 ```lean -show
 example (A B : Prop) (a : A) (b : B) : A ∧ B := ⟨a, b⟩
@@ -60,7 +60,7 @@ example (A : Prop) (a : A) : A ∧ A := ⟨a, a⟩
 ::::
 
 ::::task (rules := "conjI, conjE") (assumptions := "A ∧ B") (conclusions := "A")
-Now take a conjunction apart. Add an *∧E* block from the list of rules, feed `A ∧ B` into it and
+Now take a conjunction apart. Add an *∧E* block from the menu, feed `A ∧ B` into it and
 connect the right one of its outputs to the goal.
 
 ```lean -show

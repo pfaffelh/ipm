@@ -11,10 +11,9 @@ await page.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => x.
 const tap = async l => { await l.dispatchEvent('click'); await page.waitForTimeout(120) }
 const state = async t => `${await t.locator('.ipm-status').innerText()} | boxes: ${await t.locator('.ipm-box').count()} | ⚠/☠: ${await t.locator('.ipm-skull').count()}`
 const addRule = async (t, label) => {
-  if (await t.locator('.ipm-sheet').evaluate(e => e.classList.contains('ipm-folded'))) await tap(t.locator('.ipm-sheet-head'))
-  await tap(t.locator(`.ipm-sheet .ipm-option-picture[title^="${label}"]`))
+  await tap(t.locator(`.ipm-menu-item[title^="${label}"]`))
 }
-const rule = (t, n) => t.locator('.ipm-rule').nth(n)
+const rule = (t, n) => t.locator('.ipm-canvas .ipm-rule').nth(n)
 const out = (b, n = 0) => b.locator('.ipm-port.ipm-out:not(.ipm-local)').nth(n)
 const inp = (b, n = 0) => b.locator('.ipm-port.ipm-in').nth(n)
 const local = b => b.locator('.ipm-port.ipm-local')

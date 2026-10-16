@@ -13,8 +13,10 @@ conjunction (12 tasks) and implication (14 tasks).
 
 * Tap a red circle (something to prove): everything in the picture that fits glows green; tap it to
   draw the line. It also works the other way round (tap an output first).
-* The rules are listed below the picture as the very blocks they add, with `?1`, `?2` for arbitrary
-  statements; choosing one adds the block, which you then connect. Unification fills in `?1`, `?2`.
+* The rules are always available in a menu below the picture, drawn as the very blocks they add,
+  with `?1`, `?2` for arbitrary statements; tapping one adds the block, which you then connect.
+  Unification fills in `?1`, `?2`. Rule blocks you no longer need go into the trash can 🗑, which
+  appears while you drag a block.
 * A line that does not fit gets a ☠, a local hypothesis used outside its box a ⚠; tap them for an
   explanation.
 * →-introduction provides a local hypothesis (purple); a dashed box shows the part of the proof
