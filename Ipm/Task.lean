@@ -64,4 +64,29 @@ def task : DirectiveExpanderOf TaskConfig
         (Block.task $(quote (items cfg.assumptions)) $(quote (items cfg.conclusions)) $(quote (items cfg.rules)))
         #[$blocks,*])
 
+-- Text in one language: `:::en` and `:::de` blocks; `ipm.js` shows the language chosen in the header.
+block_extension Block.lang (lang : String) where
+  data := Json.str lang
+  traverse _ _ _ := pure none
+  extraJs := {JS.mk ipmJs}
+  extraCss := {CSS.mk ipmCss}
+  toHtml := some fun _ goB _ data content => do
+    let lang := data.getStr?.toOption.getD "en"
+    pure <| .tag "div" #[("class", s!"ipm-lang ipm-lang-{lang}"), ("lang", lang)] (← content.mapM goB)
+  toTeX := none
+
+/-- English text; see `de`. -/
+@[directive]
+def en : DirectiveExpanderOf Unit
+  | (), contents => do
+    let blocks ← contents.mapM elabBlock
+    ``(Verso.Doc.Block.other (Block.lang "en") #[$blocks,*])
+
+/-- German text, shown instead of the `en` blocks when German is chosen. -/
+@[directive]
+def de : DirectiveExpanderOf Unit
+  | (), contents => do
+    let blocks ← contents.mapM elabBlock
+    ``(Verso.Doc.Block.other (Block.lang "de") #[$blocks,*])
+
 end Ipm

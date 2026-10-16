@@ -15,6 +15,79 @@
 (function () {
   'use strict'
 
+  // ---------------------------------------------------------------- language
+
+  // English or German, as chosen with the switch in the header (kept in the browser). The page's
+  // texts come in both languages (`:::en` and `:::de` blocks); the class `ipm-de` on the root
+  // element shows the German ones.
+  let LANG = 'en'
+  try { LANG = localStorage.getItem('ipm-verso:lang') === 'de' ? 'de' : 'en' } catch {}
+  document.documentElement.classList.toggle('ipm-de', LANG === 'de')
+  document.documentElement.lang = LANG
+  const DE = {
+    '∧-introduction': '∧-Einführung', '∧-elimination': '∧-Beseitigung',
+    '→-introduction': '→-Einführung', '→-elimination': '→-Beseitigung',
+    '∨-introduction (left)': '∨-Einführung (links)', '∨-introduction (right)': '∨-Einführung (rechts)',
+    '∨-elimination': '∨-Beseitigung', '⊥-elimination': '⊥-Beseitigung',
+    'tertium non datur': 'Tertium non datur',
+    'Show blocks ▾': 'Blöcke zeigen ▾', 'Names only ▴': 'Nur Namen ▴',
+    '↶ Undo': '↶ Zurück', 'Start over': 'Neu anfangen', 'Tidy up': 'Aufräumen',
+    'Arrange the blocks automatically again': 'Die Blöcke wieder automatisch anordnen',
+    'Smaller': 'Kleiner', 'Larger': 'Größer', 'Fit to the page': 'An die Seite anpassen',
+    'Add a rule:': 'Regel hinzufügen:', 'The proof in Lean': 'Der Beweis in Lean', 'Try it in Lean ↗': 'In Lean ausprobieren ↗',
+    'Proof complete ✓': 'Beweis fertig ✓',
+    'Now tap a glowing green dot, or add a rule from the menu': 'Jetzt einen grün leuchtenden Punkt antippen oder eine Regel aus dem Menü nehmen',
+    'Now tap a glowing green circle, or add a rule from the menu': 'Jetzt einen grün leuchtenden Kreis antippen oder eine Regel aus dem Menü nehmen',
+    '1 red circle left — tap one': 'Noch 1 roter Kreis — tippe ihn an',
+    '{n} red circles left — tap one': 'Noch {n} rote Kreise — tippe einen an',
+    'Lemmas from solved tasks ({n})': 'Hilfssätze aus gelösten Aufgaben ({n})',
+    'That would go round in a circle.': 'Das wäre ein Kreisschluss.',
+    'Prove {x}': 'Beweise {x}', 'Disconnect': 'Verbindung lösen', 'This input is connected already.': 'Dieser Eingang ist schon verbunden.',
+    'Remove this block': 'Diesen Block entfernen', 'Remove this connection': 'Diese Verbindung entfernen',
+    '⚠ A local hypothesis escapes its box': '⚠ Eine lokale Annahme verlässt ihren Kasten',
+    'What is derived from a local hypothesis (of an →I or ∨E block) may only be used to prove the input of that block it belongs to. This line leads, via {x}, to a goal outside.':
+      'Was aus einer lokalen Annahme (eines →I- oder ∨E-Blocks) folgt, darf nur für den Eingang des Blocks verwendet werden, zu dem sie gehört. Diese Linie führt über {x} zu einem Ziel außerhalb.',
+    '☠ {x} does not fit {y}': '☠ {x} passt nicht zu {y}',
+    'Cancel': 'Abbrechen', 'more ▸': 'mehr ▸', 'less ▾': 'weniger ▾', '1 rule ▸': '1 Regel ▸', '{n} rules ▸': '{n} Regeln ▸',
+    '{name} block': '{name}-Block', 'Task {i} of {n}': 'Aufgabe {i} von {n}',
+  }
+  // Headings of the site, which come from Verso.
+  const DE_TITLES = {
+    'The Incredible Proof Machine in Lean': 'Die Incredible Proof Machine in Lean',
+    'Session 1: Conjunction': 'Sitzung 1: Konjunktion', 'Session 2: Implication': 'Sitzung 2: Implikation',
+    'Session 3: Disjunction': 'Sitzung 3: Disjunktion', 'Session 4: Falsity and Negation': 'Sitzung 4: Falsum und Negation',
+    'Session 5: Classical Logic': 'Sitzung 5: Klassische Logik', 'Table of Contents': 'Inhalt', 'Contents': 'Inhalt',
+  }
+  function translatePage() {
+    if (LANG !== 'de') return
+    const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+    for (let n = walk.nextNode(); n; n = walk.nextNode())
+      for (const [en, de] of Object.entries(DE_TITLES)) if (n.nodeValue.includes(en)) n.nodeValue = n.nodeValue.replace(en, de)
+    for (const [en, de] of Object.entries(DE_TITLES)) document.title = document.title.replace(en, de)
+  }
+  // The switch in the header: EN | DE. Changing the language reloads the page; progress is kept.
+  function languageSwitch() {
+    const header = document.querySelector('header')
+    if (!header || header.querySelector('.ipm-lang-switch')) return
+    const box = document.createElement('div')
+    box.className = 'ipm-lang-switch'
+    for (const l of ['en', 'de']) {
+      const b = document.createElement('button')
+      b.type = 'button'
+      b.textContent = l.toUpperCase()
+      b.className = l === LANG ? 'ipm-lang-current' : ''
+      b.setAttribute('aria-pressed', l === LANG)
+      b.addEventListener('click', () => {
+        if (l === LANG) return
+        try { localStorage.setItem('ipm-verso:lang', l) } catch {}
+        location.reload()
+      })
+      box.append(b)
+    }
+    header.append(box)
+  }
+  const tr = (en, vars = {}) => (LANG === 'de' ? DE[en] ?? en : en).replace(/\{(\w+)\}/g, (_, k) => vars[k])
+
   // ---------------------------------------------------------------- formulas
 
   // Formulas: {t: 'atom', n} | {t: 'and'|'or'|'imp', a, b} | {t: 'not', a} | {t: 'bot'} | {t: 'meta', id}
@@ -481,7 +554,7 @@
 
   function setCompact(menu, compact) {
     menu.classList.toggle('ipm-compact', compact)
-    menu.querySelector('.ipm-menu-toggle').textContent = compact ? 'Show blocks ▾' : 'Names only ▴'
+    menu.querySelector('.ipm-menu-toggle').textContent = tr(compact ? 'Show blocks ▾' : 'Names only ▴')
   }
 
   class Task {
@@ -502,15 +575,15 @@
       this.canvas = el('div', 'ipm-canvas')
       this.status = el('div', 'ipm-status')
       const tools = el('div', 'ipm-tools')
-      const undo = el('button', 'ipm-button', '↶ Undo')
+      const undo = el('button', 'ipm-button', tr('↶ Undo'))
       undo.type = 'button'
       undo.addEventListener('click', () => this.undo())
-      const reset = el('button', 'ipm-button', 'Start over')
+      const reset = el('button', 'ipm-button', tr('Start over'))
       reset.type = 'button'
       reset.addEventListener('click', () => { this.change(() => { this.proof = new Proof(this.assumptions, this.conclusions) }) })
-      const tidy = el('button', 'ipm-button', 'Tidy up')
+      const tidy = el('button', 'ipm-button', tr('Tidy up'))
       tidy.type = 'button'
-      tidy.title = 'Arrange the blocks automatically again'
+      tidy.title = tr('Arrange the blocks automatically again')
       tidy.addEventListener('click', () => { this.change(() => { this.proof.moved = {} }) })
       // Zoom: the picture is drawn at `zoom` times the size that fits the page.
       this.zoom = 1
@@ -522,9 +595,9 @@
         return z
       }
       tools.append(undo, reset, tidy,
-        zoomButton('−', 'Smaller', z => Math.max(0.4, z / 1.25)),
-        zoomButton('+', 'Larger', z => Math.min(4, z * 1.25)),
-        zoomButton('Fit', 'Fit to the page', () => 1),
+        zoomButton('−', tr('Smaller'), z => Math.max(0.4, z / 1.25)),
+        zoomButton('+', tr('Larger'), z => Math.min(4, z * 1.25)),
+        zoomButton('Fit', tr('Fit to the page'), () => 1),
         this.status)
       this.sheet = el('div', 'ipm-sheet')
       this.sheet.hidden = true
@@ -533,7 +606,7 @@
       this.trash.setAttribute('aria-hidden', 'true')
       // The rule menu: always visible below the picture.
       this.menu = el('div', 'ipm-menu')
-      this.menu.append(el('span', 'ipm-menu-label', 'Add a rule:'))
+      this.menu.append(el('span', 'ipm-menu-label', tr('Add a rule:')))
       this.rules.forEach((name, k) => {
         const o = this.ruleOptions()[k]
         const b = el('button', 'ipm-menu-item')
@@ -551,10 +624,10 @@
       this.lean = el('details', 'ipm-lean')
       this.lean.open = true
       this.leanCode = el('pre', 'ipm-lean-code')
-      this.leanLink = el('a', 'ipm-lean-link', 'Try it in Lean ↗')
+      this.leanLink = el('a', 'ipm-lean-link', tr('Try it in Lean ↗'))
       this.leanLink.target = '_blank'
       this.leanLink.rel = 'noopener'
-      this.lean.append(el('summary', '', 'The proof in Lean'), this.leanCode, this.leanLink)
+      this.lean.append(el('summary', '', tr('The proof in Lean')), this.leanCode, this.leanLink)
       // Names only, or the pictures of the blocks: on phones names only, unless the player chose otherwise.
       const toggle = el('button', 'ipm-menu-toggle')
       toggle.type = 'button'
@@ -903,10 +976,10 @@
       this.leanLink.href = 'https://live.lean-lang.org/#code=' + encodeURIComponent(code)
       this.leanLink.hidden = !qed
       const n = this.analysis.openInputs.length
-      this.status.textContent = qed ? 'Proof complete ✓' :
+      this.status.textContent = tr(qed ? 'Proof complete ✓' :
         this.selected?.kind === 'in' ? 'Now tap a glowing green dot, or add a rule from the menu' :
         this.selected?.kind === 'out' ? 'Now tap a glowing green circle, or add a rule from the menu' :
-        `${n} red circle${n === 1 ? '' : 's'} left — tap one`
+        n === 1 ? '1 red circle left — tap one' : '{n} red circles left — tap one', { n })
       try { localStorage.setItem(this.key, JSON.stringify({ proof: this.proof.snapshot(), solved: qed })) } catch {}
       if (qed) { this.saveLemma(); this.onSolved?.() }
     }
@@ -917,7 +990,7 @@
     saveLemma() {
       const { uses, goals } = leanParts(this.proof, this.analysis)
       if (uses.some(k => dependsOn(k, this.key))) return  // no lemma may be proved by itself
-      const session = Number(/Session (\d+)/.exec(document.title)?.[1] ?? 0)
+      const session = Number(/Session-(\d+)/.exec(location.pathname)?.[1] ?? 0)
       const n = this.index + 1, base = `lemma_${session}_${n}`
       const leanNames = goals.map((_, j) => (goals.length > 1 ? `${base}_${j + 1}` : base))
       const norm = x => show(parse(x))
@@ -947,7 +1020,7 @@
         .sort((a, b) => a.session - b.session || a.task - b.task)
         .filter(L => !seen.has(L.statement) && seen.add(L.statement))
       this.lemmaBox.hidden = lemmas.length === 0
-      this.lemmaHead.textContent = `Lemmas from solved tasks (${lemmas.length}) ${this.lemmasOpen ? '▴' : '▾'}`
+      this.lemmaHead.textContent = `${tr('Lemmas from solved tasks ({n})', { n: lemmas.length })} ${this.lemmasOpen ? '▴' : '▾'}`
       this.lemmaList.hidden = !this.lemmasOpen
       this.lemmaList.replaceChildren(...lemmas.map(L => {
         const name = 'lemma:' + L.key
@@ -978,7 +1051,7 @@
     link(o, i) {
       const local = isLocal(this.proof.block(o.block), o.port)
       if (!local && (o.block === i.block || this.proof.createsCycle(o.block, i.block))) {
-        this.status.textContent = 'That would go round in a circle.'
+        this.status.textContent = tr('That would go round in a circle.')
         return
       }
       this.selected = null
@@ -1034,7 +1107,7 @@
     // The sheet shows one line (title, number of new blocks) and folds out on tap. It starts
     // unfolded only when `unfold` is set, i.e. when nothing in the picture fits.
     openSheet(title, options, hint, unfold = true) {
-      const n = options.filter(o => /block$/.test(o.detail ?? '')).length
+      const n = options.filter(o => /block$/i.test(o.detail ?? '')).length
       const head = el('div', 'ipm-sheet-head')
       const toggle = el('span', 'ipm-sheet-toggle')
       head.append(el('div', 'ipm-sheet-title', title), toggle)
@@ -1050,13 +1123,13 @@
         b.addEventListener('click', o.act)
         body.append(b)
       }
-      const close = el('button', 'ipm-option ipm-close', 'Cancel')
+      const close = el('button', 'ipm-option ipm-close', tr('Cancel'))
       close.type = 'button'
       close.addEventListener('click', () => this.closeSheet())
       body.append(close)
       const setFolded = folded => {
         this.sheet.classList.toggle('ipm-folded', folded)
-        toggle.textContent = folded ? `${n ? `${n} rule${n === 1 ? '' : 's'} ` : 'more '}▸` : 'less ▾'
+        toggle.textContent = tr(folded ? (n ? (n === 1 ? '1 rule ▸' : '{n} rules ▸') : 'more ▸') : 'less ▾', { n })
       }
       head.addEventListener('click', () => setFolded(!this.sheet.classList.contains('ipm-folded')))
       this.sheet.replaceChildren(head, body)
@@ -1074,7 +1147,7 @@
         return {
           picture: rulePicture(name),
           label: `${r.label}  ${r.inputs.map(generic).join(', ')} ⟹ ${r.outputs.map(generic).join(', ')}`,
-          detail: `${r.name} block`,
+          detail: tr('{name} block', { name: tr(r.name) }),
           act: () => {
             this.undoStack.push(this.proof.snapshot())
             this.proof.addRule(name)
@@ -1091,10 +1164,10 @@
       const p = this.proof, s = this.analysis.s
       const connected = p.connections.find(c => c.to.block === b.id && c.to.port === i)
       if (!connected) return this.hideSheet()
-      this.openSheet(`Prove ${show(b.inputs[i], s)}`, [{ label: 'Disconnect', act: () => {
+      this.openSheet(tr('Prove {x}', { x: show(b.inputs[i], s) }), [{ label: tr('Disconnect'), act: () => {
         this.selected = null
         this.change(() => { p.connections = p.connections.filter(c => c !== connected) })
-      } }], 'This input is connected already.')
+      } }], tr('This input is connected already.'))
     }
 
     outputMenu() { this.hideSheet() }
@@ -1103,33 +1176,35 @@
     hideSheet() { this.sheet.hidden = true; this.sheet.replaceChildren() }
 
     blockMenu(b) {
-      this.openSheet(RULES[b.rule].name, [
-        { label: 'Remove this block', act: () => this.change(() => this.proof.removeBlock(b.id)) },
+      this.openSheet(tr(RULES[b.rule].name), [
+        { label: tr('Remove this block'), act: () => this.change(() => this.proof.removeBlock(b.id)) },
       ])
     }
 
     explainEscape(c) {
       const p = this.proof, s = this.analysis.s
-      this.openSheet('⚠ A local hypothesis escapes its box', [
-        { label: 'Remove this connection', act: () => this.change(() => { p.connections = p.connections.filter(x => x !== c) }) },
-      ], 'What is derived from a local hypothesis (of an →I or ∨E block) may only be used to prove ' +
-        `the input of that block it belongs to. This line leads, via ${show(p.block(c.from.block).outputs[c.from.port], s)}, to a goal outside.`)
+      this.openSheet(tr('⚠ A local hypothesis escapes its box'), [
+        { label: tr('Remove this connection'), act: () => this.change(() => { p.connections = p.connections.filter(x => x !== c) }) },
+      ], tr('What is derived from a local hypothesis (of an →I or ∨E block) may only be used to prove the input of ' +
+        'that block it belongs to. This line leads, via {x}, to a goal outside.', { x: show(p.block(c.from.block).outputs[c.from.port], s) }))
     }
 
     explain(c) {
       const p = this.proof, s = this.analysis.s
       const out = p.block(c.from.block).outputs[c.from.port], inp = p.block(c.to.block).inputs[c.to.port]
-      this.openSheet(`☠ ${show(out, s)} does not fit ${show(inp, s)}`, [
-        { label: 'Remove this connection', act: () => this.change(() => { p.connections = p.connections.filter(x => x !== c) }) },
+      this.openSheet(tr('☠ {x} does not fit {y}', { x: show(out, s), y: show(inp, s) }), [
+        { label: tr('Remove this connection'), act: () => this.change(() => { p.connections = p.connections.filter(x => x !== c) }) },
       ])
     }
   }
 
   // Tasks on a page are revealed one at a time, like the steps of a lesson.
   function init() {
+    translatePage()
+    languageSwitch()
     registerLemmas()
     const tasks = [...document.querySelectorAll('.ipm-task')].map((root, i) => new Task(root, i))
-    tasks.forEach((t, i) => t.root.prepend(el('div', 'ipm-task-label', `Task ${i + 1} of ${tasks.length}`)))
+    tasks.forEach((t, i) => t.root.prepend(el('div', 'ipm-task-label', tr('Task {i} of {n}', { i: i + 1, n: tasks.length }))))
     const update = scroll => {
       const open = tasks.findIndex(t => !t.root.classList.contains('ipm-solved'))
       tasks.forEach((t, i) => {

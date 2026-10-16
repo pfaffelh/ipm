@@ -13,6 +13,7 @@ Each task carries a Lean proof, checked when the site is built.
 
 #doc (Manual) "Session 3: Disjunction" =>
 
+:::en
 Three new rules, for disjunction (`∨`, “or”):
 
 * *∨-introduction* comes in two forms: ∨I₁ makes `A ∨ B` from `A`, ∨I₂ makes `A ∨ B` from `B`.
@@ -21,9 +22,29 @@ Three new rules, for disjunction (`∨`, “or”):
   purple ring) sits next to the input it belongs to, and may only be used to prove that input.
 
 In Lean, ∨I₁ and ∨I₂ are `Or.inl` and `Or.inr`, and ∨E is `Or.elim`.
+:::
+
+:::de
+Drei neue Regeln, für die Disjunktion (`∨`, „oder“):
+
+* Die *∨-Einführung* gibt es in zwei Formen: ∨I₁ macht aus `A` die Aussage `A ∨ B`, ∨I₂ macht aus
+  `B` die Aussage `A ∨ B`.
+* Die *∨-Beseitigung* (∨E) ist eine Fallunterscheidung. Aus `A ∨ B` darfst du `C` folgern, wenn du
+  `C` zweimal beweisen kannst: einmal mit der lokalen Annahme `A`, einmal mit `B`. Jede Annahme
+  (ein blauer Punkt mit lila Ring) sitzt neben dem Eingang, zu dem sie gehört, und darf nur für
+  diesen Eingang verwendet werden.
+
+In Lean heißen ∨I₁ und ∨I₂ `Or.inl` und `Or.inr`, und ∨E heißt `Or.elim`.
+:::
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "A, B") (conclusions := "A ∨ B")
+:::en
 Your first `∨`. One of the two assumptions is enough.
+:::
+
+:::de
+Dein erstes `∨`. Eine der beiden Annahmen genügt.
+:::
 
 ```lean -show
 example (A B : Prop) (a : A) (_ : B) : A ∨ B := Or.inl a
@@ -31,7 +52,13 @@ example (A B : Prop) (a : A) (_ : B) : A ∨ B := Or.inl a
 ::::
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "A") (conclusions := "A ∨ B")
+:::en
 `B` need not be true at all.
+:::
+
+:::de
+`B` muss gar nicht wahr sein.
+:::
 
 ```lean -show
 example (A B : Prop) (a : A) : A ∨ B := Or.inl a
@@ -39,7 +66,13 @@ example (A B : Prop) (a : A) : A ∨ B := Or.inl a
 ::::
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "B") (conclusions := "A ∨ B")
+:::en
 And from the other side.
+:::
+
+:::de
+Und von der anderen Seite.
+:::
 
 ```lean -show
 example (A B : Prop) (b : B) : A ∨ B := Or.inr b
@@ -47,7 +80,13 @@ example (A B : Prop) (b : B) : A ∨ B := Or.inr b
 ::::
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "A") (conclusions := "A ∨ A")
+:::en
 Either way.
+:::
+
+:::de
+So oder so.
+:::
 
 ```lean -show
 example (A : Prop) (a : A) : A ∨ A := Or.inl a
@@ -55,7 +94,13 @@ example (A : Prop) (a : A) : A ∨ A := Or.inl a
 ::::
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "A ∨ B") (conclusions := "B ∨ A")
+:::en
 Your first ∨E: prove `B ∨ A` in the case `A` and in the case `B`.
+:::
+
+:::de
+Dein erstes ∨E: Beweise `B ∨ A` im Fall `A` und im Fall `B`.
+:::
 
 ```lean -show
 example (A B : Prop) (h : A ∨ B) : B ∨ A := h.elim (fun a => Or.inr a) (fun b => Or.inl b)
@@ -63,7 +108,13 @@ example (A B : Prop) (h : A ∨ B) : B ∨ A := h.elim (fun a => Or.inr a) (fun 
 ::::
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "A ∨ B ∨ C") (conclusions := "(A ∨ B) ∨ C")
+:::en
 `A ∨ B ∨ C` means `A ∨ (B ∨ C)`. One case distinction inside another.
+:::
+
+:::de
+`A ∨ B ∨ C` bedeutet `A ∨ (B ∨ C)`. Eine Fallunterscheidung in einer anderen.
+:::
 
 ```lean -show
 example (A B C : Prop) (h : A ∨ B ∨ C) : (A ∨ B) ∨ C :=
@@ -72,7 +123,13 @@ example (A B C : Prop) (h : A ∨ B ∨ C) : (A ∨ B) ∨ C :=
 ::::
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "A ∧ B") (conclusions := "A ∨ B")
+:::en
 “And” is stronger than “or”.
+:::
+
+:::de
+„Und“ ist stärker als „oder“.
+:::
 
 ```lean -show
 example (A B : Prop) (h : A ∧ B) : A ∨ B := Or.inl h.1
@@ -80,7 +137,13 @@ example (A B : Prop) (h : A ∧ B) : A ∨ B := Or.inl h.1
 ::::
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "A ∧ B ∨ C") (conclusions := "(A ∨ C) ∧ (B ∨ C)")
+:::en
 In Lean, `∧` binds more strongly than `∨`: `A ∧ B ∨ C` is `(A ∧ B) ∨ C`.
+:::
+
+:::de
+In Lean bindet `∧` stärker als `∨`: `A ∧ B ∨ C` ist `(A ∧ B) ∨ C`.
+:::
 
 ```lean -show
 example (A B C : Prop) (h : A ∧ B ∨ C) : (A ∨ C) ∧ (B ∨ C) :=
@@ -89,7 +152,13 @@ example (A B C : Prop) (h : A ∧ B ∨ C) : (A ∨ C) ∧ (B ∨ C) :=
 ::::
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "(A ∨ B) ∧ C") (conclusions := "A ∧ C ∨ B ∧ C")
+:::en
 Distribute `C`.
+:::
+
+:::de
+Verteile `C`.
+:::
 
 ```lean -show
 example (A B C : Prop) (h : (A ∨ B) ∧ C) : A ∧ C ∨ B ∧ C :=
@@ -98,7 +167,13 @@ example (A B C : Prop) (h : (A ∨ B) ∧ C) : A ∧ C ∨ B ∧ C :=
 ::::
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "(A → C) ∧ (B → C)") (conclusions := "A ∨ B → C")
+:::en
 `A ∨ B → C` means `(A ∨ B) → C`.
+:::
+
+:::de
+`A ∨ B → C` bedeutet `(A ∨ B) → C`.
+:::
 
 ```lean -show
 example (A B C : Prop) (h : (A → C) ∧ (B → C)) : A ∨ B → C :=
@@ -107,7 +182,13 @@ example (A B C : Prop) (h : (A → C) ∧ (B → C)) : A ∨ B → C :=
 ::::
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "A ∨ B → C") (conclusions := "(A → C) ∧ (B → C)")
+:::en
 And back.
+:::
+
+:::de
+Und zurück.
+:::
 
 ```lean -show
 example (A B C : Prop) (h : A ∨ B → C) : (A → C) ∧ (B → C) :=
@@ -116,7 +197,13 @@ example (A B C : Prop) (h : A ∨ B → C) : (A → C) ∧ (B → C) :=
 ::::
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "(A → B) ∨ (A → C)") (conclusions := "A → B ∨ C")
+:::en
 The final task of the session.
+:::
+
+:::de
+Die letzte Aufgabe der Sitzung.
+:::
 
 ```lean -show
 example (A B C : Prop) (h : (A → B) ∨ (A → C)) : A → B ∨ C :=

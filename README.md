@@ -33,6 +33,7 @@ logic (9).
 * Solved tasks become lemmas: in the menu, “Lemmas from solved tasks” offers each solved task as a
   block of its own (assumptions as inputs, goals as outputs, `?1`, `?2` for the statements). In the
   Lean proof, a lemma is a `theorem` that the proof applies.
+* English or German: the switch EN | DE in the header (the choice is kept).
 * Progress is kept in the browser.
 
 ## How it works
@@ -44,6 +45,8 @@ logic (9).
 * Each task is written with the directive `::::task (assumptions := …) (conclusions := …)`
   (`Ipm/Task.lean`) and contains a Lean proof of the task in a hidden `lean` block. Building the
   site checks all these proofs, so every task is known to be provable.
+* Texts come in both languages: `:::en` and `:::de` blocks (`Ipm/Task.lean`); `ipm.js` shows the
+  chosen one and translates its own texts and the headings.
 * Formulas follow Lean's conventions: `∧`, `∨` and `→` group to the right. The Incredible Proof
   Machine groups `∧` to the left, so its `A∧B∧C` is written `(A ∧ B) ∧ C` here.
 
