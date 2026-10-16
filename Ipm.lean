@@ -23,8 +23,8 @@ proof is a set of lines that lead from the assumptions to the goals, through *ru
 * New rule blocks come from the menu below the picture: drag one onto the board (or tap it). In a
   rule, `?1` and `?2` stand for any statements; they are filled in when you connect the block.
 * A line that does not fit gets a ☠; tap it to see why. Tap a line and then ✕ to remove it.
-  Blocks can be dragged around; drag a
-  rule block onto the trash can 🗑 (bottom right, it appears while dragging) to remove it.
+* Blocks can be dragged around. To remove a rule block, drag it onto the trash can 🗑, which
+  appears at the corner of the board while you drag. With −, + and Fit you can zoom.
 
 You are done when no red circle is left. Your progress is kept in your browser.
 
