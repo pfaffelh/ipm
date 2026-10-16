@@ -233,3 +233,13 @@
   padding: 0.4em 0.2em; cursor: pointer; white-space: nowrap;
 }
 @media (max-width: 600px) { .ipm-menu:not(.ipm-compact) .ipm-menu-toggle { grid-column: 1 / -1; justify-self: end; } }
+
+/* Lemmas from solved tasks, in the rule menu */
+.ipm-lemmas { flex-basis: 100%; grid-column: 1 / -1; border-top: 1px solid #c9d3e0; padding-top: 0.2em; }
+.ipm-lemmas[hidden] { display: none; }
+.ipm-lemmas-head { font: inherit; font-size: 0.85em; color: #3b6db3; background: none; border: none; padding: 0.4em 0; cursor: pointer; }
+.ipm-lemmas-list { display: flex; flex-wrap: wrap; gap: 0.4em; max-height: 40vh; overflow-y: auto; padding-bottom: 0.2em; }
+.ipm-lemmas-list[hidden] { display: none; }
+.ipm-lemma-item .ipm-menu-caption { white-space: nowrap; }
+.ipm-menu.ipm-compact .ipm-lemma-item .ipm-menu-caption { font-size: 0.9em; }
+.ipm-svg text.ipm-lemma-tag, .ipm-rule-picture text.ipm-lemma-tag { font-size: 10px !important; fill: #999; }

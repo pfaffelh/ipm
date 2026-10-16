@@ -30,6 +30,9 @@ logic (9).
 * Below the board, the same proof is shown in Lean, updated with every change (`sorry` marks what
   is still missing); a complete proof can be opened in the Lean web editor.
 * Tasks come one after another; the ones not yet playable are shown greyed out.
+* Solved tasks become lemmas: in the menu, “Lemmas from solved tasks” offers each solved task as a
+  block of its own (assumptions as inputs, goals as outputs, `?1`, `?2` for the statements). In the
+  Lean proof, a lemma is a `theorem` that the proof applies.
 * Progress is kept in the browser.
 
 ## How it works

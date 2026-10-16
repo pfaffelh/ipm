@@ -158,7 +158,14 @@
 
     // `moved` holds the positions of blocks the player has dragged.
     snapshot() { return JSON.stringify({ b: this.blocks, c: this.connections, n: this.next, m: this.moved ?? {} }) }
-    restore(snap) { const o = JSON.parse(snap); this.blocks = o.b; this.connections = o.c; this.next = o.n; this.moved = o.m ?? {} }
+    restore(snap) {
+      const o = JSON.parse(snap)
+      // A block of a lemma that is no longer known is left out.
+      this.blocks = o.b.filter(b => b.kind !== 'rule' || RULES[b.rule])
+      const ids = new Set(this.blocks.map(b => b.id))
+      this.connections = o.c.filter(c => ids.has(c.from.block) && ids.has(c.to.block))
+      this.next = o.n; this.moved = o.m ?? {}
+    }
 
     // Whether connecting the output of `from` to `to` closes a cycle.
     createsCycle(from, to) {
@@ -232,8 +239,9 @@
   const sub = n => String(n).replace(/\d/g, d => '₀₁₂₃₄₅₆₇₈₉'[d])
   const localName = k => (k < 3 ? 'xyz'[k] : 'x' + sub(k - 2))
 
-  function leanProof(proof, analysis) {
-    const p = proof, s = analysis.s
+  // Returns the parts of the proof, one per goal, and the lemmas it uses.
+  function leanParts(proof, analysis) {
+    const p = proof, s = analysis.s, uses = new Set()
     const assumptions = p.blocks.filter(b => b.kind === 'assumption')
     const names = {}, locals = {}
     const lean = f => show(f, s).replace(/⊥/g, 'False')
@@ -263,6 +271,12 @@
         case 'falseE': return app('False.elim', arg(0))
         case 'TND': return app('Classical.em', { k: 'var', n: '_' })
       }
+      const L = RULES[b.rule]?.lemma
+      if (L) {
+        uses.add(L.key)
+        return app(L.leanNames[j], ...b.inputs.map((_, i) => arg(i)))
+      }
+      return { k: 'sorry' }
     }
     // Printing, with as few parentheses as Lean needs.
     const atomic = t => ['var', 'sorry', 'pair', 'proj'].includes(t.k)
@@ -288,15 +302,63 @@
     const collect = f => { if (f.t === 'atom') atoms.add(f.n); if (f.a) collect(f.a); if (f.b) collect(f.b) }
     for (const b of p.blocks) if (b.kind !== 'rule') [...b.inputs, ...b.outputs].forEach(collect)
     const goals = p.blocks.filter(b => b.kind === 'conclusion').map(g => ({ g, term: input(g, 0, 0) }))
-    return goals.map(({ g, term }) => {
-      used.clear()
-      use(term)
-      const binders = [atoms.size ? `(${[...atoms].sort().join(' ')} : Prop)` : '',
-        ...assumptions.map(b => `(${named(names[b.id]) ? names[b.id] : '_'} : ${lean(b.outputs[0])})`)]
-        .filter(x => x).join(' ')
-      const t = pr(term)
-      return `example ${binders} : ${lean(g.inputs[0])} :=\n  ${t}`
-    }).join('\n\n')
+    return {
+      uses: [...uses],
+      goals: goals.map(({ g, term }) => {
+        used.clear()
+        use(term)
+        return {
+          atoms: [...atoms].sort(),
+          hyps: assumptions.map(b => `(${named(names[b.id]) ? names[b.id] : '_'} : ${lean(b.outputs[0])})`),
+          goal: lean(g.inputs[0]),
+          term: pr(term),
+        }
+      }),
+    }
+  }
+
+  // The proof as Lean code: the lemmas it uses (and the ones they use), then one `example` per goal.
+  function leanProof(proof, analysis) {
+    const { uses, goals } = leanParts(proof, analysis)
+    const examples = goals.map(g =>
+      `example ${[g.atoms.length ? `(${g.atoms.join(' ')} : Prop)` : '', ...g.hyps].filter(x => x).join(' ')} : ${g.goal} :=\n  ${g.term}`)
+    return [...lemmaTheorems(uses), ...examples].join('\n\n')
+  }
+
+  // ---------------------------------------------------------------- lemmas
+
+  // A solved task can be used in other tasks, as a block of its own: its assumptions are the inputs,
+  // its goals the outputs, and its statements (A, B, …) become ?1, ?2, …. The lemmas are kept in
+  // the browser, with the Lean theorems of their proofs.
+  const LEMMAS = 'ipm-verso:lemmas'
+  function loadLemmas() {
+    try { return JSON.parse(localStorage.getItem(LEMMAS)) ?? {} } catch { return {} }
+  }
+  function registerLemmas() {
+    for (const [key, L] of Object.entries(loadLemmas())) {
+      L.key = key
+      RULES['lemma:' + key] = { label: L.label, name: `${L.label}: ${L.statement}`, vars: L.atoms,
+        inputs: L.assumptions, outputs: L.conclusions, lemma: L }
+    }
+  }
+  // Whether lemma `key` uses lemma `target`, directly or through other lemmas.
+  function dependsOn(key, target, seen = new Set()) {
+    if (key === target) return true
+    if (seen.has(key)) return false
+    seen.add(key)
+    return (RULES['lemma:' + key]?.lemma.uses ?? []).some(k => dependsOn(k, target, seen))
+  }
+  function lemmaTheorems(keys) {
+    const out = [], seen = new Set()
+    const visit = key => {
+      const L = RULES['lemma:' + key]?.lemma
+      if (!L || seen.has(key)) return
+      seen.add(key)
+      L.uses.forEach(visit)
+      out.push(...L.theorems)
+    }
+    keys.forEach(visit)
+    return out
   }
 
   // ---------------------------------------------------------------- rendering
@@ -384,6 +446,8 @@
     const g = svg('g', { class: `ipm-block ipm-${b.kind} ${extraClass}` })
     g.append(svg('rect', { x: q.x, y: q.y, width: q.w, height: q.h, rx: 8 }))
     if (b.kind === 'rule') {
+      // A lemma's block carries its name in the corner.
+      if (RULES[b.rule]?.lemma) g.append(svg('text', { x: q.x + 5, y: q.y + q.h - 5, class: 'ipm-lemma-tag' }, RULES[b.rule].label))
       b.inputs.forEach((f, i) => g.append(svg('text', { x: portAt(q, b, 'in', i).x, y: q.y + 22, 'text-anchor': 'middle', class: 'ipm-port-label' }, show(f, s))))
       b.outputs.forEach((f, i) => g.append(svg('text', { x: portAt(q, b, 'out', i).x, y: isLocal(b, i) ? q.y + 22 : q.y + q.h - 10, 'text-anchor': 'middle', class: 'ipm-port-label' + (isLocal(b, i) ? ' ipm-local-label' : '') }, show(f, s))))
     } else {
@@ -424,6 +488,7 @@
     constructor(root, index) {
       this.root = root
       this.key = `ipm-verso:${location.pathname}:${index}`
+      this.index = index
       this.assumptions = JSON.parse(root.dataset.assumptions)
       this.conclusions = JSON.parse(root.dataset.conclusions)
       this.rules = JSON.parse(root.dataset.rules)
@@ -499,6 +564,16 @@
         for (const m of document.querySelectorAll('.ipm-menu')) setCompact(m, compact)
       })
       this.menu.append(toggle)
+      // The lemmas, folded away at first.
+      this.lemmaBox = el('div', 'ipm-lemmas')
+      this.lemmaHead = el('button', 'ipm-lemmas-head')
+      this.lemmaHead.type = 'button'
+      this.lemmaHead.addEventListener('click', () => { this.lemmasOpen = !this.lemmasOpen; this.refreshLemmas() })
+      this.lemmaList = el('div', 'ipm-lemmas-list')
+      this.lemmaBox.append(this.lemmaHead, this.lemmaList)
+      this.menu.append(this.lemmaBox)
+      this.refreshLemmas()
+      window.addEventListener('ipm-lemmas', () => this.refreshLemmas())
       let pref = null
       try { pref = localStorage.getItem('ipm-verso:menu') } catch {}
       setCompact(this.menu, pref ? pref === 'compact' : window.matchMedia('(max-width: 600px)').matches)
@@ -833,7 +908,60 @@
         this.selected?.kind === 'out' ? 'Now tap a glowing green circle, or add a rule from the menu' :
         `${n} red circle${n === 1 ? '' : 's'} left — tap one`
       try { localStorage.setItem(this.key, JSON.stringify({ proof: this.proof.snapshot(), solved: qed })) } catch {}
-      if (qed) this.onSolved?.()
+      if (qed) { this.saveLemma(); this.onSolved?.() }
+    }
+
+    // ------------------------------------------------------------ lemmas
+
+    // Keeps this solved task as a lemma, with the Lean theorem of its proof.
+    saveLemma() {
+      const { uses, goals } = leanParts(this.proof, this.analysis)
+      if (uses.some(k => dependsOn(k, this.key))) return  // no lemma may be proved by itself
+      const session = Number(/Session (\d+)/.exec(document.title)?.[1] ?? 0)
+      const n = this.index + 1, base = `lemma_${session}_${n}`
+      const leanNames = goals.map((_, j) => (goals.length > 1 ? `${base}_${j + 1}` : base))
+      const norm = x => show(parse(x))
+      const L = {
+        label: `L${session}.${n}`, session, task: n,
+        statement: `${this.assumptions.map(norm).join(', ')} ⊢ ${this.conclusions.map(norm).join(', ')}`,
+        atoms: goals[0]?.atoms ?? [], assumptions: this.assumptions, conclusions: this.conclusions, leanNames, uses,
+        theorems: goals.map((g, j) =>
+          `theorem ${leanNames[j]} ${[g.atoms.length ? `{${g.atoms.join(' ')} : Prop}` : '', ...g.hyps].filter(x => x).join(' ')} : ${g.goal} :=\n  ${g.term}`),
+      }
+      const all = loadLemmas()
+      const old = all[this.key]
+      if (old && JSON.stringify({ ...old, key: undefined }) === JSON.stringify(L)) return
+      all[this.key] = L
+      try { localStorage.setItem(LEMMAS, JSON.stringify(all)) } catch {}
+      registerLemmas()
+      window.dispatchEvent(new Event('ipm-lemmas'))
+    }
+
+    // The lemmas this task may use: the other solved tasks, except trivial ones and those that use
+    // this task; the same statement only once.
+    refreshLemmas() {
+      const seen = new Set()
+      const lemmas = Object.values(RULES).filter(r => r.lemma).map(r => r.lemma)
+        .filter(L => L.key !== this.key && !dependsOn(L.key, this.key))
+        .filter(L => { const as = L.assumptions.map(x => show(parse(x))); return !L.conclusions.every(c => as.includes(show(parse(c)))) })
+        .sort((a, b) => a.session - b.session || a.task - b.task)
+        .filter(L => !seen.has(L.statement) && seen.add(L.statement))
+      this.lemmaBox.hidden = lemmas.length === 0
+      this.lemmaHead.textContent = `Lemmas from solved tasks (${lemmas.length}) ${this.lemmasOpen ? '▴' : '▾'}`
+      this.lemmaList.hidden = !this.lemmasOpen
+      this.lemmaList.replaceChildren(...lemmas.map(L => {
+        const name = 'lemma:' + L.key
+        const b = el('button', 'ipm-menu-item ipm-lemma-item')
+        b.type = 'button'
+        b.dataset.rule = name
+        b.title = RULES[name].name
+        b.append(rulePicture(name), el('span', 'ipm-menu-caption', `${L.label}: ${L.statement}`))
+        b.addEventListener('mousedown', ev => ev.preventDefault())
+        const act = () => { this.undoStack.push(this.proof.snapshot()); this.proof.addRule(name); this.hideSheet(); this.render() }
+        this.makeMenuDraggable(b, name, act)
+        b.addEventListener('click', () => { if (Date.now() - Number(b.dataset.added ?? 0) > 700) act() })
+        return b
+      }))
     }
 
     // ------------------------------------------------------------ tapping
@@ -999,6 +1127,7 @@
 
   // Tasks on a page are revealed one at a time, like the steps of a lesson.
   function init() {
+    registerLemmas()
     const tasks = [...document.querySelectorAll('.ipm-task')].map((root, i) => new Task(root, i))
     tasks.forEach((t, i) => t.root.prepend(el('div', 'ipm-task-label', `Task ${i + 1} of ${tasks.length}`)))
     const update = scroll => {
