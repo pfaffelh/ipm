@@ -25,7 +25,7 @@
 .ipm-conclusion.ipm-proved rect { fill: #e6f4ea; stroke: #2e7d4f; }
 .ipm-rule rect { cursor: pointer; }
 .ipm-rule-label { font-weight: bold; font-size: 16px !important; fill: #333; }
-.ipm-port-label { font-size: 12px !important; fill: #555; }
+.ipm-port-label { font-size: 15px !important; fill: #333; }
 .ipm-prop { font-weight: bold; }
 
 .ipm-port { cursor: pointer; }
@@ -200,3 +200,5 @@
 @container main (width >= 1212px) {
   .ipm-task { margin-left: calc((var(--verso-content-max-width) - min(72rem, 100cqw - 3rem)) / 2); }
 }
+.ipm-menu-item { display: flex; flex-direction: column; align-items: center; }
+.ipm-menu-caption { font-size: 0.75em; color: #777; line-height: 1; padding-bottom: 0.25em; font-family: var(--verso-code-font-family, monospace); }

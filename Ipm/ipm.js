@@ -250,14 +250,15 @@
 
   // Size of a block, from its labels.
   function blockSize(b, s) {
+    // Rule blocks show only the statements at their ports (15px), in a row on top and one below.
+    const labelW = 9.2
     const texts = [...b.inputs, ...b.outputs].map(f => show(f, s))
-    const label = b.kind === 'rule' ? RULES[b.rule].label : ''
     const top = [...b.outputs.filter((_, j) => isLocal(b, j)), ...b.inputs]
     const bottom = b.outputs.filter((_, j) => !isLocal(b, j))
-    const inW = top.reduce((w, f) => w + show(f, s).length * charW + portGap, 0)
-    const outW = bottom.reduce((w, f) => w + show(f, s).length * charW + portGap, 0)
-    return { w: Math.max(56, inW, outW, label.length * 12 + 24, ...texts.map(t => t.length * charW + 20)),
-             h: b.kind === 'rule' ? 62 : 34 }
+    const inW = top.reduce((w, f) => w + show(f, s).length * labelW + portGap, 0)
+    const outW = bottom.reduce((w, f) => w + show(f, s).length * labelW + portGap, 0)
+    return { w: Math.max(56, inW, outW, ...texts.map(t => t.length * (b.kind === 'rule' ? labelW : charW) + 20)),
+             h: b.kind === 'rule' ? 52 : 34 }
   }
 
   // Where port `i` (kind 'in' or 'out') of block `b` at position `q` sits.
@@ -277,9 +278,8 @@
     const g = svg('g', { class: `ipm-block ipm-${b.kind} ${extraClass}` })
     g.append(svg('rect', { x: q.x, y: q.y, width: q.w, height: q.h, rx: 8 }))
     if (b.kind === 'rule') {
-      g.append(svg('text', { x: q.x + q.w / 2, y: q.y + q.h / 2 + 6, class: 'ipm-rule-label', 'text-anchor': 'middle' }, RULES[b.rule].label))
-      b.inputs.forEach((f, i) => g.append(svg('text', { x: portAt(q, b, 'in', i).x, y: q.y + 17, 'text-anchor': 'middle', class: 'ipm-port-label' }, show(f, s))))
-      b.outputs.forEach((f, i) => g.append(svg('text', { x: portAt(q, b, 'out', i).x, y: isLocal(b, i) ? q.y + 17 : q.y + q.h - 8, 'text-anchor': 'middle', class: 'ipm-port-label' + (isLocal(b, i) ? ' ipm-local-label' : '') }, show(f, s))))
+      b.inputs.forEach((f, i) => g.append(svg('text', { x: portAt(q, b, 'in', i).x, y: q.y + 22, 'text-anchor': 'middle', class: 'ipm-port-label' }, show(f, s))))
+      b.outputs.forEach((f, i) => g.append(svg('text', { x: portAt(q, b, 'out', i).x, y: isLocal(b, i) ? q.y + 22 : q.y + q.h - 10, 'text-anchor': 'middle', class: 'ipm-port-label' + (isLocal(b, i) ? ' ipm-local-label' : '') }, show(f, s))))
     } else {
       const f = b.kind === 'assumption' ? b.outputs[0] : b.inputs[0]
       g.append(svg('text', { x: q.x + q.w / 2, y: q.y + q.h / 2 + 5, 'text-anchor': 'middle', class: 'ipm-prop' }, show(f, s)))
@@ -363,7 +363,7 @@
         const b = el('button', 'ipm-menu-item')
         b.type = 'button'
         b.title = `${o.label} (${o.detail})`
-        b.append(o.picture)
+        b.append(o.picture, el('span', 'ipm-menu-caption', RULES[name].label))
         b.addEventListener('mousedown', ev => ev.preventDefault())
         this.makeMenuDraggable(b, name, o.act)
         // A click that follows a tap already handled above does nothing; a click by keyboard adds.
