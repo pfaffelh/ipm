@@ -21,7 +21,9 @@ conjunction (12 tasks) and implication (14 tasks).
   explanation.
 * →-introduction provides a local hypothesis (purple); a dashed box shows the part of the proof
   that uses it, which must lead back into the block's own input.
-* Blocks can be dragged with mouse or finger; Undo, Start over and Tidy up (automatic layout).
+* Rules are dragged from the menu onto the board (or tapped). Blocks can be dragged with mouse or
+  finger; tap a line to select it and ✕ to remove it. Undo, Start over, Tidy up (automatic layout)
+  and zoom (−, +, Fit; a larger picture scrolls inside the board).
 * Progress is kept in the browser.
 
 ## How it works

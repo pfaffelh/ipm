@@ -336,7 +336,20 @@
       tidy.type = 'button'
       tidy.title = 'Arrange the blocks automatically again'
       tidy.addEventListener('click', () => { this.change(() => { this.proof.moved = {} }) })
-      tools.append(undo, reset, tidy, this.status)
+      // Zoom: the picture is drawn at `zoom` times the size that fits the page.
+      this.zoom = 1
+      const zoomButton = (label, title, f) => {
+        const z = el('button', 'ipm-button ipm-zoom', label)
+        z.type = 'button'
+        z.title = title
+        z.addEventListener('click', () => { this.zoom = f(this.zoom); this.render() })
+        return z
+      }
+      tools.append(undo, reset, tidy,
+        zoomButton('−', 'Smaller', z => Math.max(0.4, z / 1.25)),
+        zoomButton('+', 'Larger', z => Math.min(4, z * 1.25)),
+        zoomButton('Fit', 'Fit to the page', () => 1),
+        this.status)
       this.sheet = el('div', 'ipm-sheet')
       this.sheet.hidden = true
       // The trash can appears while a rule block is dragged; dropping the block on it removes it.
@@ -345,15 +358,18 @@
       // The rule menu: always visible below the picture.
       this.menu = el('div', 'ipm-menu')
       this.menu.append(el('span', 'ipm-menu-label', 'Add a rule:'))
-      for (const o of this.ruleOptions()) {
+      this.rules.forEach((name, k) => {
+        const o = this.ruleOptions()[k]
         const b = el('button', 'ipm-menu-item')
         b.type = 'button'
         b.title = `${o.label} (${o.detail})`
         b.append(o.picture)
         b.addEventListener('mousedown', ev => ev.preventDefault())
-        b.addEventListener('click', o.act)
+        this.makeMenuDraggable(b, name, o.act)
+        // A click that follows a tap already handled above does nothing; a click by keyboard adds.
+        b.addEventListener('click', () => { if (Date.now() - Number(b.dataset.added ?? 0) > 700) o.act() })
         this.menu.append(b)
-      }
+      })
       root.querySelector('.ipm-board').append(this.canvas, this.menu, tools, this.sheet, this.trash)
       this.render()
     }
@@ -421,6 +437,70 @@
 
     // Blocks can be dragged with mouse, finger or pen. A movement of a few pixels or less counts
     // as a tap. While dragging, the lines at the block follow it; the new position is kept.
+    // A rule is put on the board by dragging it there from the menu: a picture of the block follows
+    // the pointer and the block lands where it is dropped. A tap (no movement) adds it as well.
+    makeMenuDraggable(item, name, add) {
+      item.addEventListener('touchstart', e => e.preventDefault(), { passive: false })
+      item.addEventListener('pointerdown', ev => {
+        if (ev.button > 0) return
+        try { item.setPointerCapture(ev.pointerId) } catch {}
+        const start = { x: ev.clientX, y: ev.clientY }
+        let ghost = null
+        const overBoard = e => {
+          const r = this.canvas.getBoundingClientRect()
+          return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom
+        }
+        const move = e => {
+          if (!ghost && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 6) return
+          if (!ghost) {
+            ghost = rulePicture(name)
+            ghost.classList.add('ipm-ghost')
+            document.body.append(ghost)
+          }
+          const w = ghost.getBoundingClientRect()
+          ghost.style.left = `${e.clientX - w.width / 2}px`
+          ghost.style.top = `${e.clientY - w.height / 2}px`
+          this.canvas.classList.toggle('ipm-drop-target', overBoard(e))
+        }
+        const up = e => {
+          item.removeEventListener('pointermove', move)
+          item.removeEventListener('pointerup', up)
+          item.removeEventListener('pointercancel', up)
+          this.canvas.classList.remove('ipm-drop-target')
+          if (!ghost) {
+            if (e.type === 'pointerup') { item.dataset.added = Date.now(); add() }
+            return
+          }
+          ghost.remove()
+          item.dataset.added = Date.now()  // the browser may follow the drag with a click
+          if (e.type !== 'pointerup' || !overBoard(e) || !this.svgRoot) return
+          // Where the pointer is, in the picture's coordinates; the block is centred there.
+          const pt = this.svgRoot.createSVGPoint()
+          pt.x = e.clientX; pt.y = e.clientY
+          const at = pt.matrixTransform(this.svgRoot.getScreenCTM().inverse())
+          this.undoStack.push(this.proof.snapshot())
+          const nb = this.proof.addRule(name)
+          const size = blockSize(nb, this.analysis.s)
+          this.proof.moved = { ...(this.proof.moved ?? {}), [nb.id]: { x: at.x - size.w / 2, y: at.y - size.h / 2 } }
+          this.hideSheet()
+          this.render()
+        }
+        item.addEventListener('pointermove', move)
+        item.addEventListener('pointerup', up)
+        item.addEventListener('pointercancel', up)
+      })
+    }
+
+    // The trash can sits at the bottom right corner of the board, just above the rule menu; if the
+    // board reaches below the screen, at the bottom of its visible part.
+    placeTrash() {
+      const board = this.canvas.getBoundingClientRect(), size = 64, gap = 10
+      const menuTop = this.menu.getBoundingClientRect().top
+      const bottom = Math.min(board.bottom, menuTop, window.innerHeight)
+      this.trash.style.left = `${Math.min(board.right, window.innerWidth) - size - gap}px`
+      this.trash.style.top = `${Math.max(board.top, bottom - size - gap)}px`
+    }
+
     makeDraggable(g, b, pos, paths, tap) {
       // On touch screens the browser would take a drag on a block for scrolling (it ignores
       // `touch-action` on SVG elements). Prevent that; then there is no click either, so a touch
@@ -443,6 +523,7 @@
           moved = true
           g.classList.add('ipm-dragging')
           if (b.kind === 'rule') {
+            if (!this.trash.classList.contains('ipm-trash-shown')) this.placeTrash()
             this.trash.classList.add('ipm-trash-shown')
             const r = this.trash.getBoundingClientRect(), m = 12
             const over = e.clientX >= r.left - m && e.clientX <= r.right + m &&
@@ -486,6 +567,10 @@
       const { pos, view } = this.layout()
       const s = this.analysis.s
       const root = svg('svg', { viewBox: view.join(' '), class: 'ipm-svg' })
+      // Natural size: the picture's own units, at most the width of the page.
+      const fit = Math.min(1, (this.canvas.clientWidth || view[2]) / view[2], 640 / view[2])
+      root.style.width = `${Math.round(view[2] * fit * this.zoom)}px`
+      root.style.maxWidth = 'none'
       this.svgRoot = root
       const paths = []  // connection paths, to follow a dragged block
       // The box of each local hypothesis: around the blocks that use it, and the top of its block.
@@ -505,7 +590,27 @@
         const g = svg('g', { class: `ipm-conn ipm-${st}` + (up ? ' ipm-from-local' : '') })
         const path = svg('path', { d: curve(a, b, up) })
         paths.push({ path, c, a, b, up })
-        g.append(path)
+        const hit = svg('path', { d: path.getAttribute('d'), class: 'ipm-conn-hit' })
+        paths.push({ path: hit, c, a, b, up })
+        g.append(hit, path)
+        g.addEventListener('click', ev => {
+          if (ev.target.closest('.ipm-skull, .ipm-conn-remove')) return
+          this.selectedConn = this.selectedConn === c.id ? null : c.id
+          this.selected = null
+          this.hideSheet()
+          this.render()
+        })
+        if (this.selectedConn === c.id) {
+          g.classList.add('ipm-conn-selected')
+          const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+          const x = svg('g', { class: 'ipm-conn-remove' })
+          x.append(svg('circle', { cx: m.x + 18, cy: m.y, r: 13 }), svg('text', { x: m.x + 18, y: m.y + 5, 'text-anchor': 'middle' }, '✕'))
+          x.addEventListener('click', () => {
+            this.selectedConn = null
+            this.change(() => { p.connections = p.connections.filter(e => e !== c) })
+          })
+          g.append(x)
+        }
         if (st === 'fail') {
           const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
           const skull = svg('text', { x: m.x, y: m.y + 7, class: 'ipm-skull', 'text-anchor': 'middle' }, '☠')
@@ -555,7 +660,9 @@
         root.append(g)
       }
       root.addEventListener('click', ev => {
-        if (ev.target === root && this.selected) { this.selected = null; this.render() }
+        if (ev.target === root && (this.selected || this.selectedConn)) {
+          this.selected = null; this.selectedConn = null; this.render()
+        }
       })
       this.canvas.replaceChildren(root)
       const qed = this.analysis.qed
@@ -591,6 +698,7 @@
     }
 
     tapInput(b, i) {
+      this.selectedConn = null
       const sel = this.selected
       if (sel?.kind === 'out') return this.link(sel, { block: b.id, port: i })
       if (sel?.kind === 'in' && sel.block === b.id && sel.port === i) return this.closeSheet()
@@ -600,6 +708,7 @@
     }
 
     tapOutput(b, j) {
+      this.selectedConn = null
       const sel = this.selected
       if (sel?.kind === 'in') return this.link({ block: b.id, port: j }, sel)
       if (sel?.kind === 'out' && sel.block === b.id && sel.port === j) return this.closeSheet()
