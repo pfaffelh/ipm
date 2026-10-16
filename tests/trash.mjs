@@ -10,7 +10,7 @@ async function setup(ctxOptions) {
   const page = await ctx.newPage()
   page.on('pageerror', e => console.log('PAGEERROR', e.message))
   await page.goto(base); await page.evaluate(() => localStorage.clear()); await page.reload()
-  await page.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => x.classList.remove('ipm-locked')))
+  await page.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => { x.classList.remove('ipm-locked'); x.inert = false }))
   const t = page.locator('.ipm-task').nth(3)  // A, B ⊢ A ∧ B
   const click = async l => { await l.dispatchEvent('click'); await page.waitForTimeout(120) }
   await click(t.locator('.ipm-conclusion .ipm-port.ipm-in'))

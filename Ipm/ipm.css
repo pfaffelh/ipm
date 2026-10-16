@@ -10,9 +10,11 @@
 .ipm-task-label { font-size: 0.8em; color: #3b6db3; font-weight: bold; }
 .ipm-task.ipm-solved .ipm-task-label::after { content: " ✓"; color: #2e7d4f; }
 .ipm-task.ipm-locked { background: #f3f4f6; border-style: dashed; }
-.ipm-task.ipm-locked > :not(.ipm-task-label) { display: none; }
-.ipm-task.ipm-locked .ipm-task-label { color: #999; }
-.ipm-task.ipm-locked .ipm-task-label::after { content: " 🔒"; }
+/* Tasks not yet playable are shown greyed out, with their picture but without the controls. */
+.ipm-task.ipm-locked > :not(.ipm-task-label) { opacity: 0.45; filter: grayscale(1); pointer-events: none; user-select: none; }
+.ipm-task.ipm-locked :is(.ipm-menu, .ipm-tools, .ipm-lean, .ipm-sheet) { display: none; }
+.ipm-task.ipm-locked .ipm-task-label { color: #888; }
+.ipm-task.ipm-locked .ipm-task-label::after { content: " 🔒 solve the previous task first"; font-weight: normal; }
 
 .ipm-canvas { overflow-x: auto; }
 .ipm-svg { width: 100%; max-width: 640px; height: auto; display: block; margin: 0 auto; touch-action: manipulation; }
@@ -202,3 +204,13 @@
 }
 .ipm-menu-item { display: flex; flex-direction: column; align-items: center; }
 .ipm-menu-caption { font-size: 0.75em; color: #777; line-height: 1; padding-bottom: 0.25em; font-family: var(--verso-code-font-family, monospace); }
+/* The proof in Lean, below the board */
+.ipm-lean { margin-top: 0.6em; border: 1px solid #d5dbe5; border-radius: 8px; background: #fafbfd; padding: 0.3em 0.7em; }
+.ipm-lean summary { cursor: pointer; color: #555; font-size: 0.9em; }
+.ipm-lean-code { margin: 0.4em 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.9em; background: none; }
+.ipm-solved .ipm-lean { border-color: #8cc4a2; }
+.ipm-lean-link { display: inline-block; font-size: 0.85em; margin-bottom: 0.3em; }
+.ipm-lean-link[hidden] { display: none; }
+
+/* (after the board sizes above) a locked task's board is only as large as its picture */
+.ipm-task.ipm-locked .ipm-canvas { min-height: 0; }

@@ -217,6 +217,71 @@
     }
   }
 
+  // ---------------------------------------------------------------- the proof in Lean
+
+  // The proof graph read as a Lean proof term, one `example` per goal. Assumptions are named
+  // h₁, h₂, …, local hypotheses x, y, z, …; an input that is not (correctly) connected yet is `sorry`.
+  // A part of the graph that is used twice appears twice in the term.
+  const sub = n => String(n).replace(/\d/g, d => '₀₁₂₃₄₅₆₇₈₉'[d])
+  const localName = k => (k < 3 ? 'xyz'[k] : 'x' + sub(k - 2))
+
+  function leanProof(proof, analysis) {
+    const p = proof, s = analysis.s
+    const assumptions = p.blocks.filter(b => b.kind === 'assumption')
+    const names = {}, locals = {}
+    assumptions.forEach((b, k) => { names[b.id] = 'h' + sub(k + 1) })
+    // Terms: {k: 'var', n} | {k: 'sorry'} | {k: 'app', f, a} | {k: 'fun', x, body} | {k: 'pair', a, b} | {k: 'proj', a, i}
+    const input = (b, i, depth) => {
+      const c = p.connections.find(c => c.to.block === b.id && c.to.port === i && analysis.status[c.id] !== 'fail')
+      return c && depth < 60 ? output(p.block(c.from.block), c.from.port, depth + 1) : { k: 'sorry' }
+    }
+    const output = (b, j, depth) => {
+      if (b.kind === 'assumption') return { k: 'var', n: names[b.id] }
+      const arg = i => input(b, i, depth)
+      switch (b.rule) {
+        case 'conjI': return { k: 'pair', a: arg(0), b: arg(1) }
+        case 'conjE': return { k: 'proj', a: arg(0), i: j + 1 }
+        case 'impE': return { k: 'app', f: arg(0), a: arg(1) }
+        case 'impI':
+          if (!(b.id in locals)) locals[b.id] = localName(Object.keys(locals).length)
+          return j === 1 ? { k: 'var', n: locals[b.id] } : { k: 'fun', x: locals[b.id], body: arg(0) }
+      }
+    }
+    // Printing, with as few parentheses as Lean needs.
+    const atomic = t => ['var', 'sorry', 'pair', 'proj'].includes(t.k)
+    // In a complete proof, unused names are written `_`, as Lean asks for.
+    const used = new Set()
+    const use = t => { if (t.k === 'var') used.add(t.n); for (const k of ['f', 'a', 'b', 'body']) if (t[k]) use(t[k]) }
+    const named = n => !analysis.qed || used.has(n)
+    const pr = t => {
+      switch (t.k) {
+        case 'var': return t.n
+        case 'sorry': return 'sorry'
+        case 'pair': return `⟨${pr(t.a)}, ${pr(t.b)}⟩`
+        case 'proj': return `${atomic(t.a) ? pr(t.a) : `(${pr(t.a)})`}.${t.i}`
+        case 'app': return `${t.f.k === 'fun' ? `(${pr(t.f)})` : pr(t.f)} ${atomic(t.a) ? pr(t.a) : `(${pr(t.a)})`}`
+        case 'fun': {  // fun x => fun y => … is written fun x y => …
+          const xs = []
+          for (; t.k === 'fun'; t = t.body) xs.push(named(t.x) ? t.x : '_')
+          return `fun ${xs.join(' ')} => ${pr(t)}`
+        }
+      }
+    }
+    const atoms = new Set()
+    const collect = f => { if (f.t === 'atom') atoms.add(f.n); if (f.a) collect(f.a); if (f.b) collect(f.b) }
+    for (const b of p.blocks) if (b.kind !== 'rule') [...b.inputs, ...b.outputs].forEach(collect)
+    const goals = p.blocks.filter(b => b.kind === 'conclusion').map(g => ({ g, term: input(g, 0, 0) }))
+    return goals.map(({ g, term }) => {
+      used.clear()
+      use(term)
+      const binders = [atoms.size ? `(${[...atoms].sort().join(' ')} : Prop)` : '',
+        ...assumptions.map(b => `(${named(names[b.id]) ? names[b.id] : '_'} : ${show(b.outputs[0], s)})`)]
+        .filter(x => x).join(' ')
+      const t = pr(term)
+      return `example ${binders} : ${show(g.inputs[0], s)} :=\n  ${t}`
+    }).join('\n\n')
+  }
+
   // ---------------------------------------------------------------- rendering
 
   const SVG = 'http://www.w3.org/2000/svg'
@@ -370,7 +435,15 @@
         b.addEventListener('click', () => { if (Date.now() - Number(b.dataset.added ?? 0) > 700) o.act() })
         this.menu.append(b)
       })
-      root.querySelector('.ipm-board').append(this.canvas, this.menu, tools, this.sheet, this.trash)
+      // The same proof in Lean, updated with every change.
+      this.lean = el('details', 'ipm-lean')
+      this.lean.open = true
+      this.leanCode = el('pre', 'ipm-lean-code')
+      this.leanLink = el('a', 'ipm-lean-link', 'Try it in Lean ↗')
+      this.leanLink.target = '_blank'
+      this.leanLink.rel = 'noopener'
+      this.lean.append(el('summary', '', 'The proof in Lean'), this.leanCode, this.leanLink)
+      root.querySelector('.ipm-board').append(this.canvas, this.menu, tools, this.sheet, this.lean, this.trash)
       this.render()
     }
 
@@ -409,7 +482,7 @@
           layer[b.id] = 1 + Math.max(0, ...preds)
         }
       const last = 1 + Math.max(0, ...order.map(b => layer[b.id]))
-      for (const b of p.blocks) if (b.kind === 'conclusion') layer[b.id] = Math.max(last, 2)
+      for (const b of p.blocks) if (b.kind === 'conclusion') layer[b.id] = Math.max(last, this.root.inert ? 1 : 2)  // a locked task: compact
       const s = this.analysis.s
       const pos = {}
       const rows = {}
@@ -689,6 +762,10 @@
       this.canvas.replaceChildren(root)
       const qed = this.analysis.qed
       this.root.classList.toggle('ipm-solved', qed)
+      const code = leanProof(p, this.analysis)
+      this.leanCode.textContent = code
+      this.leanLink.href = 'https://live.lean-lang.org/#code=' + encodeURIComponent(code)
+      this.leanLink.hidden = !qed
       const n = this.analysis.openInputs.length
       this.status.textContent = qed ? 'Proof complete ✓' :
         this.selected?.kind === 'in' ? 'Now tap a glowing green dot, or add a rule from the menu' :
@@ -865,7 +942,14 @@
     tasks.forEach((t, i) => t.root.prepend(el('div', 'ipm-task-label', `Task ${i + 1} of ${tasks.length}`)))
     const update = scroll => {
       const open = tasks.findIndex(t => !t.root.classList.contains('ipm-solved'))
-      tasks.forEach((t, i) => t.root.classList.toggle('ipm-locked', open >= 0 && i > open))
+      tasks.forEach((t, i) => {
+        const locked = open >= 0 && i > open
+        if (t.root.classList.contains('ipm-locked') === locked && t.drawn) return
+        t.root.classList.toggle('ipm-locked', locked)
+        t.root.inert = locked
+        t.drawn = true
+        t.render()  // the board's size depends on it
+      })
       if (scroll && open >= 0) tasks[open].root.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
     tasks.forEach(t => {

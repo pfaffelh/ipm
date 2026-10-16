@@ -24,6 +24,9 @@ conjunction (12 tasks) and implication (14 tasks).
 * Rules are dragged from the menu onto the board (or tapped). Blocks can be dragged with mouse or
   finger; tap a line to select it and ✕ to remove it. Undo, Start over, Tidy up (automatic layout)
   and zoom (−, +, Fit; a larger picture scrolls inside the board).
+* Below the board, the same proof is shown in Lean, updated with every change (`sorry` marks what
+  is still missing); a complete proof can be opened in the Lean web editor.
+* Tasks come one after another; the ones not yet playable are shown greyed out.
 * Progress is kept in the browser.
 
 ## How it works
@@ -55,7 +58,9 @@ cd _out/html-multi && python3 -m http.server 8002
 ```
 
 Tests: `cd tests && npm install && BASE=http://localhost:8002/ node session1.mjs` (and
-`session2.mjs`); they need a Chrome or Chromium (`CHROME=…`).
+`session2.mjs`, `locked.mjs`, …); they need a Chrome or Chromium (`CHROME=…`).
+`LEANOUT=proofs.lean node lean-proofs.mjs` writes the Lean proofs of some solved tasks;
+`lake env lean proofs.lean` checks them.
 
 Pushing to `main` builds the site and publishes it on GitHub Pages
 (`.github/workflows/deploy.yml`).

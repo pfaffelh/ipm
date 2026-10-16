@@ -32,4 +32,8 @@ await tap(t.locator('.ipm-menu-item[title^="∧I"]')); await tap(t.locator('.ipm
 await tap(t.locator('.ipm-canvas .ipm-rule .ipm-port.ipm-in.ipm-open').nth(0)); await tap(t.locator('.ipm-assumption rect').nth(0))
 await tap(t.locator('.ipm-canvas .ipm-rule .ipm-port.ipm-in.ipm-open').nth(0)); await tap(t.locator('.ipm-assumption rect').nth(1)); console.log('T4:', await state(t))
 await t.screenshot({ path: 'ipm2-t4.png' })
+// The Lean proofs of the solved tasks; with LEANOUT=file they are written there, to check with Lean.
+const lean = await page.$$eval('.ipm-task.ipm-solved .ipm-lean-code', xs => xs.map(x => x.textContent))
+console.log(lean.join('\n\n'))
+if (process.env.LEANOUT) (await import('node:fs')).writeFileSync(process.env.LEANOUT, lean.join('\n\n') + '\n')
 await browser.close()

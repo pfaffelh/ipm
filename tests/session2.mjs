@@ -7,7 +7,7 @@ const page = await ctx.newPage()
 page.on('pageerror', e => console.log('PAGEERROR', e.message))
 await page.goto((process.env.BASE ?? 'http://127.0.0.1:8002/') + 'Session-2___-Implication/')
 await page.evaluate(() => localStorage.clear()); await page.reload()
-await page.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => x.classList.remove('ipm-locked')))
+await page.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => { x.classList.remove('ipm-locked'); x.inert = false }))
 const tap = async l => { await l.dispatchEvent('click'); await page.waitForTimeout(120) }
 const state = async t => `${await t.locator('.ipm-status').innerText()} | boxes: ${await t.locator('.ipm-box').count()} | ⚠/☠: ${await t.locator('.ipm-skull').count()}`
 const addRule = async (t, label) => {
@@ -42,11 +42,15 @@ await tap(inp(rule(t, 1), 1)); await addRule(t, '→E'); await tap(out(rule(t, 2
 await tap(inp(rule(t, 2), 0)); await tap(assumption(t, 0))                       // A → B
 await tap(inp(rule(t, 2), 1)); await tap(local(rule(t, 0)))                      // the local hypothesis A
 console.log('T5:', await state(t))
-await page.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => x.classList.remove('ipm-locked'))); await t.scrollIntoViewIfNeeded(); await t.screenshot({ path: process.env.SHOT ?? 'session2-t5.png' })
+await page.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => { x.classList.remove('ipm-locked'); x.inert = false })); await t.scrollIntoViewIfNeeded(); await t.screenshot({ path: process.env.SHOT ?? 'session2-t5.png' })
 
 // Task 7: ⊢ A → A
 t = page.locator('.ipm-task').nth(6)
 await tap(goal(t)); await addRule(t, '→I'); await tap(out(rule(t, 0)))
 await tap(inp(rule(t, 0))); await tap(local(rule(t, 0)))
 console.log('T7:', await state(t))
+// The Lean proofs of the solved tasks; with LEANOUT=file they are written there, to check with Lean.
+const lean = await page.$$eval('.ipm-task.ipm-solved .ipm-lean-code', xs => xs.map(x => x.textContent))
+console.log(lean.join('\n\n'))
+if (process.env.LEANOUT) (await import('node:fs')).writeFileSync(process.env.LEANOUT, lean.join('\n\n') + '\n')
 await browser.close()
