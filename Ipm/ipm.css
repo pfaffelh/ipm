@@ -12,7 +12,7 @@
 .ipm-task.ipm-locked { background: #f3f4f6; border-style: dashed; }
 /* Tasks not yet playable are shown greyed out, with their picture but without the controls. */
 .ipm-task.ipm-locked > :not(.ipm-task-label) { opacity: 0.45; filter: grayscale(1); pointer-events: none; user-select: none; }
-.ipm-task.ipm-locked :is(.ipm-menu, .ipm-tools, .ipm-lean, .ipm-sheet) { display: none; }
+.ipm-task.ipm-locked :is(.ipm-menu, .ipm-tools, .ipm-lean, .ipm-sheet, .ipm-palette) { display: none; }
 .ipm-task.ipm-locked .ipm-task-label { color: #888; }
 .ipm-task.ipm-locked .ipm-task-label::after { content: " 🔒 solve the previous level first"; font-weight: normal; }
 
@@ -302,7 +302,8 @@
 .ipm-stage > .ipm-task { display: none; margin: 0; }
 .ipm-stage > .ipm-task.ipm-current { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .ipm-stage .ipm-current .ipm-board { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-.ipm-stage .ipm-current .ipm-canvas { flex: 1; min-height: 0; height: auto; }
+.ipm-stage .ipm-current .ipm-play { display: flex; gap: 0; flex: 1; min-height: 0; }
+.ipm-stage .ipm-current .ipm-canvas { flex: 1; min-height: 0; min-width: 0; height: auto; }
 .ipm-stage .ipm-current .ipm-lean[open] .ipm-lean-code { max-height: 22vh; overflow: auto; }
 .ipm-stage .ipm-task-label { display: none; }
 .ipm-stage .ipm-task.ipm-locked .ipm-task-label { display: block; }
@@ -315,8 +316,6 @@
 .ipm-dot-solved { background: #3c9a5f; border-color: #3c9a5f; }
 .ipm-dot-locked { border-style: dashed; opacity: 0.6; }
 .ipm-dot-current { outline: 2px solid #3b6db3; outline-offset: 1px; }
-.ipm-next { display: none; }
-.ipm-solved .ipm-next { display: inline-block; background: #3b6db3; color: white; border-color: #3b6db3; font-weight: bold; }
 @media (max-width: 600px) { .ipm-dot { width: 12px; height: 12px; } }
 
 /* Below the board: the status, then the tool bar (＋ first). */
@@ -329,7 +328,7 @@
 .ipm-stage .ipm-lean summary { display: none; }
 .ipm-stage .ipm-lean { margin-top: 0.3em; }
 .ipm-stage .ipm-lean-code { margin: 0.2em 0; }
-.ipm-next { margin-left: auto; }
+
 /* The rules of the session, folded away above the tasks. */
 .ipm-intro { margin-left: auto; text-align: right; }
 .ipm-intro[open] { flex-basis: 100%; text-align: left; }
@@ -384,3 +383,59 @@ html.ipm-playing main, html.ipm-playing .content-wrapper, html.ipm-playing secti
 .ipm-tip-blocks { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6em; margin: 0.4em 0 0.6em; }
 .ipm-tip-block { display: flex; flex-direction: column; align-items: center; border: 1px solid #c9d3e0; border-radius: 8px; padding: 0.3em 0.5em; background: #fafbfd; }
 .ipm-tip-block .ipm-rule-picture { height: 72px; width: auto; max-width: 100%; }
+
+/* No text above the board: one plays right away; the text is under "About this level". */
+.ipm-stage .ipm-task > .ipm-lang { display: none; }
+/* On a large screen the blocks stand in a column left of the board, instead of behind ＋. */
+.ipm-palette { display: none; }
+@media (min-width: 1000px) {
+  .ipm-stage .ipm-palette {
+    display: flex; flex-direction: column; gap: 0.4em; width: var(--ipm-palette-width, 14rem); flex: none; overflow-y: auto;
+    padding: 0.4em; border: 1px solid #c9d3e0; border-radius: 8px; background: #f6f8fb; box-sizing: border-box;
+  }
+  .ipm-stage .ipm-add { display: none; }
+}
+.ipm-palette-item {
+  padding: 0.1em 0.15em 0.25em; border: 1px solid #b8c4d4; border-radius: 6px; background: white; cursor: grab; touch-action: none;
+  display: flex; flex-direction: column; align-items: center;
+}
+.ipm-palette-item:hover { border-color: #3b6db3; background: #e8f0fb; }
+.ipm-palette-item .ipm-rule-picture { width: 100%; height: auto; max-height: 140px; }
+.ipm-palette-lemmas { display: flex; flex-direction: column; gap: 0.4em; }
+.ipm-palette-lemmas .ipm-menu-caption { white-space: normal; }
+
+/* The tool bar: all buttons alike, in blue; on the left ＋ (small screens), Undo, Start over, Tidy up,
+   Lean; on the right About this level and Next. Lean and About open a panel above the bar. */
+.ipm-bar .ipm-button, .ipm-bar .ipm-add {
+  font: inherit; font-family: var(--verso-structure-font-family, sans-serif); font-size: 0.95em; font-weight: normal;
+  color: white; background: #3b6db3; border: 1px solid #3b6db3; border-radius: 8px; padding: 0.45em 0.9em;
+  min-height: 40px; margin: 0; box-shadow: none; cursor: pointer;
+}
+.ipm-bar .ipm-button:hover, .ipm-bar .ipm-add:hover { background: #2f5a96; }
+.ipm-bar .ipm-button[aria-pressed="true"] { background: #23467a; box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3); }
+.ipm-bar .ipm-button:disabled { background: #9db3d3; border-color: #9db3d3; cursor: default; }
+.ipm-bar .ipm-add-text { margin-left: 0.3em; }
+.ipm-bar .ipm-about-button { margin-left: auto; }
+.ipm-solved .ipm-bar .ipm-next:not(:disabled) { animation: ipm-pulse 1.2s ease-in-out infinite; font-weight: bold; }
+.ipm-about { border: 1px solid #c9d3e0; border-radius: 8px; background: #fafbfd; padding: 0.3em 0.8em; margin-top: 0.3em; }
+.ipm-about[hidden] { display: none; }
+.ipm-about .ipm-intro-body { max-height: 34vh; overflow: auto; }
+@media (max-width: 600px) {
+  .ipm-bar .ipm-button, .ipm-bar .ipm-add { padding: 0.4em 0.6em; font-size: 0.9em; }
+  .ipm-bar .ipm-undo { font-size: 0; } .ipm-bar .ipm-undo::before { content: "↶"; font-size: 1.1rem; }
+}
+.ipm-stage .ipm-lean:not([open]) { display: none; }
+.ipm-bar .ipm-undo { min-width: 44px; }
+
+/* The line between the blocks and the board, to drag (large screens only) */
+.ipm-splitter { display: none; }
+@media (min-width: 1000px) {
+  .ipm-stage .ipm-splitter { display: block; flex: none; width: 12px; cursor: col-resize; touch-action: none; position: relative; }
+  .ipm-stage .ipm-splitter::after { content: ""; position: absolute; left: 5px; top: 30%; bottom: 30%; width: 2px; border-radius: 1px; background: #b8c4d4; }
+  .ipm-stage .ipm-splitter:hover::after { background: #3b6db3; }
+}
+.ipm-palette-item .ipm-menu-caption { font-size: 1.05em; color: #333; }
+.ipm-palette { gap: 0.3em; padding: 0.3em; }
+
+/* The start page lists the worlds only in the table of contents (☰), not again in the text. */
+main section:has(> ol.section-toc) { display: none; }

@@ -37,7 +37,7 @@
     'Arrange the blocks automatically again': 'Die Blöcke wieder automatisch anordnen',
     
     'The proof in Lean': 'Der Beweis in Lean', 'Try it in Lean ↗': 'In Lean ausprobieren ↗',
-    'Proof complete ✓': 'Beweis fertig ✓',
+    'goals accomplished 🎉': 'goals accomplished 🎉',
     'Now tap a glowing green dot, or add a block with ＋': 'Jetzt einen grün leuchtenden Punkt antippen oder mit ＋ einen Baustein hinzufügen',
     'Now tap a glowing green circle, or add a block with ＋': 'Jetzt einen grün leuchtenden Kreis antippen oder mit ＋ einen Baustein hinzufügen',
     '1 red circle left — tap one': 'Noch 1 roter Kreis — tippe ihn an',
@@ -49,7 +49,7 @@
     '{x} does not fit {y}': '{x} passt nicht zu {y}',
     'A local hypothesis may only be used inside its box.': 'Eine lokale Annahme darf nur innerhalb ihres Kastens verwendet werden.',
     'Cancel': 'Abbrechen', 'more ▸': 'mehr ▸', 'less ▾': 'weniger ▾', '1 rule ▸': '1 Regel ▸', '{n} rules ▸': '{n} Regeln ▸',
-    '{name} block': '{name}-Block', 'Next ›': 'Weiter ›', '▶ Start': '▶ Start', '▶ Continue': '▶ Weiterspielen', 'or start from the beginning': 'oder von vorn beginnen', 'About this level': 'Über dieses Level', 'This world': 'Diese Welt', 'Tip': 'Tipp', 'Got it': 'Verstanden', 'Settings': 'Einstellungen', 'Off': 'Aus', 'All': 'Alle',
+    '{name} block': '{name}-Block', 'Next ›': 'Weiter ›', '▶ Start': '▶ Start', '▶ Continue': '▶ Weiterspielen', 'or start from the beginning': 'oder von vorn beginnen', 'About this level': 'Über dieses Level', 'This world': 'Diese Welt', 'Tip': 'Tipp', 'Got it': 'Verstanden', 'Drag to make the blocks or the board wider': 'Ziehen, um die Bausteine oder das Spielfeld breiter zu machen', 'Settings': 'Einstellungen', 'Off': 'Aus', 'All': 'Alle',
     'Tactics: buttons with the Lean command that fits a tapped circle or dot': 'Taktiken: Knöpfe mit dem passenden Lean-Befehl zu einem angetippten Kreis oder Punkt',
     'Earned by solving levels': 'Durch Lösen von Levels freigespielt', 'Order': 'Reihenfolge', 'Levels in order': 'Levels der Reihe nach',
     'A level can be played once the one before it is solved.': 'Ein Level ist spielbar, sobald das vorherige gelöst ist.',
@@ -1032,14 +1032,14 @@
     return g
   }
 
-  // A rule as a small picture: exactly the block that gets added to the board.
-  function rulePicture(name) {
-    const r = RULES[name]
+  // A rule as a small picture: exactly the block that gets added to the board; `pad` is the room
+  // around it (for the ports, which stick out).
+  function rulePicture(name, pad = 18) {
     const b = { kind: 'rule', rule: name, picture: true, ...ruleFormulas(name, 'rule') }
     const size = blockSize(b, {})
-    const q = { x: 18, y: 18, ...size }
-    const pic = svg('svg', { viewBox: `0 0 ${size.w + 36} ${size.h + 36}`, class: 'ipm-rule-picture',
-      width: size.w + 36, height: size.h + 36 })
+    const q = { x: pad, y: pad, ...size }
+    const pic = svg('svg', { viewBox: `0 0 ${size.w + 2 * pad} ${size.h + 2 * pad}`, class: 'ipm-rule-picture',
+      width: size.w + 2 * pad, height: size.h + 2 * pad })
     pic.append(drawBlock(b, q, {}, '', kind => (kind === 'in' ? 'ipm-open' : '')))
     return pic
   }
@@ -1110,6 +1110,14 @@
         const o = this.ruleOptions()[k]
         ruleList.append(this.menuItem(name, o.picture, RULES[name].label, `${o.label} (${o.detail})`, o.act))
       })
+      // On a large screen, the same blocks stand in a column left of the board (instead of ＋).
+      this.palette = el('div', 'ipm-palette')
+      this.rules.forEach((name, k) => {
+        const o = this.ruleOptions()[k]
+        this.palette.append(this.menuItem(name, rulePicture(name, 8), RULES[name].label, `${o.label} (${o.detail})`, o.act, 'ipm-palette-item'))
+      })
+      this.paletteLemmas = el('div', 'ipm-palette-lemmas')
+      this.palette.append(this.paletteLemmas)
       this.lemmaBox = el('div', 'ipm-pop-section')
       this.lemmaList = el('div', 'ipm-pop-list')
       this.lemmaBox.append(el('div', 'ipm-pop-subtitle', tr('Lemmas from solved levels')), this.lemmaList)
@@ -1122,7 +1130,7 @@
       document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && !this.popover.hidden) this.closePopover() })
       // The same proof in Lean, updated with every change.
       this.lean = el('details', 'ipm-lean')
-      this.lean.open = true
+      this.lean.open = false  // folded at first: the Lean button opens it
       this.leanCode = el('pre', 'ipm-lean-code')
       this.leanLink = el('a', 'ipm-lean-link', tr('Try it in Lean ↗'))
       this.leanLink.target = '_blank'
@@ -1138,13 +1146,46 @@
       tools.append(this.menu, undo, reset, tidy, leanButton)
       this.refreshLemmas()
       window.addEventListener('ipm-lemmas', () => this.refreshLemmas())
-      root.querySelector('.ipm-board').append(this.canvas, this.info, this.lean, this.sheet, tools, this.trash)
+      this.play = el('div', 'ipm-play')
+      this.play.append(this.palette, this.splitter(), this.canvas)
+      root.querySelector('.ipm-board').append(this.play, this.info, this.lean, this.sheet, tools, this.trash)
       this.render()
     }
 
+    // Between the blocks and the board (large screens): a line to drag, which makes one wider and the
+    // other narrower. The width holds for all levels and is kept in the browser.
+    splitter() {
+      const line = el('div', 'ipm-splitter')
+      line.title = tr('Drag to make the blocks or the board wider')
+      line.addEventListener('pointerdown', ev => {
+        ev.preventDefault()
+        try { line.setPointerCapture(ev.pointerId) } catch {}
+        const start = ev.clientX, w0 = this.palette.getBoundingClientRect().width
+        const most = this.play.getBoundingClientRect().width * 0.5
+        let frame = 0
+        const move = e => {
+          const w = Math.max(110, Math.min(most, w0 + e.clientX - start))
+          document.documentElement.style.setProperty('--ipm-palette-width', `${w}px`)
+          cancelAnimationFrame(frame)
+          frame = requestAnimationFrame(() => this.render())
+        }
+        const up = () => {
+          line.removeEventListener('pointermove', move)
+          line.removeEventListener('pointerup', up)
+          line.removeEventListener('pointercancel', up)
+          try { localStorage.setItem('ipm-verso:palette-width', getComputedStyle(document.documentElement).getPropertyValue('--ipm-palette-width')) } catch {}
+          this.render()
+        }
+        line.addEventListener('pointermove', move)
+        line.addEventListener('pointerup', up)
+        line.addEventListener('pointercancel', up)
+      })
+      return line
+    }
+
     // An entry of the popover: tapping it adds the block, dragging puts it where it is dropped.
-    menuItem(name, picture, caption, title, act) {
-      const b = el('button', 'ipm-menu-item')
+    menuItem(name, picture, caption, title, act, cls = 'ipm-menu-item') {
+      const b = el('button', cls)
       b.type = 'button'
       b.dataset.rule = name
       b.title = title
@@ -1529,7 +1570,7 @@
       this.leanLink.href = 'https://live.lean-lang.org/#code=' + encodeURIComponent(code)
       this.leanLink.hidden = !qed
       const n = this.analysis.openInputs.length
-      this.status.textContent = tr(qed ? 'Proof complete ✓' :
+      this.status.textContent = tr(qed ? 'goals accomplished 🎉' :
         this.selected?.kind === 'in' ? 'Now tap a glowing green dot, or add a block with ＋' :
         this.selected?.kind === 'out' ? 'Now tap a glowing green circle, or add a block with ＋' :
         n === 1 ? '1 red circle left — tap one' : '{n} red circles left — tap one', { n })
@@ -1587,13 +1628,15 @@
         .sort((a, b) => a.session - b.session || a.task - b.task)
         .filter(L => !seen.has(L.statement) && seen.add(L.statement))
       this.lemmaBox.hidden = lemmas.length === 0
-      this.lemmaList.replaceChildren(...lemmas.map(L => {
+      const items = cls => lemmas.map(L => {
         const name = 'lemma:' + L.key
         const act = () => { this.undoStack.push(this.proof.snapshot()); this.proof.addRule(name); this.hideSheet(); this.render() }
-        const item = this.menuItem(name, rulePicture(name), `${L.label}: ${L.statement}`, RULES[name].name, act)
+        const item = this.menuItem(name, rulePicture(name, cls === 'ipm-palette-item' ? 8 : 18), `${L.label}: ${L.statement}`, RULES[name].name, act, cls)
         item.classList.add('ipm-lemma-item')
         return item
-      }))
+      })
+      this.lemmaList.replaceChildren(...items('ipm-menu-item'))
+      this.paletteLemmas.replaceChildren(...(lemmas.length ? [el('div', 'ipm-pop-subtitle', tr('Lemmas from solved levels')), ...items('ipm-palette-item')] : []))
     }
 
     // ------------------------------------------------------------ tapping
@@ -1912,6 +1955,7 @@
 
   function init() {
     moveProgress()
+    try { const w = localStorage.getItem('ipm-verso:palette-width'); if (w) document.documentElement.style.setProperty('--ipm-palette-width', w) } catch {}
     translatePage()
     languageSwitch()
     registerLemmas()
@@ -1942,6 +1986,8 @@
       const c = n.cloneNode(true); c.classList.remove('ipm-tip'); c.classList.add('ipm-lang'); return c
     })
     const clone = () => [...rules.childNodes].map(n => n.cloneNode(true))
+    // The text of a level (shown no longer above the board, but here).
+    const levelText = k => [...tasks[k].root.querySelectorAll(':scope > .ipm-lang')].map(n => n.cloneNode(true))
     // The rule blocks a tip is about, drawn as they come from ＋ (with their names).
     const tipBlocks = k => {
       const names = [...new Set([...tasks[k].root.querySelectorAll(':scope > .ipm-tip')]
@@ -1955,19 +2001,26 @@
       }
       return [row]
     }
-    const about = el('details', 'ipm-intro'), aboutBody = el('div', 'ipm-intro-body')
-    about.append(el('summary', '', tr('About this level')), aboutBody)
-    foot.append(about)
-    about.addEventListener('toggle', () => tasks[current].render())
+    // "About this level": a panel above the tool bar of the current level, opened by its button.
+    const about = el('div', 'ipm-about'), aboutBody = el('div', 'ipm-intro-body')
+    about.append(aboutBody)
+    about.hidden = true
+    const aboutButtons = []
+    const toggleAbout = open => {
+      about.hidden = !open
+      aboutButtons.forEach(b => b.setAttribute('aria-pressed', String(open)))
+      tasks[current].render()
+    }
     const fillAbout = () => {
-      const own = [...tipBlocks(current), ...tipNodes(current)]
+      const own = [...levelText(current), ...tipBlocks(current), ...tipNodes(current)]
       aboutBody.replaceChildren(...own, ...(hasRules ? [el('div', 'ipm-rules-head', tr('This world')), ...clone()] : []))
     }
     // The tip of a level, once: in a box over the stage, closed with "Got it".
     const seenKey = k => `${tasks[k].key}:tip`
     const showTip = k => {
       if (tasks[k].root.inert) return
-      const nodes = [...tipBlocks(k), ...tipNodes(k), ...(k === 0 && hasRules ? clone() : [])]
+      const tip = [...tipBlocks(k), ...tipNodes(k), ...(k === 0 && hasRules ? clone() : [])]
+      const nodes = tip.length ? [...levelText(k), ...tip] : []
       let seen = false
       try { seen = localStorage.getItem(seenKey(k)) === '1' } catch {}
       if (!nodes.length || seen || document.querySelector('.ipm-tip-overlay')) return
@@ -1997,6 +2050,10 @@
       } catch {}
       tasks[current].render()  // its board now has its size
       fillAbout()
+      // the panel moves to the level shown, above its tool bar
+      const bar = tasks[current].root.querySelector('.ipm-tools')
+      bar?.before(about)
+      tasks[current].render()
       showTip(current)
     }
     const refreshDots = () => {
@@ -2017,13 +2074,19 @@
       if (ev.key === 'ArrowLeft') show(current - 1)
       if (ev.key === 'ArrowRight') show(current + 1)
     })
-    // "Next task ›" below a solved task.
+    // On the right of each tool bar: "About this level" and "Next ›" (which glows once the level is solved).
     tasks.forEach((t, k) => {
-      if (k === tasks.length - 1) return
+      const bar = t.root.querySelector('.ipm-tools')
+      const a = el('button', 'ipm-button ipm-about-button', tr('About this level'))
+      a.type = 'button'
+      a.setAttribute('aria-pressed', 'false')
+      a.addEventListener('click', () => toggleAbout(about.hidden))
+      aboutButtons.push(a)
       const b = el('button', 'ipm-button ipm-next', tr('Next ›'))
       b.type = 'button'
+      b.disabled = k === tasks.length - 1
       b.addEventListener('click', () => show(k + 1))
-      t.root.querySelector('.ipm-tools')?.append(b)
+      bar?.append(a, b)
     })
     const update = () => {
       const open = tasks.findIndex(t => !t.root.classList.contains('ipm-solved'))

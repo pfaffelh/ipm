@@ -8,7 +8,9 @@ export async function allTasks(page) {
       .ipm-stage > .ipm-task { display: block !important; margin: 1.2em 0 !important; }
       .ipm-stage .ipm-board { display: block !important; }
       .ipm-stage .ipm-canvas { height: 560px !important; flex: none !important; }
-      .ipm-tip-overlay { display: none !important; }`
+      .ipm-tip-overlay { display: none !important; }
+      .ipm-stage .ipm-play { display: block !important; } .ipm-stage .ipm-palette { display: none !important; }
+      .ipm-stage .ipm-add { display: inline-block !important; } .ipm-stage .ipm-task > .ipm-lang { display: block !important; }`
     document.head.append(style)
   }))
 }

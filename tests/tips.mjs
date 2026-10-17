@@ -20,7 +20,7 @@ console.log('level 2 (nothing new):', await box.count() ? await text(box) : '(no
 await page.locator('.ipm-dot').nth(3).click(); await page.waitForTimeout(200)
 console.log('level 4, first time:', await box.count() ? await text(box) : '(no tip)')
 await page.locator('.ipm-tip-ok').click(); await page.waitForTimeout(150)
-await page.locator('.ipm-intro summary').click(); await page.waitForTimeout(200)
+await page.locator('.ipm-current .ipm-about-button').click(); await page.waitForTimeout(200)
 console.log('level 4, About this level:', await text(page.locator('.ipm-intro-body')))
 if (process.env.SHOTDIR) await page.screenshot({ path: process.env.SHOTDIR + '/about-phone.png' })
 await browser.close()

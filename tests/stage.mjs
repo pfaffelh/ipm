@@ -22,7 +22,7 @@ for (const [opts, name] of [[{ viewport: { width: 390, height: 844 }, hasTouch: 
   const tapOn = async l => { const b = await l.boundingBox(); if (opts.hasTouch) await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2); else await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2); await page.waitForTimeout(150) }
   await tapOn(cur().locator('.ipm-conclusion rect')); await tapOn(cur().locator('.ipm-assumption rect'))
   await page.waitForTimeout(500)
-  console.log(`  task 1: ${await cur().locator('.ipm-status').innerText()} | scrolled: ${await page.evaluate(() => scrollY) - y0}px | "Next" shown: ${await cur().locator('.ipm-next').isVisible()} | next dot glows: ${await page.locator('.ipm-dot-next').count()} | dots solved: ${await page.locator('.ipm-dot-solved').count()}`)
+  console.log(`  task 1: ${await cur().locator('.ipm-status').innerText()} | scrolled: ${await page.evaluate(() => scrollY) - y0}px | "Next" glows: ${await page.locator('.ipm-solved .ipm-next:not(:disabled)').count()} | next dot glows: ${await page.locator('.ipm-dot-next').count()} | dots solved: ${await page.locator('.ipm-dot-solved').count()}`)
   await tapOn(cur().locator('.ipm-next'))
   console.log(`  after Next: ${await where()}`)
   await page.reload(); await page.waitForTimeout(300)
@@ -32,8 +32,9 @@ for (const [opts, name] of [[{ viewport: { width: 390, height: 844 }, hasTouch: 
   console.log(`  dot 1, then ←: ${await where()}`)
   await page.keyboard.press('ArrowRight'); await page.keyboard.press('ArrowRight'); await page.waitForTimeout(150)
   console.log(`  → twice: ${await where()} | locked: ${await cur().evaluate(t => t.classList.contains('ipm-locked'))}`)
-  const foot = await page.locator('.ipm-foot').boundingBox(), dots = await page.locator('.ipm-dots').boundingBox(), stageBox = await page.locator('.ipm-stage').boundingBox()
-  console.log(`  dots above on the right: ${dots.y < stageBox.y + 40 && dots.x + dots.width > stageBox.x + stageBox.width - 4} | "About this session" at the bottom of the screen: ${foot.y + foot.height <= (opts.viewport.height) + 1 && foot.y > opts.viewport.height * 0.6}`)
+  await page.keyboard.press('ArrowLeft'); await page.waitForTimeout(150)  // back to level 2, which is playable
+  const bar = await cur().locator('.ipm-bar').boundingBox(), dots = await page.locator('.ipm-dots').boundingBox(), stageBox = await page.locator('.ipm-stage').boundingBox()
+  console.log(`  dots above on the right: ${dots.y < stageBox.y + 40 && dots.x + dots.width > stageBox.x + stageBox.width - 4} | tool bar at the bottom of the screen: ${bar.y + bar.height <= (opts.viewport.height) + 1 && bar.y > opts.viewport.height * 0.6}`)
   if (process.env.SHOTDIR) await page.screenshot({ path: `${process.env.SHOTDIR}/stage-${name}.png` })
 }
 await browser.close()

@@ -44,8 +44,10 @@ induction over the natural numbers (6 tasks), which the Proof Machine does not h
   (nothing to scroll in it); layers wider than the board are broken into several lines.
 * Below the board, the same proof is shown in Lean, updated with every change (`sorry` marks what
   is still missing); a complete proof can be opened in the Lean web editor.
-* A world's page is a stage as high as the screen: one level (task) at a time, a tool bar below the board
-  (＋, Undo, Start over, Tidy up, Lean, Next ›), a dot per task above on the right (← → also go to
+* A world's page is a stage as high as the screen: one level (task) at a time, no text above the board
+  (it is under “About this level”), on a large screen the blocks in a column left of the board (the line
+  between them can be dragged), and a tool bar below (＋ on phones, Undo, Start over, Tidy up, Lean;
+  About this level, Next ›), a dot per task above on the right (← → also go to
   the previous and next level), and at its foot “About this level”: the level's tip and the rules of
   the world. The tip of a level (`:::tip (lang := "en")` in the task; for the first level of a world
   its rules) also appears once, when the level is played for the first time. Nothing scrolls while one plays; the
