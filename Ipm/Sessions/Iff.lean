@@ -51,6 +51,10 @@ Your first ↔I: an equivalence is two implications.
 Dein erstes ↔I: Eine Äquivalenz besteht aus zwei Implikationen.
 :::
 
+
+:::tip (rules := "iffI, iffE1, iffE2, trueI")
+:::
+
 ```lean -show
 example (P Q : Prop) (f : P → Q) (g : Q → P) : P ↔ Q := Iff.intro f g
 ```
@@ -182,7 +186,7 @@ example (P Q R : Prop) (h : P ↔ Q) : P ∧ R ↔ Q ∧ R :=
 :::
 
 
-:::tip (lang := "en")
+:::tip (lang := "en") (rules := "trueI")
 `⊤` (in Lean `True`) always holds: the block ⊤I proves it, without any input.
 :::
 

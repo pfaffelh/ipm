@@ -58,6 +58,10 @@ Your first ∀E: what holds for all `x` holds for `a`.
 Dein erstes ∀E: Was für alle `x` gilt, gilt auch für `a`.
 :::
 
+
+:::tip (rules := "allE, allI, exI, exE")
+:::
+
 ```lean -show
 example (α : Type) (P : α → Prop) (a : α) (h : ∀ x, P x) : P a := h a
 ```
@@ -87,7 +91,7 @@ Dein erstes ∃I: `a` ist ein Beispiel.
 :::
 
 
-:::tip (lang := "en")
+:::tip (lang := "en") (rules := "exI")
 ∃I: to prove `∃ x, P x`, give an example. From `P a` you get `∃ x, P x`.
 :::
 
@@ -138,7 +142,7 @@ Dein erstes ∃E. Seine Eigenvariable `c₁` ist das Objekt, das existiert; sein
 :::
 
 
-:::tip (lang := "en")
+:::tip (lang := "en") (rules := "exE")
 ∃E: from `∃ x, A` you may use the hypothesis `A` about an object `c₁` that exists, the block's
 *eigenvariable*. Nothing else is known about `c₁`: it must not appear in the goal.
 :::
@@ -163,7 +167,7 @@ Dein erstes ∀I: Beweise `A ∧ P c₁` für ein beliebiges `c₁`.
 :::
 
 
-:::tip (lang := "en")
+:::tip (lang := "en") (rules := "allI")
 ∀I: to prove `∀ x, A ∧ P x`, prove `A ∧ P c₁` for an arbitrary object `c₁`, the block's
 eigenvariable. Arbitrary means: `c₁` must not appear in an assumption that you use.
 :::

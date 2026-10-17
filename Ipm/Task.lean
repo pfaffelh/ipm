@@ -102,28 +102,31 @@ def de : DirectiveExpanderOf Unit
     ``(Verso.Doc.Block.other (Block.lang "de") #[$blocks,*])
 
 -- A tip for a task, in one language: `:::tip (lang := "en")`. It is shown when the task is played for
--- the first time, and always under "About this level".
-block_extension Block.tip (lang : String) where
-  data := Json.str lang
+-- the first time, and always under "About this level". With `(rules := "impI")` the tip also shows
+-- the pictures of these rule blocks.
+block_extension Block.tip (lang : String) (rules : String) where
+  data := Json.mkObj [("lang", Json.str lang), ("rules", Json.str rules)]
   traverse _ _ _ := pure none
   extraJs := {JS.mk ipmJs}
   extraCss := {CSS.mk ipmCss}
   toHtml := some fun _ goB _ data content => do
-    let lang := data.getStr?.toOption.getD "en"
-    pure <| .tag "div" #[("class", s!"ipm-tip ipm-lang-{lang}"), ("lang", lang)] (← content.mapM goB)
+    let lang := (data.getObjValAs? String "lang").toOption.getD "en"
+    let rules := (data.getObjValAs? String "rules").toOption.getD ""
+    pure <| .tag "div" #[("class", s!"ipm-tip ipm-lang-{lang}"), ("lang", lang), ("data-rules", rules)] (← content.mapM goB)
   toTeX := none
 
 structure TipConfig where
   lang : String
+  rules : String
 
 instance : FromArgs TipConfig DocElabM where
-  fromArgs := TipConfig.mk <$> .namedD `lang .string "en"
+  fromArgs := TipConfig.mk <$> .namedD `lang .string "en" <*> .namedD `rules .string ""
 
 /-- A tip for the task it is in; see `Block.tip`. -/
 @[directive]
 def tip : DirectiveExpanderOf TipConfig
   | cfg, contents => do
     let blocks ← contents.mapM elabBlock
-    ``(Verso.Doc.Block.other (Block.tip $(quote cfg.lang)) #[$blocks,*])
+    ``(Verso.Doc.Block.other (Block.tip $(quote cfg.lang) $(quote cfg.rules)) #[$blocks,*])
 
 end Ipm

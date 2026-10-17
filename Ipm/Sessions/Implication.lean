@@ -43,6 +43,10 @@ Your first →E: from `A → B` and `A` you get `B`.
 Dein erstes →E: Aus `A → B` und `A` bekommst du `B`.
 :::
 
+
+:::tip (rules := "impE, impI")
+:::
+
 ```lean -show
 example (A B : Prop) (a : A) (f : A → B) : B := f a
 ```
@@ -102,7 +106,7 @@ blauen Punkt mit dem lila Ring) und führe, was du daraus bekommst, in den Einga
 :::
 
 
-:::tip (lang := "en")
+:::tip (lang := "en") (rules := "impI")
 To prove `A → C`, use →I. On top it has a compartment `?1 ⇒ ?2`: the *local hypothesis* `?1`
 (the blue dot with the purple ring) is something you have, but only for proving the input `?2`
 next to it. Whatever uses it lies in a dashed box.

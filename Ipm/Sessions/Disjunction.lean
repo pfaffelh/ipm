@@ -46,6 +46,10 @@ Your first `∨`. One of the two assumptions is enough.
 Dein erstes `∨`. Eine der beiden Annahmen genügt.
 :::
 
+
+:::tip (rules := "disjI1, disjI2, disjE")
+:::
+
 ```lean -show
 example (A B : Prop) (a : A) (_ : B) : A ∨ B := Or.inl a
 ```
@@ -103,7 +107,7 @@ Dein erstes ∨E: Beweise `B ∨ A` im Fall `A` und im Fall `B`.
 :::
 
 
-:::tip (lang := "en")
+:::tip (lang := "en") (rules := "disjE")
 ∨E is a case distinction. From `A ∨ B`, prove the goal twice: in the compartment `?1 ⇒ ?3` with
 the hypothesis `A`, and in `?2 ⇒ ?3` with the hypothesis `B`.
 :::

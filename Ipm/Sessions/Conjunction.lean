@@ -37,7 +37,7 @@ Tippe den roten Kreis oben am Ziel `A` an; die Annahme `A` leuchtet grün. Tippe
 :::
 
 
-:::tip (lang := "en")
+:::tip (lang := "en") (rules := "conjI, conjE")
 How to play: a *red circle* is something still to prove, a *blue dot* something you have. Tap
 one of them, then one of the parts that glow green: a line connects them. You are done when no red
 circle is left.
@@ -94,7 +94,7 @@ neuer Block erscheint: Verbinde seinen Ausgang mit dem Ziel und fülle dann sein
 :::
 
 
-:::tip (lang := "en")
+:::tip (lang := "en") (rules := "conjI")
 Your first *rule block*: it comes from *＋* below the board. ∧I has two inputs (red circles `?1`
 and `?2`) and one output (blue dot `?1 ∧ ?2`). Connect its output to the goal: then `?1` and `?2`
 become `A` and `B`, and its two red circles are what is left to prove.
@@ -137,7 +137,7 @@ verbinde den richtigen seiner Ausgänge mit dem Ziel.
 :::
 
 
-:::tip (lang := "en")
+:::tip (lang := "en") (rules := "conjE")
 ∧E takes a conjunction apart: one input `?1 ∧ ?2`, two outputs `?1` and `?2`. Feed `A ∧ B` into
 it, and use the output you need.
 :::

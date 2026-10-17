@@ -45,6 +45,10 @@ Just the new rule.
 Nur die neue Regel.
 :::
 
+
+:::tip (rules := "TND")
+:::
+
 ```lean -show
 example (A : Prop) : A ∨ (A → False) := Classical.em A
 ```

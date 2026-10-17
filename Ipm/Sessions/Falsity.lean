@@ -42,6 +42,10 @@ From something impossible, anything follows.
 Aus etwas Unmöglichem folgt alles.
 :::
 
+
+:::tip (rules := "falseE")
+:::
+
 ```lean -show
 example (A : Prop) (h : False) : A := h.elim
 ```

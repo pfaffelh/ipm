@@ -43,6 +43,10 @@ The induction rule itself: connect the start and the step.
 Die Induktionsregel selbst: Verbinde den Anfang und den Schritt.
 :::
 
+
+:::tip (rules := "ind")
+:::
+
 ```lean -show
 example (P : Nat → Prop) (h0 : P 0) (hs : ∀ n, P n → P (n + 1)) : ∀ n, P n :=
   Nat.rec (motive := fun n => P n) h0 hs

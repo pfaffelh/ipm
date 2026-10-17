@@ -1942,19 +1942,32 @@
       const c = n.cloneNode(true); c.classList.remove('ipm-tip'); c.classList.add('ipm-lang'); return c
     })
     const clone = () => [...rules.childNodes].map(n => n.cloneNode(true))
+    // The rule blocks a tip is about, drawn as they come from ＋ (with their names).
+    const tipBlocks = k => {
+      const names = [...new Set([...tasks[k].root.querySelectorAll(':scope > .ipm-tip')]
+        .flatMap(n => (n.dataset.rules ?? '').split(',').map(x => x.trim()).filter(x => RULES[x])))]
+      if (!names.length) return []
+      const row = el('div', 'ipm-tip-blocks')
+      for (const name of names) {
+        const fig = el('div', 'ipm-tip-block')
+        fig.append(rulePicture(name), el('div', 'ipm-menu-caption', `${RULES[name].label} · ${tr(RULES[name].name)}`))
+        row.append(fig)
+      }
+      return [row]
+    }
     const about = el('details', 'ipm-intro'), aboutBody = el('div', 'ipm-intro-body')
     about.append(el('summary', '', tr('About this level')), aboutBody)
     foot.append(about)
     about.addEventListener('toggle', () => tasks[current].render())
     const fillAbout = () => {
-      const own = tipNodes(current)
+      const own = [...tipBlocks(current), ...tipNodes(current)]
       aboutBody.replaceChildren(...own, ...(hasRules ? [el('div', 'ipm-rules-head', tr('This world')), ...clone()] : []))
     }
     // The tip of a level, once: in a box over the stage, closed with "Got it".
     const seenKey = k => `${tasks[k].key}:tip`
     const showTip = k => {
       if (tasks[k].root.inert) return
-      const nodes = [...tipNodes(k), ...(k === 0 && hasRules ? clone() : [])]
+      const nodes = [...tipBlocks(k), ...tipNodes(k), ...(k === 0 && hasRules ? clone() : [])]
       let seen = false
       try { seen = localStorage.getItem(seenKey(k)) === '1' } catch {}
       if (!nodes.length || seen || document.querySelector('.ipm-tip-overlay')) return
@@ -1966,7 +1979,8 @@
       card.append(el('div', 'ipm-tip-head', '💡 ' + tr('Tip')), ...nodes, ok)
       overlay.append(card)
       document.body.append(overlay)
-      ok.focus()
+      ok.focus({ preventScroll: true })  // a long tip starts at its top, with the blocks
+      card.scrollTop = 0
     }
     let current = 0
     const key = `ipm-verso:${location.pathname}:current`
