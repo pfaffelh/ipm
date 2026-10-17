@@ -3,7 +3,8 @@
 export async function allTasks(page) {
   await page.addInitScript(() => document.addEventListener('DOMContentLoaded', () => {
     const style = document.createElement('style')
-    style.textContent = `.ipm-stage { height: auto !important; display: block !important; }
+    style.textContent = `html.ipm-playing, html.ipm-playing body { overflow: visible !important; }
+      .ipm-stage { height: auto !important; display: block !important; }
       .ipm-stage > .ipm-task { display: block !important; margin: 1.2em 0 !important; }
       .ipm-stage .ipm-board { display: block !important; }
       .ipm-stage .ipm-canvas { height: 560px !important; flex: none !important; }`

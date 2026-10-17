@@ -296,7 +296,7 @@
 
 /* The stage: one task at a time, as high as the screen; nothing scrolls while one plays. */
 .ipm-stage {
-  display: flex; flex-direction: column; height: calc(100svh - var(--verso-header-height, 3rem) - 12px);
+  display: flex; flex-direction: column; height: calc(100svh - var(--verso-header-height, 3rem) - 12px);  /* measured exactly by ipm.js */
   scroll-margin-top: calc(var(--verso-header-height, 3rem) + 6px); margin: 0.6em 0;
 }
 .ipm-stage > .ipm-task { display: none; margin: 0; }
@@ -359,5 +359,9 @@
 .ipm-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3em 0.8em; padding-top: 0.5em; border-top: 1px solid #e0e5ec; margin-top: 0.5em; }
 .ipm-intro[open] summary { text-align: right; }
 /* Above the task, on the right: the dots of the tasks. */
-.ipm-top { display: flex; justify-content: flex-end; padding-bottom: 0.4em; }
+.ipm-top { display: flex; justify-content: space-between; align-items: center; gap: 0.6em; padding-bottom: 0.4em; }
+.ipm-stage-title { font-family: var(--verso-structure-font-family, sans-serif); font-weight: bold; font-size: 1.15em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* A session page is only the header and the stage: it does not scroll. */
+html.ipm-playing, html.ipm-playing body { overflow: hidden; }
+html.ipm-playing main, html.ipm-playing .content-wrapper, html.ipm-playing section { padding-top: 0; padding-bottom: 0; margin-top: 0; }
 .ipm-foot:empty { display: none; }

@@ -1898,8 +1898,14 @@
     const stage = el('div', 'ipm-stage')
     tasks[0].root.before(stage)
     const top = el('div', 'ipm-top'), dots = el('div', 'ipm-dots'), foot = el('div', 'ipm-foot')
-    top.append(dots)
+    // The heading of the session moves into the top line of the stage (left; the dots right), so
+    // that the page is only the header and the stage, and does not scroll.
+    const h1 = stage.parentElement?.querySelector('h1')
+    const title = el('div', 'ipm-stage-title', (h1?.textContent ?? '').replace('🔗', '').trim())
+    if (h1) h1.hidden = true
+    top.append(title, dots)
     stage.append(top, ...tasks.map(t => t.root), foot)
+    document.documentElement.classList.add('ipm-playing')
     // The text before the tasks (the rules of the session) folds away above them; open at first.
     const intro = el('details', 'ipm-intro')
     const before = []
@@ -1983,11 +1989,17 @@
     show(start)
     window.addEventListener('hashchange', () => { if (fromHash() >= 0 && fromHash() !== current) show(fromHash()) })
     let resizing
-    window.addEventListener('resize', () => { clearTimeout(resizing); resizing = setTimeout(() => tasks[current].render(), 150) })
     // The Lean proof, opened or closed, changes the room for the board.
     tasks.forEach(t => t.lean.addEventListener('toggle', () => t.render()))
-    // The page shows the stage, which fills the screen.
-    stage.scrollIntoView({ block: 'start' })
+    // The stage fills the screen below the header: its height is measured, also when the window
+    // changes.
+    const fit = () => {
+      window.scrollTo(0, 0)
+      stage.style.height = `${Math.max(320, window.innerHeight - stage.getBoundingClientRect().top - 10)}px`
+      tasks[current].render()
+    }
+    fit()
+    window.addEventListener('resize', () => { clearTimeout(resizing); resizing = setTimeout(fit, 120) })
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init)
