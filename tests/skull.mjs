@@ -2,10 +2,12 @@
 // a tap elsewhere closes the box. With the finger and with the mouse.
 // Usage: BASE=http://localhost:8002/ node skull.mjs   (SHOT=file for a screenshot)
 import { chromium } from 'playwright-core'
+import { allTasks } from './all-tasks.mjs'
 const b = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })
 const base = process.env.BASE ?? 'http://127.0.0.1:8002/'
 for (const [opts, how] of [[{ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 }, 'finger'], [{ viewport: { width: 1300, height: 900 } }, 'mouse']]) {
   const p = await (await b.newContext(opts)).newPage()
+  await allTasks(p)
   p.on('pageerror', e => console.log('PAGEERROR', e.message))
   await p.goto(base + 'Session-1___-Conjunction/'); await p.evaluate(() => localStorage.clear()); await p.reload()
   await p.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => { x.classList.remove('ipm-locked'); x.inert = false }))

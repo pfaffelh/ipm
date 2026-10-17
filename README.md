@@ -44,6 +44,10 @@ induction over the natural numbers (6 tasks), which the Proof Machine does not h
   (nothing to scroll in it); layers wider than the board are broken into several lines.
 * Below the board, the same proof is shown in Lean, updated with every change (`sorry` marks what
   is still missing); a complete proof can be opened in the Lean web editor.
+* A session page is a stage as high as the screen: one task at a time, with ‹ Task 3 of 12 › and a
+  dot per task above it, the rules of the session folded away (“About this session”), and a tool bar
+  below the board (＋, Undo, Start over, Tidy up, Lean, Next ›). Nothing scrolls while one plays; the
+  task is in the address (`#task-3`). The start page has a big Start (or Continue) button.
 * Tasks come one after another; the ones not yet playable are shown greyed out.
 * Solved tasks marked `(lemma := true)` become lemmas, offered only in the tasks after them (no circles): in the menu of ＋, “Lemmas from solved tasks” offers each solved task as a
   block of its own (assumptions as inputs, goals as outputs, `?1`, `?2` for the statements). In the
@@ -93,7 +97,8 @@ lake exe ipm            # writes the site to _out/html-multi
 cd _out/html-multi && python3 -m http.server 8002
 ```
 
-Tests: `cd tests && npm install && BASE=http://localhost:8002/ node session1.mjs` (and
+Tests (they show all tasks of a page one below the other, see `tests/all-tasks.mjs`; `stage.mjs`
+and `start.mjs` test the stage and the start page): `cd tests && npm install && BASE=http://localhost:8002/ node session1.mjs` (and
 `session2.mjs`, `locked.mjs`, …); they need a Chrome or Chromium (`CHROME=…`).
 `LEANOUT=proofs.lean node lean-proofs.mjs` writes the Lean proofs of some solved tasks;
 `lake env lean proofs.lean` checks them.

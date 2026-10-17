@@ -2,10 +2,12 @@
 // down, everything stays inside the board, and there is nothing to scroll in it.
 // Usage: BASE=http://localhost:8002/ node fit.mjs   (SHOTDIR=dir for screenshots)
 import { chromium } from 'playwright-core'
+import { allTasks } from './all-tasks.mjs'
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })
 const base = process.env.BASE ?? 'http://127.0.0.1:8002/'
 for (const [opts, name] of [[{ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 }, 'phone'], [{ viewport: { width: 1300, height: 900 } }, 'desktop']]) {
   const page = await (await browser.newContext(opts)).newPage()
+  await allTasks(page)
   page.on('pageerror', e => console.log('PAGEERROR', e.message))
   await page.goto(base + 'Session-5___-Classical-Logic/')
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('ipm-verso:in-order', 'off') }); await page.reload()

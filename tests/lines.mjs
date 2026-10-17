@@ -1,9 +1,11 @@
 // Removes a line by tapping it and its ✕ (simulated phone).
 // Usage: BASE=http://localhost:8002/ node lines.mjs
 import { chromium } from 'playwright-core'
+import { allTasks } from './all-tasks.mjs'
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 })
 const page = await ctx.newPage()
+await allTasks(page)
 page.on('pageerror', e => console.log('PAGEERROR', e.message))
 await page.goto((process.env.BASE ?? 'http://127.0.0.1:8002/') + 'Session-1___-Conjunction/')
 await page.evaluate(() => localStorage.clear()); await page.reload()

@@ -49,7 +49,7 @@
     '{x} does not fit {y}': '{x} passt nicht zu {y}',
     'A local hypothesis may only be used inside its box.': 'Eine lokale Annahme darf nur innerhalb ihres Kastens verwendet werden.',
     'Cancel': 'Abbrechen', 'more ▸': 'mehr ▸', 'less ▾': 'weniger ▾', '1 rule ▸': '1 Regel ▸', '{n} rules ▸': '{n} Regeln ▸',
-    '{name} block': '{name}-Block', 'Settings': 'Einstellungen', 'Off': 'Aus', 'All': 'Alle',
+    '{name} block': '{name}-Block', 'Previous task': 'Vorherige Aufgabe', 'Next task': 'Nächste Aufgabe', 'Next ›': 'Weiter ›', '▶ Start': '▶ Start', '▶ Continue': '▶ Weiterspielen', 'or start from the beginning': 'oder von vorn beginnen', 'About this session': 'Über diese Sitzung', 'Settings': 'Einstellungen', 'Off': 'Aus', 'All': 'Alle',
     'Tactics: buttons with the Lean command that fits a tapped circle or dot': 'Taktiken: Knöpfe mit dem passenden Lean-Befehl zu einem angetippten Kreis oder Punkt',
     'Earned by solving tasks': 'Durch Lösen von Aufgaben freigespielt', 'Order': 'Reihenfolge', 'Tasks in order': 'Aufgaben der Reihe nach',
     'A task can be played once the one before it is solved.': 'Eine Aufgabe ist spielbar, sobald die vorherige gelöst ist.',
@@ -1061,8 +1061,10 @@
 
       this.canvas = el('div', 'ipm-canvas')
       this.status = el('div', 'ipm-status')
-      const tools = el('div', 'ipm-tools')
-      const undo = el('button', 'ipm-button', tr('↶ Undo'))
+      // The tool bar below the board: ＋, Undo, Start over, Tidy up, Lean (and Next, from the stage).
+      const tools = el('div', 'ipm-tools ipm-bar')
+      const undo = el('button', 'ipm-button ipm-undo', tr('↶ Undo'))
+      undo.title = tr('↶ Undo')
       undo.type = 'button'
       undo.addEventListener('click', () => this.undo())
       const reset = el('button', 'ipm-button', tr('Start over'))
@@ -1076,8 +1078,8 @@
       // The tactics this task unlocks, shown below it while tactics are earned.
       this.unlocks = JSON.parse(root.dataset.unlocks ?? '[]')
       this.unlockNote = el('div', 'ipm-unlock')
-      tools.append(undo, reset, tidy,
-        this.status, this.unlockNote)
+      this.info = el('div', 'ipm-info')
+      this.info.append(this.status, this.unlockNote)
       this.sheet = el('div', 'ipm-sheet')
       this.sheet.hidden = true
       // The trash can appears while a rule block is dragged; dropping the block on it removes it.
@@ -1086,7 +1088,9 @@
       // Adding a block: the button ＋ below the picture opens a popover with all blocks, the rules
       // and the lemmas. Taking one (a tap, or dragging it onto the board) closes the popover again.
       this.menu = el('div', 'ipm-menu')
-      this.addButton = el('button', 'ipm-add', tr('＋ Add a block'))
+      this.addButton = el('button', 'ipm-add')
+      this.addButton.append('＋', el('span', 'ipm-add-text', tr('Add a block')))
+      this.addButton.title = tr('Add a block')
       this.addButton.type = 'button'
       this.addButton.setAttribute('aria-expanded', 'false')
       this.addButton.addEventListener('click', () => (this.popover.hidden ? this.openPopover() : this.closePopover()))
@@ -1121,9 +1125,17 @@
       this.leanLink.target = '_blank'
       this.leanLink.rel = 'noopener'
       this.lean.append(el('summary', '', tr('The proof in Lean')), this.leanCode, this.leanLink)
+      const leanButton = el('button', 'ipm-button ipm-lean-toggle', 'Lean')
+      leanButton.type = 'button'
+      leanButton.title = tr('The proof in Lean')
+      leanButton.addEventListener('click', () => { this.lean.open = !this.lean.open })
+      const pressed = () => leanButton.setAttribute('aria-pressed', String(this.lean.open))
+      this.lean.addEventListener('toggle', pressed)
+      pressed()
+      tools.append(this.menu, undo, reset, tidy, leanButton)
       this.refreshLemmas()
       window.addEventListener('ipm-lemmas', () => this.refreshLemmas())
-      root.querySelector('.ipm-board').append(this.canvas, this.menu, tools, this.sheet, this.lean, this.trash)
+      root.querySelector('.ipm-board').append(this.canvas, this.info, this.lean, this.sheet, tools, this.trash)
       this.render()
     }
 
@@ -1849,13 +1861,98 @@
   }
 
   // Tasks on a page are revealed one at a time, like the steps of a lesson.
+  // The start page: a big button to start (the first session), or to go on where one left off.
+  function startButton() {
+    const first = document.querySelector('#toc a[href*="Session-1"], main a[href*="Session-1"]')
+    const h1 = document.querySelector('main h1')
+    if (!first || !h1) return
+    let last = null
+    try { last = JSON.parse(localStorage.getItem('ipm-verso:last')) } catch {}
+    const box = el('div', 'ipm-start')
+    const go = el('a', 'ipm-start-button', last ? tr('▶ Continue') : tr('▶ Start'))
+    go.href = last?.href ?? first.getAttribute('href')
+    box.append(go)
+    if (last) {
+      box.append(el('div', 'ipm-start-where', last.title))
+      const again = el('a', 'ipm-start-again', tr('or start from the beginning'))
+      again.href = first.getAttribute('href')
+      box.append(again)
+    }
+    h1.after(box)
+  }
+
+  // A session page shows one task at a time, on a stage as high as the screen: the task's text,
+  // its board (which takes the room that is left), ＋ and the tools. Above it: ‹ Task 3 of 12 ›
+  // and a dot for each task. Nothing scrolls while one plays; the task is in the address (#task-3).
   function init() {
     translatePage()
     languageSwitch()
     registerLemmas()
     const tasks = [...document.querySelectorAll('.ipm-task')].map((root, i) => new Task(root, i))
     tasks.forEach((t, i) => t.root.prepend(el('div', 'ipm-task-label', tr('Task {i} of {n}', { i: i + 1, n: tasks.length }))))
-    const update = scroll => {
+    if (!tasks.length) { startButton(); return }
+    const stage = el('div', 'ipm-stage')
+    tasks[0].root.before(stage)
+    const nav = el('div', 'ipm-nav'), dots = el('div', 'ipm-dots')
+    const prev = el('button', 'ipm-nav-step', '‹'), next = el('button', 'ipm-nav-step', '›')
+    const label = el('span', 'ipm-nav-label')
+    prev.type = next.type = 'button'
+    prev.title = tr('Previous task'); next.title = tr('Next task')
+    nav.append(prev, label, next, dots)
+    stage.append(nav, ...tasks.map(t => t.root))
+    // The text before the tasks (the rules of the session) folds away above them; open at first.
+    const intro = el('details', 'ipm-intro')
+    const before = []
+    for (let n = stage.previousSibling; n && !(n.nodeType === 1 && /^H\d$/.test(n.tagName)); n = n.previousSibling) before.unshift(n)
+    if (before.some(n => n.nodeType === 1)) {
+      const body = el('div', 'ipm-intro-body')
+      body.append(...before)
+      intro.append(el('summary', '', tr('About this session')), body)
+      intro.open = !tasks.some(t => t.proof.connections.length || t.root.classList.contains('ipm-solved'))
+      stage.prepend(intro)
+      intro.addEventListener('toggle', () => tasks[current].render())
+    }
+    let current = 0
+    const key = `ipm-verso:${location.pathname}:current`
+    const show = i => {
+      current = Math.max(0, Math.min(tasks.length - 1, i))
+      tasks.forEach((t, k) => t.root.classList.toggle('ipm-current', k === current))
+      label.textContent = tr('Task {i} of {n}', { i: current + 1, n: tasks.length })
+      prev.disabled = current === 0
+      next.disabled = current === tasks.length - 1
+      refreshDots()
+      // (with the path: the page has a <base>, against which a bare #task-3 would point elsewhere)
+      history.replaceState(null, '', `${location.pathname}${location.search}#task-${current + 1}`)
+      try {
+        localStorage.setItem(key, String(current))
+        // For "Continue" on the start page.
+        localStorage.setItem('ipm-verso:last', JSON.stringify({ href: location.pathname + location.hash, title: document.title }))
+      } catch {}
+      tasks[current].render()  // its board now has its size
+    }
+    const refreshDots = () => {
+      dots.replaceChildren(...tasks.map((t, k) => {
+        const d = el('button', 'ipm-dot' + (t.root.classList.contains('ipm-solved') ? ' ipm-dot-solved' : '') +
+          (t.root.classList.contains('ipm-locked') ? ' ipm-dot-locked' : '') + (k === current ? ' ipm-dot-current' : ''))
+        d.type = 'button'
+        d.title = tr('Task {i} of {n}', { i: k + 1, n: tasks.length })
+        d.addEventListener('click', () => show(k))
+        return d
+      }))
+      // The arrow to the next task glows once this one is solved.
+      next.classList.toggle('ipm-nav-glow', tasks[current].root.classList.contains('ipm-solved') && current < tasks.length - 1)
+    }
+    prev.addEventListener('click', () => show(current - 1))
+    next.addEventListener('click', () => show(current + 1))
+    // "Next task ›" below a solved task.
+    tasks.forEach((t, k) => {
+      if (k === tasks.length - 1) return
+      const b = el('button', 'ipm-button ipm-next', tr('Next ›'))
+      b.type = 'button'
+      b.addEventListener('click', () => show(k + 1))
+      t.root.querySelector('.ipm-tools')?.append(b)
+    })
+    const update = () => {
       const open = tasks.findIndex(t => !t.root.classList.contains('ipm-solved'))
       tasks.forEach((t, i) => {
         const locked = SETTINGS.inOrder && open >= 0 && i > open
@@ -1865,18 +1962,31 @@
         t.drawn = true
         t.render()  // the board's size depends on it
       })
-      if (scroll && open >= 0) tasks[open].root.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      refreshDots()
     }
     tasks.forEach(t => {
       t.onSolved = () => {
         if (t.reported) return
         t.reported = true
-        setTimeout(() => update(true), 1200)
+        setTimeout(update, 300)
       }
       if (t.root.classList.contains('ipm-solved')) t.reported = true
     })
-    update(false)
-    window.addEventListener('ipm-settings', () => update(false))
+    update()
+    window.addEventListener('ipm-settings', update)
+    // Which task: from the address, or the one played last, or the first one not solved.
+    const fromHash = () => Number(/^#task-(\d+)$/.exec(location.hash)?.[1] ?? 0) - 1
+    let start = fromHash()
+    if (start < 0) { try { start = Number(localStorage.getItem(key) ?? -1) } catch { start = -1 } }
+    if (start < 0) start = Math.max(0, tasks.findIndex(t => !t.root.classList.contains('ipm-solved')))
+    show(start)
+    window.addEventListener('hashchange', () => { if (fromHash() >= 0 && fromHash() !== current) show(fromHash()) })
+    let resizing
+    window.addEventListener('resize', () => { clearTimeout(resizing); resizing = setTimeout(() => tasks[current].render(), 150) })
+    // The Lean proof, opened or closed, changes the room for the board.
+    tasks.forEach(t => t.lean.addEventListener('toggle', () => t.render()))
+    // The page shows the stage, which fills the screen.
+    stage.scrollIntoView({ block: 'start' })
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init)

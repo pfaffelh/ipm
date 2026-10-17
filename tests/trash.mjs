@@ -1,6 +1,7 @@
 // Drags a rule block onto the trash can, with the mouse and with a finger.
 // Usage: BASE=http://localhost:8002/ node trash.mjs
 import { chromium } from 'playwright-core'
+import { allTasks } from './all-tasks.mjs'
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })
 const base = (process.env.BASE ?? 'http://127.0.0.1:8002/') + 'Session-1___-Conjunction/'
 const center = async l => { const b = await l.boundingBox(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 } }
@@ -8,6 +9,7 @@ const center = async l => { const b = await l.boundingBox(); return { x: b.x + b
 async function setup(ctxOptions) {
   const ctx = await browser.newContext(ctxOptions)
   const page = await ctx.newPage()
+  await allTasks(page)
   page.on('pageerror', e => console.log('PAGEERROR', e.message))
   await page.goto(base); await page.evaluate(() => localStorage.clear()); await page.reload()
   await page.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => { x.classList.remove('ipm-locked'); x.inert = false }))

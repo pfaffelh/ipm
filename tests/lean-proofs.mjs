@@ -2,9 +2,11 @@
 // With LEANOUT=file they are written there; `lake env lean file` then checks them.
 // Usage: BASE=http://localhost:8002/ LEANOUT=proofs.lean node lean-proofs.mjs
 import { chromium } from 'playwright-core'
+import { allTasks } from './all-tasks.mjs'
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 })
 const page = await ctx.newPage()
+await allTasks(page)
 page.on('pageerror', e => console.log('PAGEERROR', e.message))
 const base = process.env.BASE ?? 'http://127.0.0.1:8002/'
 const tap = async l => { await l.dispatchEvent('click'); await page.waitForTimeout(100) }

@@ -2,11 +2,13 @@
 // the menu closes again each time.
 // Usage: BASE=http://localhost:8002/ node menu-drag.mjs
 import { chromium } from 'playwright-core'
+import { allTasks } from './all-tasks.mjs'
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })
 const base = (process.env.BASE ?? 'http://127.0.0.1:8002/') + 'Session-2___-Implication/'
 const center = async l => { const b = await l.boundingBox(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 } }
 async function open(opts) {
   const page = await (await browser.newContext(opts)).newPage()
+  await allTasks(page)
   page.on('pageerror', e => console.log('PAGEERROR', e.message))
   await page.goto(base); await page.evaluate(() => localStorage.clear()); await page.reload()
   const t = page.locator('.ipm-task').nth(0)
@@ -32,7 +34,8 @@ console.log('mouse: blocks', await blocks(t).count(), '| dropped at', Math.round
 // drag and drop outside the board: nothing happens
 await t.locator('.ipm-add').click()
 from = await center(t.locator('.ipm-menu-item[title^="∧I"]'))
-await page.mouse.move(from.x, from.y); await page.mouse.down(); await page.mouse.move(from.x + 300, from.y + 200, { steps: 8 }); await page.mouse.up()
+const outside = await t.locator('.ipm-canvas').boundingBox()  // left of the board
+await page.mouse.move(from.x, from.y); await page.mouse.down(); await page.mouse.move(outside.x - 15, outside.y + 100, { steps: 8 }); await page.mouse.up()
 console.log('mouse, dropped outside: blocks', await blocks(t).count(), '| menu open', await popoverOpen(t))
 // a tap outside the menu closes it
 await t.locator('.ipm-add').click(); await page.mouse.click(5, 5)

@@ -1,8 +1,10 @@
 // Session 1, task 12: (A ∧ B) ∧ C ⊢ A ∧ B ∧ C. Builds the proof from the screenshot and checks that
 // connecting B to an input B ∧ C is refused (☠).
 import { chromium } from 'playwright-core'
+import { allTasks } from './all-tasks.mjs'
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })
 const page = await (await browser.newContext({ viewport: { width: 1300, height: 1000 } })).newPage()
+await allTasks(page)
 page.on('pageerror', e => console.log('PAGEERROR', e.message))
 await page.goto((process.env.BASE ?? 'http://127.0.0.1:8002/') + 'Session-1___-Conjunction/')
 await page.evaluate(() => localStorage.clear()); await page.reload()

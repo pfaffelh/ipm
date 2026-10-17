@@ -1,9 +1,11 @@
 // The language switch in the header: English by default, German after tapping DE (kept on reload).
 // Usage: BASE=http://localhost:8002/ node language.mjs   (SHOTDIR=dir for screenshots)
 import { chromium } from 'playwright-core'
+import { allTasks } from './all-tasks.mjs'
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 })
 const page = await ctx.newPage()
+await allTasks(page)
 page.on('pageerror', e => console.log('PAGEERROR', e.message))
 const base = process.env.BASE ?? 'http://127.0.0.1:8002/'
 await page.goto(base + 'Session-2___-Implication/')
@@ -24,6 +26,7 @@ await page.goto(base)
 await report('DE start page')
 console.log('  TOC:', (await page.locator('#toc').innerText()).replace(/\n/g, ' | ').slice(0, 160))
 const d = await (await browser.newContext({ viewport: { width: 1300, height: 800 } })).newPage()
+await allTasks(d)
 await d.goto(base); await d.evaluate(() => localStorage.setItem('ipm-verso:lang', 'de')); await d.reload()
 if (process.env.SHOTDIR) await d.screenshot({ path: process.env.SHOTDIR + '/lang-de-desk.png' })
 await page.locator('.ipm-lang-switch button', { hasText: 'EN' }).click()
