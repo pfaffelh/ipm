@@ -93,7 +93,7 @@ example (A : Prop) (a : A) : A ∨ A := Or.inl a
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "A ∨ B") (conclusions := "B ∨ A")
+::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "A ∨ B") (conclusions := "B ∨ A")
 :::en
 Your first ∨E: prove `B ∨ A` in the case `A` and in the case `B`.
 :::
@@ -166,7 +166,7 @@ example (A B C : Prop) (h : (A ∨ B) ∧ C) : A ∧ C ∨ B ∧ C :=
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "(A → C) ∧ (B → C)") (conclusions := "A ∨ B → C")
+::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "(A → C) ∧ (B → C)") (conclusions := "A ∨ B → C")
 :::en
 `A ∨ B → C` means `(A ∨ B) → C`.
 :::
@@ -181,7 +181,7 @@ example (A B C : Prop) (h : (A → C) ∧ (B → C)) : A ∨ B → C :=
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "A ∨ B → C") (conclusions := "(A → C) ∧ (B → C)")
+::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "A ∨ B → C") (conclusions := "(A → C) ∧ (B → C)")
 :::en
 And back.
 :::

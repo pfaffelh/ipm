@@ -65,7 +65,7 @@ example (A B : Prop) (h : (B → False) → A → False) : A → B :=
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "A ∧ B → ⊥") (conclusions := "(A → ⊥) ∨ (B → ⊥)")
+::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "A ∧ B → ⊥") (conclusions := "(A → ⊥) ∨ (B → ⊥)")
 :::en
 If not both are true, then one of them is false.
 :::
@@ -80,7 +80,7 @@ example (A B : Prop) (h : A ∧ B → False) : (A → False) ∨ (B → False) :
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "(A → ⊥) → ⊥") (conclusions := "A")
+::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "(A → ⊥) → ⊥") (conclusions := "A")
 :::en
 Double negation: if `A` is not false, it is true.
 :::
@@ -95,7 +95,7 @@ example (A : Prop) (h : (A → False) → False) : A :=
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "A → B") (conclusions := "(A → ⊥) ∨ B")
+::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "A → B") (conclusions := "(A → ⊥) ∨ B")
 :::en
 An implication as an “or”.
 :::
@@ -158,7 +158,7 @@ example (A B C : Prop) (h : A ∧ B ∧ C → False) : (A → False) ∨ (B → 
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "(A → B) → ⊥") (conclusions := "A ∧ (B → ⊥)")
+::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "(A → B) → ⊥") (conclusions := "A ∧ (B → ⊥)")
 :::en
 The final task: if the implication is false, then `A` is true and `B` is false.
 :::

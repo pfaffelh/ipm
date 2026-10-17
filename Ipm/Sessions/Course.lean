@@ -256,7 +256,7 @@ example (P Q R S : Prop) (f : P → R) (g : Q → S) : P ∨ Q → R ∨ S :=
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "P ∧ Q ∨ P ∧ R") (conclusions := "P ∧ (Q ∨ R)")
+::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "P ∧ Q ∨ P ∧ R") (conclusions := "P ∧ (Q ∨ R)")
 :::en
 Distributivity, the direction back.
 :::
@@ -271,7 +271,7 @@ example (P Q R : Prop) (h : P ∧ Q ∨ P ∧ R) : P ∧ (Q ∨ R) :=
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "(P ∨ Q) ∧ (P ∨ R)") (conclusions := "P ∨ Q ∧ R")
+::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "(P ∨ Q) ∧ (P ∨ R)") (conclusions := "P ∨ Q ∧ R")
 :::en
 The other distributive law, back. Two case distinctions, one inside the other.
 :::

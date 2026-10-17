@@ -1,4 +1,4 @@
-// Tactics: off by default; with "Allow tactics" on, steps appear beside a selected port, as in Lean: tapping the goal A → C offers "→I · intro", which puts
+// Tactics: off by default; exact and apply from a goal; with "Allow tactics" on, steps appear beside a selected port, as in Lean: tapping the goal A → C offers "→I · intro", which puts
 // the block in and connects it; an assumption B → C offers "→E · apply"; and so on.
 // Usage: BASE=http://localhost:8002/ node steps.mjs   (LEANOUT=file for the Lean proof, SHOT=file)
 import { chromium } from 'playwright-core'
@@ -67,5 +67,15 @@ t = page.locator('.ipm-task').nth(9)
 await tap(goal(t)); await tap(t.locator('.ipm-step').first())
 await tap(inp(rule(t, 0))); console.log('goal ⊤ inside P → ⊤:', await steps(t))
 await tap(t.locator('.ipm-step').first()); console.log('P → ⊤ with steps only:', await t.locator('.ipm-status').innerText())
-if (process.env.LEANOUT) (await import('node:fs')).writeFileSync(process.env.LEANOUT, code + '\n')
+// exact and apply from the goal: A, A → B ⊢ B in two taps
+await open('Session-2___-Implication/')
+t = page.locator('.ipm-task').nth(0)
+await tap(goal(t)); console.log('goal B:', await steps(t))
+await tap(t.locator('.ipm-step', { hasText: 'apply' }))
+await tap(inp(rule(t, 0), 1)); console.log('then the open A:', await steps(t))
+await tap(t.locator('.ipm-step', { hasText: 'exact' }))
+console.log('A, A → B ⊢ B with apply and exact:', await t.locator('.ipm-status').innerText())
+const code2 = await t.locator('.ipm-lean-code').innerText()
+console.log(code2)
+if (process.env.LEANOUT) (await import('node:fs')).writeFileSync(process.env.LEANOUT, code + '\n\n' + code2 + '\n')
 await browser.close()

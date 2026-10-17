@@ -90,7 +90,7 @@ example (A : Prop) (a : A) (_ : A → A) : A := a
 ```
 ::::
 
-::::task (assumptions := "A → B, B → C") (conclusions := "A → C")
+::::task (lemma := true) (assumptions := "A → B, B → C") (conclusions := "A → C")
 :::en
 Your first →I. Add an →I block for the goal; then use its local hypothesis `A` (the blue dot with the purple ring), and lead what
 you get from it into the block's input.

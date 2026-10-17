@@ -28,15 +28,14 @@ const open = async (path, clear = true) => {
   await page.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => { x.classList.remove('ipm-locked'); x.inert = false }))
 }
 
+// A lemma about P, Q (as from a solved, marked task of session 6) is shown with ?1, ?2
 await open('Session-6___-From-the-Lean-Course/')
-// ⊢ P → Q → P
-let t = page.locator('.ipm-task').nth(1)
-await add(t, 'impI', 'impI')
-await link(goal(t), out(rule(t, 0))); await link(inp(rule(t, 0)), out(rule(t, 1))); await link(inp(rule(t, 1)), local(rule(t, 0)))
-await done('S6 T2', t)
+await page.evaluate(() => localStorage.setItem('ipm-verso:lemmas', JSON.stringify({ 'ipm-verso:/Session-6___-From-the-Lean-Course/:1': {
+  v: 2, label: 'L6.2', session: 6, task: 2, statement: '⊢ P → Q → P', atoms: ['P', 'Q'], assumptions: [], conclusions: ['P → Q → P'],
+  leanNames: ['lemma_6_2'], uses: [], theorems: ['theorem lemma_6_2 {P Q : Prop} : P → Q → P :=\n  fun x _ => x'] } })))
 
 await open('Session-7___-Equivalence-and-Truth/', false)
-t = page.locator('.ipm-task').nth(0)
+let t = page.locator('.ipm-task').nth(0)
 const lemma = t.locator('.ipm-lemma-item').first()
 console.log('lemma from session 6:', await lemma.getAttribute('title'), '| picture:', (await lemma.locator('svg').textContent()).replace(/\s+/g, ' '))
 // P → Q, Q → P ⊢ P ↔ Q

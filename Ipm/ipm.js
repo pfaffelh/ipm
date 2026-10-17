@@ -809,7 +809,9 @@
     try { return JSON.parse(localStorage.getItem(LEMMAS)) ?? {} } catch { return {} }
   }
   function registerLemmas() {
+    for (const k of Object.keys(RULES)) if (k.startsWith('lemma:')) delete RULES[k]
     for (const [key, L] of Object.entries(loadLemmas())) {
+      if (L.v !== 2) continue  // from before tasks were marked as lemmas
       L.key = key
       // The statements of the lemma are renamed A, B, C, …, so that they are shown as ?1, ?2, ?3, ….
       const letter = Object.fromEntries(L.atoms.map((x, i) => [x, String.fromCharCode(65 + i)]))
@@ -981,6 +983,9 @@
       this.root = root
       this.key = `ipm-verso:${location.pathname}:${index}`
       this.index = index
+      this.session = Number(/Session-(\d+)/.exec(location.pathname)?.[1] ?? 0)
+      // Whether this task, once solved, is a lemma for the tasks after it.
+      this.isLemma = root.dataset.lemma === 'true'
       this.assumptions = JSON.parse(root.dataset.assumptions)
       this.conclusions = JSON.parse(root.dataset.conclusions)
       this.rules = JSON.parse(root.dataset.rules)
@@ -1461,14 +1466,15 @@
 
     // Keeps this solved task as a lemma, with the Lean theorem of its proof.
     saveLemma() {
+      if (!this.isLemma) return
       const { uses, goals } = leanParts(this.proof, this.analysis)
       if (uses.some(k => dependsOn(k, this.key))) return  // no lemma may be proved by itself
-      const session = Number(/Session-(\d+)/.exec(location.pathname)?.[1] ?? 0)
+      const session = this.session
       const n = this.index + 1, base = `lemma_${session}_${n}`
       const leanNames = goals.map((_, j) => (goals.length > 1 ? `${base}_${j + 1}` : base))
       const norm = x => show(parse(x))
       const L = {
-        label: `L${session}.${n}`, session, task: n,
+        v: 2, label: `L${session}.${n}`, session, task: n,
         statement: [this.assumptions.map(norm).join(', '), '⊢', this.conclusions.map(norm).join(', ')].filter(x => x).join(' '),
         atoms: goals[0]?.atoms ?? [], assumptions: this.assumptions, conclusions: this.conclusions, leanNames, uses,
         theorems: goals.map((g, j) =>
@@ -1483,12 +1489,13 @@
       window.dispatchEvent(new Event('ipm-lemmas'))
     }
 
-    // The lemmas this task may use: the other solved tasks, except trivial ones and those that use
-    // this task; the same statement only once.
+    // The lemmas this task may use: the solved tasks marked as lemmas that come before it (so that
+    // no circle is possible), except trivial ones; the same statement only once.
     refreshLemmas() {
       const seen = new Set()
+      const before = L => L.session < this.session || (L.session === this.session && L.task < this.index + 1)
       const lemmas = Object.values(RULES).filter(r => r.lemma).map(r => r.lemma)
-        .filter(L => L.key !== this.key && !dependsOn(L.key, this.key))
+        .filter(L => before(L) && !dependsOn(L.key, this.key))
         .filter(L => { const as = L.assumptions.map(x => show(parse(x))); return !L.conclusions.every(c => as.includes(show(parse(c)))) })
         .sort((a, b) => a.session - b.session || a.task - b.task)
         .filter(L => !seen.has(L.statement) && seen.add(L.statement))
@@ -1564,7 +1571,26 @@
         iff: [['iffE1', `apply ${h}.mp`], ['iffE2', `apply ${h}.mpr`]],
         all: [['allE', `specialize ${h} _`]], ex: [['exE', `obtain ⟨c, hc⟩ := ${h}`]] }
       if (sel.kind === 'in' && !this.analysis.openInputs.some(o => o.block === sel.block && o.port === sel.port)) return []
-      return ((sel.kind === 'in' ? goal : have)[f.t] ?? []).filter(([rule]) => this.rules.includes(rule))
+      const steps = ((sel.kind === 'in' ? goal : have)[f.t] ?? []).filter(([rule]) => this.rules.includes(rule))
+        .map(([rule, tactic]) => ({ rule, text: `${RULES[rule].label} · ${tactic}`, act: () => this.takeStep(rule) }))
+      if (sel.kind !== 'in') return steps
+      // For a goal also: `exact h₁` for an assumption that fits it, and `apply h₁` for an assumption
+      // h₁ : A → B whose B fits it (a →E block, which leaves A to prove).
+      const exact = [], apply = []
+      assumptions.forEach((a, k) => {
+        const o = { block: a.id, port: 0 }, name = 'h' + sub(k + 1), g = norm(a.outputs[0], this.analysis.s)
+        if (this.fits(o, sel)) exact.push({ text: `exact ${name}`, act: () => this.link(o, sel) })
+        else if (g.t === 'imp' && this.rules.includes('impE') && unify(g.b, f, this.analysis.s))
+          apply.push({ rule: 'impE', text: `→E · apply ${name}`, act: () => {
+            this.selected = null
+            this.change(() => {
+              const nb = this.proof.addRule('impE')
+              this.proof.connect({ block: nb.id, port: 0 }, { block: sel.block, port: sel.port })
+              this.proof.connect(o, { block: nb.id, port: 0 })
+            })
+          } })
+      })
+      return [...exact, ...steps, ...apply]
     }
 
     // Puts the block of a step in and connects it to the selected port.
@@ -1585,7 +1611,7 @@
       if (!steps.length) return
       const sel = this.selected, b = this.proof.block(sel.block)
       const at = portAt(pos[b.id], b, sel.kind, sel.port)
-      const pills = steps.map(([rule, tactic]) => ({ rule, text: `${RULES[rule].label} · ${tactic}` }))
+      const pills = steps
       const w = t => t.length * 8.2 + 22, gap = 8
       const total = pills.reduce((s, p) => s + w(p.text), 0) + gap * (pills.length - 1)
       const stacked = total > view[2] - 8
@@ -1594,10 +1620,10 @@
       pills.forEach((p, k) => {
         const y = sel.kind === 'in' ? at.y - 52 - (stacked ? (pills.length - 1 - k) * 40 : 0) : at.y + 18 + (stacked ? k * 40 : 0)
         const px = inside(stacked ? at.x - w(p.text) / 2 : x, w(p.text))
-        const g = svg('g', { class: 'ipm-step', 'data-rule': p.rule })
+        const g = svg('g', { class: 'ipm-step', 'data-rule': p.rule ?? '' })
         g.append(svg('rect', { x: px, y, width: w(p.text), height: 32, rx: 16 }),
           svg('text', { x: px + w(p.text) / 2, y: y + 21, 'text-anchor': 'middle' }, p.text))
-        g.addEventListener('click', ev => { ev.stopPropagation(); this.takeStep(p.rule) })
+        g.addEventListener('click', ev => { ev.stopPropagation(); p.act() })
         root.append(g)
         x += w(p.text) + gap
       })

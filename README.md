@@ -27,7 +27,8 @@ induction over the natural numbers (6 tasks), which the Proof Machine does not h
   command (goal `A → B`: `intro h`; `A ∧ B`, `A ↔ B`: `constructor`; `A ∨ B`: `left`/`right`; `⊤`:
   `trivial`; assumption `h₁ : A ∧ B`: `obtain ⟨ha, hb⟩ := h₁`; `A ∨ B`: `obtain (ha | hb) := h₁`;
   `A → B`: `apply h₁`; `⊥`: `exact h₁.elim`; `A ↔ B`: `apply h₁.mp`/`apply h₁.mpr`). One tap adds
-  the block, already connected.
+  the block, already connected. A goal also offers `exact h₁` for an assumption that fits it, and
+  `apply h₁` for an assumption `h₁ : A → B` whose `B` fits it.
 * A line that does not fit gets a ☠, a local hypothesis used outside its box a ⚠; tap them for an
   explanation.
 * Red circles are inputs (still to be proved), blue dots outputs (what you have).
@@ -39,7 +40,7 @@ induction over the natural numbers (6 tasks), which the Proof Machine does not h
 * Below the board, the same proof is shown in Lean, updated with every change (`sorry` marks what
   is still missing); a complete proof can be opened in the Lean web editor.
 * Tasks come one after another; the ones not yet playable are shown greyed out.
-* Solved tasks become lemmas: in the menu of ＋, “Lemmas from solved tasks” offers each solved task as a
+* Solved tasks marked `(lemma := true)` become lemmas, offered only in the tasks after them (no circles): in the menu of ＋, “Lemmas from solved tasks” offers each solved task as a
   block of its own (assumptions as inputs, goals as outputs, `?1`, `?2` for the statements). In the
   Lean proof, a lemma is a `theorem` that the proof applies.
 * English or German: the switch EN | DE in the header (the choice is kept).

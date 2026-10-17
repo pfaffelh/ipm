@@ -261,7 +261,7 @@ example (α : Type) (P : α → Prop) (h : ∀ x, P x) : (∃ x, P x → False) 
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "(∀ x, P x) → ⊥") (conclusions := "∃ x, P x → ⊥")
+::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "(∀ x, P x) → ⊥") (conclusions := "∃ x, P x → ⊥")
 :::en
 Classical: if not all `x` have `P`, then one does not. Use TND twice.
 :::

@@ -133,7 +133,7 @@ example (A B : Prop) (f : A → B) : (B → False) → A → False := fun nb a =
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (assumptions := "A ∨ B → ⊥") (conclusions := "(A → ⊥) ∧ (B → ⊥)")
+::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (assumptions := "A ∨ B → ⊥") (conclusions := "(A → ⊥) ∧ (B → ⊥)")
 :::en
 If neither `A` nor `B` …
 :::
@@ -148,7 +148,7 @@ example (A B : Prop) (h : A ∨ B → False) : (A → False) ∧ (B → False) :
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (assumptions := "(A → ⊥) ∧ (B → ⊥)") (conclusions := "A ∨ B → ⊥")
+::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (assumptions := "(A → ⊥) ∧ (B → ⊥)") (conclusions := "A ∨ B → ⊥")
 :::en
 … and back.
 :::
@@ -163,7 +163,7 @@ example (A B : Prop) (h : (A → False) ∧ (B → False)) : A ∨ B → False :
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (assumptions := "(A → ⊥) ∨ (B → ⊥)") (conclusions := "A ∧ B → ⊥")
+::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (assumptions := "(A → ⊥) ∨ (B → ⊥)") (conclusions := "A ∧ B → ⊥")
 :::en
 If one of the two is false, then not both are true.
 :::
@@ -193,7 +193,7 @@ example (A : Prop) (h : ((A → False) → False) → False) : A → False :=
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (assumptions := "(A → ⊥) ∨ B") (conclusions := "A → B")
+::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (assumptions := "(A → ⊥) ∨ B") (conclusions := "A → B")
 :::en
 Case by case.
 :::
