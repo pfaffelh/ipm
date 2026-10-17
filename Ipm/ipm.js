@@ -35,7 +35,7 @@
     '＋ Add a block': '＋ Baustein hinzufügen', 'Add a block': 'Baustein hinzufügen', 'Rules': 'Regeln', 'Close': 'Schließen',
     '↶ Undo': '↶ Zurück', 'Start over': 'Neu anfangen', 'Tidy up': 'Aufräumen',
     'Arrange the blocks automatically again': 'Die Blöcke wieder automatisch anordnen',
-    'Smaller': 'Kleiner', 'Larger': 'Größer', 'Fit to the page': 'An die Seite anpassen',
+    
     'The proof in Lean': 'Der Beweis in Lean', 'Try it in Lean ↗': 'In Lean ausprobieren ↗',
     'Proof complete ✓': 'Beweis fertig ✓',
     'Now tap a glowing green dot, or add a block with ＋': 'Jetzt einen grün leuchtenden Punkt antippen oder mit ＋ einen Baustein hinzufügen',
@@ -1069,23 +1069,11 @@
       tidy.type = 'button'
       tidy.title = tr('Arrange the blocks automatically again')
       tidy.addEventListener('click', () => { this.change(() => { this.proof.moved = {} }) })
-      // Zoom: the picture is drawn at `zoom` times the size that fits the page.
-      this.zoom = 1
-      const zoomButton = (label, title, f) => {
-        const z = el('button', 'ipm-button ipm-zoom', label)
-        z.type = 'button'
-        z.title = title
-        z.addEventListener('click', () => { this.zoom = f(this.zoom); this.render() })
-        return z
-      }
       window.addEventListener('ipm-settings', () => this.render())
       // The tactics this task unlocks, shown below it while tactics are earned.
       this.unlocks = JSON.parse(root.dataset.unlocks ?? '[]')
       this.unlockNote = el('div', 'ipm-unlock')
       tools.append(undo, reset, tidy,
-        zoomButton('−', tr('Smaller'), z => Math.max(0.4, z / 1.25)),
-        zoomButton('+', tr('Larger'), z => Math.min(4, z * 1.25)),
-        zoomButton('Fit', tr('Fit to the page'), () => 1),
         this.status, this.unlockNote)
       this.sheet = el('div', 'ipm-sheet')
       this.sheet.hidden = true
@@ -1204,29 +1192,47 @@
       const pos = {}
       const rows = {}
       for (const b of p.blocks) (rows[layer[b.id]] ??= []).push(b)
-      let width = Math.max(320, board.w)
       const sizes = {}
       for (const b of p.blocks) sizes[b.id] = blockSize(b, s)
-      for (const row of Object.values(rows)) width = Math.max(width, row.reduce((w, b) => w + sizes[b.id].w + 24, 24))
-      for (const [l, row] of Object.entries(rows)) {
-        const total = row.reduce((w, b) => w + sizes[b.id].w, 0) + 24 * (row.length - 1)
-        let x = (width - total) / 2
+      // A layer wider than the board (at the scale it is drawn at best) is broken into several
+      // lines, so that the picture uses the height of the board and stays large.
+      const cw = this.canvas.clientWidth || 640
+      const most = Math.max(320, cw / (cw > 700 ? 1.4 : 1) - 8)
+      const lines = []
+      for (const row of Object.values(rows)) {
+        let line = [], w = 24
         for (const b of row) {
-          pos[b.id] = { x, y: 20 + Number(l) * layerH, ...sizes[b.id] }
+          if (line.length && w + sizes[b.id].w + 24 > most) { lines.push(line); line = []; w = 24 }
+          line.push(b); w += sizes[b.id].w + 24
+        }
+        lines.push(line)
+      }
+      const lineWidth = line => line.reduce((w, b) => w + sizes[b.id].w + 24, 24)
+      const width = Math.max(320, board.w, ...lines.map(lineWidth))
+      lines.forEach((line, k) => {
+        let x = (width - lineWidth(line)) / 2 + 24
+        for (const b of line) {
+          pos[b.id] = { x, y: 20 + k * layerH, ...sizes[b.id] }
           x += sizes[b.id].w + 24
         }
-      }
+      })
       for (const [id, m] of Object.entries(p.moved ?? {})) if (pos[id]) Object.assign(pos[id], m)
       // The picture covers all blocks, wherever they were dragged.
       const qs = Object.values(pos)
       const minX = Math.min(0, ...qs.map(q => q.x - 20)), minY = Math.min(0, ...qs.map(q => q.y - 20))
       const maxX = Math.max(width, ...qs.map(q => q.x + q.w + 20))
-      const maxY = Math.max(20 + (Math.max(...Object.keys(rows).map(Number)) + 1) * layerH, board.h,
+      const maxY = Math.max(20 + lines.length * layerH, board.h,
         ...qs.map(q => q.y + q.h + 20))
       return { pos, view: [minX, minY, maxX - minX, maxY - minY] }
     }
 
     portXY(pos, b, kind, i) { return portAt(pos[b.id], b, kind, i) }
+
+    // A position for a block of size `q` at (x, y), kept inside the board, which shows `this.view`.
+    inside(x, y, q) {
+      const [vx, vy, vw, vh] = this.view ?? [x, y, Infinity, Infinity]
+      return { x: Math.max(vx + 4, Math.min(x, vx + vw - q.w - 4)), y: Math.max(vy + 30, Math.min(y, vy + vh - q.h - 4)) }
+    }
 
     // Blocks can be dragged with mouse, finger or pen. A movement of a few pixels or less counts
     // as a tap. While dragging, the lines at the block follow it; the new position is kept.
@@ -1276,7 +1282,7 @@
           this.undoStack.push(this.proof.snapshot())
           const nb = this.proof.addRule(name)
           const size = blockSize(nb, this.analysis.s)
-          this.proof.moved = { ...(this.proof.moved ?? {}), [nb.id]: { x: at.x - size.w / 2, y: at.y - size.h / 2 } }
+          this.proof.moved = { ...(this.proof.moved ?? {}), [nb.id]: this.inside(at.x - size.w / 2, at.y - size.h / 2, size) }
           this.hideSheet()
           this.render()
         }
@@ -1347,7 +1353,7 @@
           this.trash.classList.remove('ipm-trash-shown', 'ipm-trash-hot')
           if (trashed) return this.change(() => this.proof.removeBlock(b.id))
           this.undoStack.push(this.proof.snapshot())
-          this.proof.moved = { ...(this.proof.moved ?? {}), [b.id]: { x: q.x + d.x, y: q.y + d.y } }
+          this.proof.moved = { ...(this.proof.moved ?? {}), [b.id]: this.inside(q.x + d.x, q.y + d.y, q) }
           this.render()
         }
         g.addEventListener('pointermove', move)
@@ -1359,21 +1365,21 @@
     render() {
       const p = this.proof
       this.analysis = p.analyze()
-      // Scale: the natural picture fits the board's width, times the zoom. The
-      // picture then covers the whole board, so that blocks can be put anywhere on it.
+      // The whole picture is always in view: it is scaled to fit the board, in width and height (the
+      // board is about as high as the screen), and then covers the whole board, so that blocks can
+      // be put anywhere on it. A locked task's board is only as high as its picture.
       const natural = this.layout().view
       const cw = this.canvas.clientWidth || natural[2]
-      const ch = parseFloat(getComputedStyle(this.canvas).minHeight) || 0
+      const ch = this.root.inert ? 0 : this.canvas.clientHeight
       // On a large board the picture is drawn larger (up to 1.4 times), so that it is easy to read.
-      const scale = Math.min(cw > 700 ? 1.4 : 1, cw / natural[2]) * this.zoom
-      const { pos, view } = this.layout({ w: cw / scale - 2, h: ch / scale - 2 })
+      const scale = Math.min(cw > 700 ? 1.4 : 1, cw / natural[2], ch ? ch / natural[3] : Infinity)
+      const { pos, view } = this.layout({ w: cw / scale - 2, h: ch ? ch / scale - 2 : 0 })
+      this.view = view
       const s = this.analysis.s
       const root = svg('svg', { viewBox: view.join(' '), class: 'ipm-svg' })
       // Natural size: the picture's own units, at most the width of the page.
       root.style.width = `${Math.round(view[2] * scale)}px`
       root.style.maxWidth = 'none'
-      // Only a zoomed-in picture scrolls (and is clipped); otherwise blocks may be dragged past the edge.
-      this.canvas.style.overflow = this.zoom > 1 ? 'auto' : 'visible'
       this.svgRoot = root
       const paths = []  // connection paths, to follow a dragged block
       let bubble = null

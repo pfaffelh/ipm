@@ -197,12 +197,11 @@
 
 /* The board: a visible field, as large as there is room for */
 .ipm-canvas {
-  border: 1px solid #b8c4d4; border-radius: 8px; min-height: 340px;
+  border: 1px solid #b8c4d4; border-radius: 8px;
   background-color: white;
   background-image: radial-gradient(#dde3ec 1px, transparent 1px);
   background-size: 22px 22px;
 }
-@media (min-width: 900px) { .ipm-canvas { min-height: 60vh; } }
 .ipm-svg { margin: 0; }
 
 /* On large screens a task may be wider than the text column (Verso caps that at 47rem): it grows
@@ -288,3 +287,9 @@
 /* The tactic a task unlocks */
 .ipm-unlock { flex-basis: 100%; font-size: 0.85em; color: #6b5b00; }
 .ipm-unlock[hidden] { display: none; }
+
+/* The board is about as high as the screen, and shows the whole picture: nothing to scroll in it. */
+.ipm-canvas { height: clamp(300px, calc(100svh - var(--verso-header-height, 3rem) - 7.5rem), 56rem); overflow: hidden; }
+.ipm-task.ipm-locked .ipm-canvas { height: auto; }
+/* Scrolled to, the board starts just below the header, so that all of it is visible. */
+.ipm-canvas { scroll-margin-top: calc(var(--verso-header-height, 3rem) + 8px); }

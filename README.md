@@ -37,8 +37,9 @@ induction over the natural numbers (6 tasks), which the Proof Machine does not h
 * →-introduction provides a local hypothesis (a blue dot with a purple ring, on top of the block); a dashed box shows the part of the proof
   that uses it, which must lead back into the block's own input.
 * Blocks can be dragged with mouse or
-  finger; tap a line to select it and ✕ to remove it. Undo, Start over, Tidy up (automatic layout)
-  and zoom (−, +, Fit; a larger picture scrolls inside the board).
+  finger; tap a line to select it and ✕ to remove it. Undo, Start over, Tidy up (automatic layout).
+  The board is about as high as the screen and always shows the whole picture, scaled to fit
+  (nothing to scroll in it); layers wider than the board are broken into several lines.
 * Below the board, the same proof is shown in Lean, updated with every change (`sorry` marks what
   is still missing); a complete proof can be opened in the Lean web editor.
 * Tasks come one after another; the ones not yet playable are shown greyed out.

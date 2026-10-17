@@ -39,7 +39,7 @@ proof is a set of lines that lead from the assumptions to the goals, through *ru
   filled in when you connect the block.
 * A line that does not fit gets a ☠; tap it to see why. Tap a line and then ✕ to remove it.
 * Blocks can be dragged around. To remove a rule block, drag it onto the trash can 🗑, which
-  appears at the corner of the board while you drag. With −, + and Fit you can zoom.
+  appears at the corner of the board while you drag. The board always shows the whole proof.
 * Below the board you see the same proof in Lean, updated with every step.
 * A solved task becomes a *lemma*: in the menu of *＋*, under “Lemmas from solved tasks”, you can use
   it as a block of its own in other tasks.
@@ -68,7 +68,7 @@ aus Linien, die über *Regelblöcke* von den Annahmen zu den Zielen führen.
 * Eine Linie, die nicht passt, bekommt ein ☠; tippe darauf, um zu sehen, warum. Tippe eine Linie und
   dann ✕ an, um sie zu entfernen.
 * Blöcke lassen sich verschieben. Um einen Regelblock zu entfernen, zieh ihn auf den Mülleimer 🗑, der
-  beim Ziehen an der Ecke des Spielfelds erscheint. Mit −, + und Fit kannst du zoomen.
+  beim Ziehen an der Ecke des Spielfelds erscheint. Das Spielfeld zeigt immer den ganzen Beweis.
 * Unter dem Spielfeld steht derselbe Beweis in Lean, bei jedem Schritt aktualisiert.
 * Eine gelöste Aufgabe wird zum *Hilfssatz*: Im Menü von *＋* kannst du sie unter „Hilfssätze aus
   gelösten Aufgaben“ in anderen Aufgaben als eigenen Block verwenden.

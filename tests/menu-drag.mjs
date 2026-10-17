@@ -10,7 +10,7 @@ async function open(opts) {
   page.on('pageerror', e => console.log('PAGEERROR', e.message))
   await page.goto(base); await page.evaluate(() => localStorage.clear()); await page.reload()
   const t = page.locator('.ipm-task').nth(0)
-  await t.locator('.ipm-board').scrollIntoViewIfNeeded()
+  await t.locator('.ipm-canvas').evaluate(c => c.scrollIntoView({ block: 'start' }))
   return { page, t }
 }
 const blocks = t => t.locator('.ipm-canvas .ipm-rule')
