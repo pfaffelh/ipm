@@ -72,11 +72,14 @@
     'Session 5: Classical Logic': 'Sitzung 5: Klassische Logik', 'Session 6: From the Lean Course': 'Sitzung 6: Aus dem Lean-Kurs', 'Session 7: Equivalence and Truth': 'Sitzung 7: Äquivalenz und Wahrheit', 'Session 8: Quantifiers': 'Sitzung 8: Quantoren', 'Session 9: Two Puzzles': 'Sitzung 9: Zwei Rätsel', 'Session 10: Induction': 'Sitzung 10: Induktion', 'Table of Contents': 'Inhalt', 'Contents': 'Inhalt',
   }
   function translatePage() {
-    if (LANG !== 'de') return
     const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
-    for (let n = walk.nextNode(); n; n = walk.nextNode())
-      for (const [en, de] of Object.entries(DE_TITLES)) if (n.nodeValue.includes(en)) n.nodeValue = n.nodeValue.replace(en, de)
-    for (const [en, de] of Object.entries(DE_TITLES)) document.title = document.title.replace(en, de)
+    for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+      if (LANG === 'de')
+        for (const [en, de] of Object.entries(DE_TITLES)) if (n.nodeValue.includes(en)) n.nodeValue = n.nodeValue.replace(en, de)
+      // The sessions are numbered anyway (1. …): "1. Session 1: Conjunction" is shown as "1. Conjunction".
+      if (!n.parentElement?.closest('.ipm-task')) n.nodeValue = n.nodeValue.replace(/(Session|Sitzung) \d+: /g, '')
+    }
+    if (LANG === 'de') for (const [en, de] of Object.entries(DE_TITLES)) document.title = document.title.replace(en, de)
   }
   // The switch in the header: EN | DE. Changing the language reloads the page; progress is kept.
   function languageSwitch() {

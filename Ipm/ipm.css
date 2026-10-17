@@ -357,3 +357,5 @@
 .ipm-start-button:hover { background: #2f5a96; }
 .ipm-start-where { color: #555; font-size: 0.95em; }
 .ipm-start-again { font-size: 0.85em; color: #3b6db3; }
+/* The table of contents is narrower: the titles are short ("1. Conjunction"). */
+:root:root { --verso-toc-width: 16.5rem; }
