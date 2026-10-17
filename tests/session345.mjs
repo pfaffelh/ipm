@@ -31,7 +31,7 @@ const open = async path => {
   await page.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => { x.classList.remove('ipm-locked'); x.inert = false }))
 }
 
-await open('Session-3___-Disjunction/')
+await open('World-3___-Disjunction/')
 // A ∨ B ⊢ B ∨ A
 let t = page.locator('.ipm-task').nth(4)
 await add(t, 'disjE', 'disjI2', 'disjI1')
@@ -47,7 +47,7 @@ await link(goal(t), out(rule(t, 0)))
 await link(inp(rule(t, 0), 1), local(rule(t, 0), 1))
 console.log('S3 T6, hypothesis in the wrong case:', await state(t), '\n')
 
-await open('Session-4___-Falsity-and-Negation/')
+await open('World-4___-Falsity-and-Negation/')
 // ⊥ ∨ A ⊢ A
 t = page.locator('.ipm-task').nth(3)
 await add(t, 'disjE', 'falseE')
@@ -70,7 +70,7 @@ await link(inp(rule(t, 4), 1), out(rule(t, 5)))
 await link(inp(rule(t, 5)), local(rule(t, 3)))
 await done('S4 T15', t)
 
-await open('Session-5___-Classical-Logic/')
+await open('World-5___-Classical-Logic/')
 // Peirce: ⊢ ((A → B) → A) → A
 t = page.locator('.ipm-task').nth(6)
 await add(t, 'impI', 'disjE', 'TND', 'impE', 'impI', 'falseE', 'impE')

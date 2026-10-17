@@ -11,7 +11,7 @@ falsity and negation. `⊥` is Lean's `False`, and `A → ⊥` is Lean's `¬A`.
 Each task carries a Lean proof, checked when the site is built.
 -/
 
-#doc (Manual) "Session 4: Falsity and Negation" =>
+#doc (Manual) "World 4: Falsity and Negation" =>
 
 :::en
 The statement `⊥` (“falsity”) can never be true; in Lean it is called `False`. One new rule:
@@ -239,12 +239,12 @@ example (A B C : Prop) (h : (A → False) ∨ (B → False) ∨ (C → False)) :
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (conclusions := "(A ∨ (A → ⊥) → ⊥) → ⊥") (assumptions := "")
 :::en
-The final task of the session: it is impossible that both `A` and “not `A`” are false. Note
+The final level of the world: it is impossible that both `A` and “not `A`” are false. Note
 `A ∨ (A → ⊥) → ⊥` means `(A ∨ (A → ⊥)) → ⊥`.
 :::
 
 :::de
-Die letzte Aufgabe der Sitzung: Es ist unmöglich, dass sowohl `A` als auch „nicht `A`“ falsch
+Das letzte Level der Welt: Es ist unmöglich, dass sowohl `A` als auch „nicht `A`“ falsch
 sind. Beachte: `A ∨ (A → ⊥) → ⊥` bedeutet `(A ∨ (A → ⊥)) → ⊥`.
 :::
 

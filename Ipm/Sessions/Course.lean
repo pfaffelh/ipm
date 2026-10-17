@@ -11,22 +11,22 @@ chapter 01-Logic, that the Incredible Proof Machine does not have.
 Each task carries a Lean proof, checked when the site is built.
 -/
 
-#doc (Manual) "Session 6: From the Lean Course" =>
+#doc (Manual) "World 6: From the Lean Course" =>
 
 :::en
-Tasks from the exercises of the [Lean course](https://pfaffelh.github.io/leancourse/) (chapter
-01-Logic) that the sessions so far did not have, with all the rules from before. There, `¬P` is
+Levels from the exercises of the [Lean course](https://pfaffelh.github.io/leancourse/) (chapter
+01-Logic) that the worlds so far did not have, with all the rules from before. There, `¬P` is
 written; here it is `P → ⊥`, which in Lean is the same.
 
-The last tasks need TND, the others do not.
+The last levels need TND, the others do not.
 :::
 
 :::de
-Aufgaben aus den Übungen des [Lean-Kurses](https://pfaffelh.github.io/leancourse/) (Kapitel
-01-Logic), die in den bisherigen Sitzungen nicht vorkamen, mit allen bisherigen Regeln. Dort steht
+Levels aus den Übungen des [Lean-Kurses](https://pfaffelh.github.io/leancourse/) (Kapitel
+01-Logic), die in den bisherigen Welten nicht vorkamen, mit allen bisherigen Regeln. Dort steht
 `¬P`; hier steht `P → ⊥`, was in Lean dasselbe ist.
 
-Die letzten Aufgaben brauchen TND, die anderen nicht.
+Die letzten Levels brauchen TND, die anderen nicht.
 :::
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "") (conclusions := "P → P → P")
@@ -228,11 +228,11 @@ example (P Q R S : Prop) (f : P → R) (g : Q → R) : (P ∨ Q) ∧ S → R := 
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "(P ∨ Q) ∨ R") (conclusions := "P ∨ Q ∨ R")
 :::en
-Associativity of `∨`: the direction that session 3 did not have.
+Associativity of `∨`: the direction that world 3 did not have.
 :::
 
 :::de
-Assoziativität von `∨`: die Richtung, die in Sitzung 3 fehlte.
+Assoziativität von `∨`: die Richtung, die in Welt 3 fehlte.
 :::
 
 ```lean -show
@@ -414,11 +414,11 @@ example (P Q : Prop) (f : P → Q) : Q ∨ (P → False) := (Classical.em P).eli
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "") (conclusions := "(P → Q) ∨ (Q → P)")
 :::en
-The final task: one of the two implications always holds. Distinguish the cases for `Q`.
+The final level: one of the two implications always holds. Distinguish the cases for `Q`.
 :::
 
 :::de
-Die letzte Aufgabe: Eine der beiden Implikationen gilt immer. Unterscheide die Fälle für `Q`.
+Das letzte Level: Eine der beiden Implikationen gilt immer. Unterscheide die Fälle für `Q`.
 :::
 
 ```lean -show

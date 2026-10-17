@@ -11,7 +11,7 @@ with Lean's conventions: `∧` groups to the right, so the Proof Machine's `A∧
 Each task carries a Lean proof, checked when the site is built.
 -/
 
-#doc (Manual) "Session 1: Conjunction" =>
+#doc (Manual) "World 1: Conjunction" =>
 
 :::en
 Two rules, for conjunction (`∧`, “and”):
@@ -34,6 +34,19 @@ Tap the red circle on top of the goal `A`; the assumption `A` glows green. Tap i
 
 :::de
 Tippe den roten Kreis oben am Ziel `A` an; die Annahme `A` leuchtet grün. Tippe sie an.
+:::
+
+
+:::tip (lang := "en")
+How to play: a *red circle* is something still to prove, a *blue dot* something you have. Tap
+one of them, then one of the parts that glow green: a line connects them. You are done when no red
+circle is left.
+:::
+
+:::tip (lang := "de")
+So wird gespielt: Ein *roter Kreis* ist etwas, das noch zu beweisen ist, ein *blauer Punkt* etwas,
+das du hast. Tippe eines davon an, dann eines der grün leuchtenden Teile: Eine Linie verbindet sie.
+Du bist fertig, wenn kein roter Kreis mehr übrig ist.
 :::
 
 ```lean -show
@@ -80,6 +93,19 @@ Deine erste Regel. Tippe den roten Kreis des Ziels an, dann *＋* unter dem Bild
 neuer Block erscheint: Verbinde seinen Ausgang mit dem Ziel und fülle dann seine beiden roten Kreise.
 :::
 
+
+:::tip (lang := "en")
+Your first *rule block*: it comes from *＋* below the board. ∧I has two inputs (red circles `?1`
+and `?2`) and one output (blue dot `?1 ∧ ?2`). Connect its output to the goal: then `?1` and `?2`
+become `A` and `B`, and its two red circles are what is left to prove.
+:::
+
+:::tip (lang := "de")
+Dein erster *Regelblock*: Er kommt über *＋* unter dem Spielfeld. ∧I hat zwei Eingänge (rote Kreise
+`?1` und `?2`) und einen Ausgang (blauer Punkt `?1 ∧ ?2`). Verbinde seinen Ausgang mit dem Ziel: Dann
+werden `?1` und `?2` zu `A` und `B`, und seine zwei roten Kreise sind, was noch zu beweisen bleibt.
+:::
+
 ```lean -show
 example (A B : Prop) (a : A) (b : B) : A ∧ B := ⟨a, b⟩
 ```
@@ -108,6 +134,17 @@ connect the right one of its outputs to the goal.
 :::de
 Jetzt zerlegst du eine Konjunktion. Nimm mit *＋* einen *∧E*-Block, gib `A ∧ B` hinein und
 verbinde den richtigen seiner Ausgänge mit dem Ziel.
+:::
+
+
+:::tip (lang := "en")
+∧E takes a conjunction apart: one input `?1 ∧ ?2`, two outputs `?1` and `?2`. Feed `A ∧ B` into
+it, and use the output you need.
+:::
+
+:::tip (lang := "de")
+∧E zerlegt eine Konjunktion: ein Eingang `?1 ∧ ?2`, zwei Ausgänge `?1` und `?2`. Gib `A ∧ B` hinein
+und verwende den Ausgang, den du brauchst.
 :::
 
 ```lean -show

@@ -24,14 +24,14 @@ const unlock = () => page.evaluate(() => document.querySelectorAll('.ipm-task').
 const task = n => page.locator('.ipm-task').nth(n)
 
 // Task 1.4 (A, B ⊢ A ∧ B), not marked as a lemma
-await page.goto(base + 'Session-1___-Conjunction/')
+await page.goto(base + 'World-1___-Conjunction/')
 await page.evaluate(() => localStorage.clear()); await page.reload(); await unlock()
 let t = task(3)
 await add(t, 'conjI'); await link(goal(t), out(rule(t, 0))); await link(inp(rule(t, 0), 0), hyp(t, 0)); await link(inp(rule(t, 0), 1), hyp(t, 1))
 console.log('1.4:', await t.locator('.ipm-status').innerText())
 
 // Task 2.5 (A → B, B → C ⊢ A → C), a lemma
-await page.goto(base + 'Session-2___-Implication/'); await unlock()
+await page.goto(base + 'World-2___-Implication/'); await unlock()
 t = task(4)
 await add(t, 'impI'); await add(t, 'impE'); await add(t, 'impE')
 await link(goal(t), out(rule(t, 0))); await link(inp(rule(t, 0)), out(rule(t, 1)))
@@ -42,7 +42,7 @@ await page.waitForTimeout(300)
 console.log('lemmas in 2.3:', await lemmas(task(2)), '| in 2.6:', await lemmas(task(5)))
 
 // Task 4.13 (A → ⊥, B → A ⊢ B → ⊥) with lemma 2.5
-await page.goto(base + 'Session-4___-Falsity-and-Negation/'); await unlock()
+await page.goto(base + 'World-4___-Falsity-and-Negation/'); await unlock()
 t = task(12)
 console.log('lemmas in 4.13:', await lemmas(t))
 await tap(t.locator('.ipm-lemma-item').first())

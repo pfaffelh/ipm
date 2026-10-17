@@ -31,7 +31,7 @@ const open = async path => {
   await page.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => { x.classList.remove('ipm-locked'); x.inert = false }))
 }
 
-await open('Session-1___-Conjunction/')
+await open('World-1___-Conjunction/')
 // (A ∧ B) ∧ C ⊢ A ∧ C, using one ∧E block twice
 let t = page.locator('.ipm-task').nth(10)
 await add(t, '∧I'); await add(t, '∧E'); await add(t, '∧E')
@@ -42,7 +42,7 @@ await link(inp(rule(t, 2)), hyp(t, 0))
 await link(inp(rule(t, 0), 1), out(rule(t, 2), 1))
 await done('S1 T11', t)
 
-await open('Session-2___-Implication/')
+await open('World-2___-Implication/')
 // B ⊢ A → B: the hypothesis is not used
 t = page.locator('.ipm-task').nth(9)
 await add(t, '→I')

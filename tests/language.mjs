@@ -8,7 +8,7 @@ const page = await ctx.newPage()
 await allTasks(page)
 page.on('pageerror', e => console.log('PAGEERROR', e.message))
 const base = process.env.BASE ?? 'http://127.0.0.1:8002/'
-await page.goto(base + 'Session-2___-Implication/')
+await page.goto(base + 'World-2___-Implication/')
 await page.evaluate(() => localStorage.clear()); await page.reload()
 const visibleText = async sel => (await page.locator(sel).count()) ? (await page.locator(sel).first().innerText()).slice(0, 60).replace(/\n/g, ' ') : '–'
 const report = async label => console.log(`${label}: title "${await page.title()}" | intro "${await visibleText('main .ipm-lang:visible')}" | ` +

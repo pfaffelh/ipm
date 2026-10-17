@@ -42,18 +42,18 @@
     'Now tap a glowing green circle, or add a block with ＋': 'Jetzt einen grün leuchtenden Kreis antippen oder mit ＋ einen Baustein hinzufügen',
     '1 red circle left — tap one': 'Noch 1 roter Kreis — tippe ihn an',
     '{n} red circles left — tap one': 'Noch {n} rote Kreise — tippe einen an',
-    'Lemmas from solved tasks': 'Hilfssätze aus gelösten Aufgaben',
+    'Lemmas from solved levels': 'Hilfssätze aus gelösten Levels',
     'That would go round in a circle.': 'Das wäre ein Kreisschluss.',
     'Prove {x}': 'Beweise {x}', 'Disconnect': 'Verbindung lösen', 'This input is connected already.': 'Dieser Eingang ist schon verbunden.',
     'Remove this block': 'Diesen Block entfernen', 'Remove this connection': 'Diese Verbindung entfernen',
     '{x} does not fit {y}': '{x} passt nicht zu {y}',
     'A local hypothesis may only be used inside its box.': 'Eine lokale Annahme darf nur innerhalb ihres Kastens verwendet werden.',
     'Cancel': 'Abbrechen', 'more ▸': 'mehr ▸', 'less ▾': 'weniger ▾', '1 rule ▸': '1 Regel ▸', '{n} rules ▸': '{n} Regeln ▸',
-    '{name} block': '{name}-Block', 'Previous task': 'Vorherige Aufgabe', 'Next task': 'Nächste Aufgabe', 'Next ›': 'Weiter ›', '▶ Start': '▶ Start', '▶ Continue': '▶ Weiterspielen', 'or start from the beginning': 'oder von vorn beginnen', 'About this session': 'Über diese Sitzung', 'Settings': 'Einstellungen', 'Off': 'Aus', 'All': 'Alle',
+    '{name} block': '{name}-Block', 'Next ›': 'Weiter ›', '▶ Start': '▶ Start', '▶ Continue': '▶ Weiterspielen', 'or start from the beginning': 'oder von vorn beginnen', 'About this level': 'Über dieses Level', 'This world': 'Diese Welt', 'Tip': 'Tipp', 'Got it': 'Verstanden', 'Settings': 'Einstellungen', 'Off': 'Aus', 'All': 'Alle',
     'Tactics: buttons with the Lean command that fits a tapped circle or dot': 'Taktiken: Knöpfe mit dem passenden Lean-Befehl zu einem angetippten Kreis oder Punkt',
-    'Earned by solving tasks': 'Durch Lösen von Aufgaben freigespielt', 'Order': 'Reihenfolge', 'Tasks in order': 'Aufgaben der Reihe nach',
-    'A task can be played once the one before it is solved.': 'Eine Aufgabe ist spielbar, sobald die vorherige gelöst ist.',
-    '🔓 Unlocked: the tactic {t}': '🔓 Freigespielt: die Taktik {t}', '🔒 Solve this task to unlock the tactic {t}.': '🔒 Löse diese Aufgabe, um die Taktik {t} freizuspielen.',
+    'Earned by solving levels': 'Durch Lösen von Levels freigespielt', 'Order': 'Reihenfolge', 'Levels in order': 'Levels der Reihe nach',
+    'A level can be played once the one before it is solved.': 'Ein Level ist spielbar, sobald das vorherige gelöst ist.',
+    '🔓 Unlocked: the tactic {t}': '🔓 Freigespielt: die Taktik {t}', '🔒 Solve this level to unlock the tactic {t}.': '🔒 Löse dieses Level, um die Taktik {t} freizuspielen.',
     'induction': 'Induktion', '∀-introduction': '∀-Einführung', '∀-elimination': '∀-Beseitigung', '∃-introduction': '∃-Einführung', '∃-elimination': '∃-Beseitigung',
     '⚠ {c} escapes': '⚠ {c} entkommt',
     'The {c} of this induction block stands for an arbitrary number. So it must not occur in the conclusion, nor in an assumption other than its hypothesis that the proof of the step uses.':
@@ -62,22 +62,22 @@
       'Das {c} dieses ∀I-Blocks steht für ein beliebiges Objekt. Es darf daher weder in der Folgerung vorkommen noch in einer Annahme, die der Beweis seines Eingangs verwendet.',
     'The {c} of this ∃E block stands for the object that exists, about which nothing else is known. So it must not occur in the conclusion, nor in the ∃ statement, nor in another assumption that the proof of its second input uses.':
       'Das {c} dieses ∃E-Blocks steht für das Objekt, das existiert und über das sonst nichts bekannt ist. Es darf daher weder in der Folgerung noch in der ∃-Aussage vorkommen noch in einer anderen Annahme, die der Beweis seines zweiten Eingangs verwendet.', 'Allow tactics': 'Taktiken erlauben',
-    'Show the Lean command that fits a tapped circle or dot': 'Zu einem angetippten Kreis oder Punkt den passenden Lean-Befehl zeigen', 'Task {i} of {n}': 'Aufgabe {i} von {n}',
+    'Show the Lean command that fits a tapped circle or dot': 'Zu einem angetippten Kreis oder Punkt den passenden Lean-Befehl zeigen', 'Level {i} of {n}': 'Level {i} von {n}',
   }
   // Headings of the site, which come from Verso.
   const DE_TITLES = {
     'The Incredible Proof Machine in Lean': 'Die Incredible Proof Machine in Lean',
-    'Session 1: Conjunction': 'Sitzung 1: Konjunktion', 'Session 2: Implication': 'Sitzung 2: Implikation',
-    'Session 3: Disjunction': 'Sitzung 3: Disjunktion', 'Session 4: Falsity and Negation': 'Sitzung 4: Falsum und Negation',
-    'Session 5: Classical Logic': 'Sitzung 5: Klassische Logik', 'Session 6: From the Lean Course': 'Sitzung 6: Aus dem Lean-Kurs', 'Session 7: Equivalence and Truth': 'Sitzung 7: Äquivalenz und Wahrheit', 'Session 8: Quantifiers': 'Sitzung 8: Quantoren', 'Session 9: Two Puzzles': 'Sitzung 9: Zwei Rätsel', 'Session 10: Induction': 'Sitzung 10: Induktion', 'Table of Contents': 'Inhalt', 'Contents': 'Inhalt',
+    'World 1: Conjunction': 'Welt 1: Konjunktion', 'World 2: Implication': 'Welt 2: Implikation',
+    'World 3: Disjunction': 'Welt 3: Disjunktion', 'World 4: Falsity and Negation': 'Welt 4: Falsum und Negation',
+    'World 5: Classical Logic': 'Welt 5: Klassische Logik', 'World 6: From the Lean Course': 'Welt 6: Aus dem Lean-Kurs', 'World 7: Equivalence and Truth': 'Welt 7: Äquivalenz und Wahrheit', 'World 8: Quantifiers': 'Welt 8: Quantoren', 'World 9: Two Puzzles': 'Welt 9: Zwei Rätsel', 'World 10: Induction': 'Welt 10: Induktion', 'Table of Contents': 'Inhalt', 'Contents': 'Inhalt',
   }
   function translatePage() {
     const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
     for (let n = walk.nextNode(); n; n = walk.nextNode()) {
       if (LANG === 'de')
         for (const [en, de] of Object.entries(DE_TITLES)) if (n.nodeValue.includes(en)) n.nodeValue = n.nodeValue.replace(en, de)
-      // The sessions are numbered anyway (1. …): "1. Session 1: Conjunction" is shown as "1. Conjunction".
-      if (!n.parentElement?.closest('.ipm-task')) n.nodeValue = n.nodeValue.replace(/(Session|Sitzung) \d+: /g, '')
+      // The worlds are numbered anyway (1. …): "1. World 1: Conjunction" is shown as "1. Conjunction".
+      if (!n.parentElement?.closest('.ipm-task')) n.nodeValue = n.nodeValue.replace(/(World|Welt) \d+: /g, '')
     }
     if (LANG === 'de') for (const [en, de] of Object.entries(DE_TITLES)) document.title = document.title.replace(en, de)
   }
@@ -128,12 +128,12 @@
     const box = el('input')
     box.type = 'checkbox'; box.name = 'ipm-in-order'; box.checked = SETTINGS.inOrder
     box.addEventListener('change', () => { SETTINGS.inOrder = box.checked; saveSettings() })
-    order.append(box, el('span', '', tr('Tasks in order')))
+    order.append(box, el('span', '', tr('Levels in order')))
     panel.append(head,
       el('div', 'ipm-pop-subtitle', tr('Tactics: buttons with the Lean command that fits a tapped circle or dot')),
-      radio('off', tr('Off')), radio('earned', tr('Earned by solving tasks')), radio('all', tr('All')),
+      radio('off', tr('Off')), radio('earned', tr('Earned by solving levels')), radio('all', tr('All')),
       el('div', 'ipm-pop-subtitle', tr('Order')), order,
-      el('div', 'ipm-setting-note', tr('A task can be played once the one before it is solved.')))
+      el('div', 'ipm-setting-note', tr('A level can be played once the one before it is solved.')))
     button.addEventListener('click', ev => { ev.stopPropagation(); panel.hidden = !panel.hidden })
     document.addEventListener('pointerdown', ev => { if (!panel.hidden && !panel.contains(ev.target) && ev.target !== button) panel.hidden = true })
     document.addEventListener('keydown', ev => { if (ev.key === 'Escape') panel.hidden = true })
@@ -1049,7 +1049,7 @@
       this.root = root
       this.key = `ipm-verso:${location.pathname}:${index}`
       this.index = index
-      this.session = Number(/Session-(\d+)/.exec(location.pathname)?.[1] ?? 0)
+      this.session = Number(/World-(\d+)/.exec(location.pathname)?.[1] ?? 0)
       // Whether this task, once solved, is a lemma for the tasks after it.
       this.isLemma = root.dataset.lemma === 'true'
       this.assumptions = JSON.parse(root.dataset.assumptions)
@@ -1112,7 +1112,7 @@
       })
       this.lemmaBox = el('div', 'ipm-pop-section')
       this.lemmaList = el('div', 'ipm-pop-list')
-      this.lemmaBox.append(el('div', 'ipm-pop-subtitle', tr('Lemmas from solved tasks')), this.lemmaList)
+      this.lemmaBox.append(el('div', 'ipm-pop-subtitle', tr('Lemmas from solved levels')), this.lemmaList)
       this.popover.append(head, el('div', 'ipm-pop-subtitle', tr('Rules')), ruleList, this.lemmaBox)
       this.menu.append(this.popover, this.addButton)
       // A tap elsewhere, or Escape, closes the popover.
@@ -1538,7 +1538,7 @@
       this.unlockNote.hidden = !(SETTINGS.tactics === 'earned' && this.unlocks.length)
       const ts = this.unlocks.join(', ')
       this.unlockNote.textContent = this.unlocks.every(k => UNLOCKED.has(k))
-        ? tr('🔓 Unlocked: the tactic {t}', { t: ts }) : tr('🔒 Solve this task to unlock the tactic {t}.', { t: ts })
+        ? tr('🔓 Unlocked: the tactic {t}', { t: ts }) : tr('🔒 Solve this level to unlock the tactic {t}.', { t: ts })
     }
 
     // Solving the task unlocks its tactics.
@@ -1866,7 +1866,7 @@
   // Tasks on a page are revealed one at a time, like the steps of a lesson.
   // The start page: a big button to start (the first session), or to go on where one left off.
   function startButton() {
-    const first = document.querySelector('#toc a[href*="Session-1"], main a[href*="Session-1"]')
+    const first = document.querySelector('#toc a[href*="World-1___"], main a[href*="World-1___"]')
     const h1 = document.querySelector('main h1')
     if (!first || !h1) return
     let last = null
@@ -1884,16 +1884,39 @@
     h1.after(box)
   }
 
-  // A session page shows one task at a time, on a stage as high as the screen: the task's text,
+  // A world's page shows one level at a time, on a stage as high as the screen: the level's text,
   // its board (which takes the room that is left), ＋ and the tools. Above, on the right: a dot for
   // each task (to go there; ← → also do). At its foot: the rules of the session, folded away.
-  // Nothing scrolls while one plays; the task is in the address (#task-3).
+  // Nothing scrolls while one plays; the level is in the address (#level-3).
+  // The pages were called Session-2___-Implication/ before, now World-2___-Implication/: what the
+  // browser keeps under the old addresses (progress, lemmas, the last level, tips seen) moves once.
+  function moveProgress() {
+    try {
+      if (localStorage.getItem('ipm-verso:worlds') === '1') return
+      const address = {}
+      for (const a of document.querySelectorAll('a[href*="World-"]')) {
+        const m = /World-(\d+)___-[^/#"]*/.exec(a.getAttribute('href'))
+        if (m) address[m[1]] = m[0]
+      }
+      if (!Object.keys(address).length) return
+      const fix = x => x.replace(/Session-(\d+)___-[^/#"]*/g, (old, n) => address[n] ?? old)
+      for (const k of Object.keys(localStorage)) {
+        if (!k.startsWith('ipm-verso')) continue
+        const v = localStorage.getItem(k), k2 = fix(k), v2 = fix(v)
+        if (k2 !== k) { if (localStorage.getItem(k2) === null) localStorage.setItem(k2, v2); localStorage.removeItem(k) }
+        else if (v2 !== v) localStorage.setItem(k, v2)
+      }
+      localStorage.setItem('ipm-verso:worlds', '1')
+    } catch {}
+  }
+
   function init() {
+    moveProgress()
     translatePage()
     languageSwitch()
     registerLemmas()
     const tasks = [...document.querySelectorAll('.ipm-task')].map((root, i) => new Task(root, i))
-    tasks.forEach((t, i) => t.root.prepend(el('div', 'ipm-task-label', tr('Task {i} of {n}', { i: i + 1, n: tasks.length }))))
+    tasks.forEach((t, i) => t.root.prepend(el('div', 'ipm-task-label', tr('Level {i} of {n}', { i: i + 1, n: tasks.length }))))
     if (!tasks.length) { startButton(); return }
     const stage = el('div', 'ipm-stage')
     tasks[0].root.before(stage)
@@ -1907,16 +1930,43 @@
     stage.append(top, ...tasks.map(t => t.root), foot)
     document.documentElement.classList.add('ipm-playing')
     // The text before the tasks (the rules of the session) folds away above them; open at first.
-    const intro = el('details', 'ipm-intro')
+    // The text before the levels (the rules of the world) is the tip of its first level. A level's
+    // tip appears when it is played for the first time; it and the rules of the world are always
+    // under "About this level" at the foot.
     const before = []
     for (let n = stage.previousSibling; n && !(n.nodeType === 1 && /^H\d$/.test(n.tagName)); n = n.previousSibling) before.unshift(n)
-    if (before.some(n => n.nodeType === 1)) {
-      const body = el('div', 'ipm-intro-body')
-      body.append(...before)
-      intro.append(el('summary', '', tr('About this session')), body)
-      intro.open = !tasks.some(t => t.proof.connections.length || t.root.classList.contains('ipm-solved'))
-      foot.append(intro)
-      intro.addEventListener('toggle', () => tasks[current].render())
+    const rules = el('div', 'ipm-rules')
+    rules.append(...before)
+    const hasRules = before.some(n => n.nodeType === 1)
+    const tipNodes = k => [...tasks[k].root.querySelectorAll(':scope > .ipm-tip')].map(n => {
+      const c = n.cloneNode(true); c.classList.remove('ipm-tip'); c.classList.add('ipm-lang'); return c
+    })
+    const clone = () => [...rules.childNodes].map(n => n.cloneNode(true))
+    const about = el('details', 'ipm-intro'), aboutBody = el('div', 'ipm-intro-body')
+    about.append(el('summary', '', tr('About this level')), aboutBody)
+    foot.append(about)
+    about.addEventListener('toggle', () => tasks[current].render())
+    const fillAbout = () => {
+      const own = tipNodes(current)
+      aboutBody.replaceChildren(...own, ...(hasRules ? [el('div', 'ipm-rules-head', tr('This world')), ...clone()] : []))
+    }
+    // The tip of a level, once: in a box over the stage, closed with "Got it".
+    const seenKey = k => `${tasks[k].key}:tip`
+    const showTip = k => {
+      if (tasks[k].root.inert) return
+      const nodes = [...tipNodes(k), ...(k === 0 && hasRules ? clone() : [])]
+      let seen = false
+      try { seen = localStorage.getItem(seenKey(k)) === '1' } catch {}
+      if (!nodes.length || seen || document.querySelector('.ipm-tip-overlay')) return
+      const overlay = el('div', 'ipm-tip-overlay'), card = el('div', 'ipm-tip-card'), ok = el('button', 'ipm-tip-ok', tr('Got it'))
+      ok.type = 'button'
+      const close = () => { try { localStorage.setItem(seenKey(k), '1') } catch {}; overlay.remove() }
+      ok.addEventListener('click', close)
+      overlay.addEventListener('click', ev => { if (ev.target === overlay) close() })
+      card.append(el('div', 'ipm-tip-head', '💡 ' + tr('Tip')), ...nodes, ok)
+      overlay.append(card)
+      document.body.append(overlay)
+      ok.focus()
     }
     let current = 0
     const key = `ipm-verso:${location.pathname}:current`
@@ -1924,21 +1974,23 @@
       current = Math.max(0, Math.min(tasks.length - 1, i))
       tasks.forEach((t, k) => t.root.classList.toggle('ipm-current', k === current))
       refreshDots()
-      // (with the path: the page has a <base>, against which a bare #task-3 would point elsewhere)
-      history.replaceState(null, '', `${location.pathname}${location.search}#task-${current + 1}`)
+      // (with the path: the page has a <base>, against which a bare #level-3 would point elsewhere)
+      history.replaceState(null, '', `${location.pathname}${location.search}#level-${current + 1}`)
       try {
         localStorage.setItem(key, String(current))
         // For "Continue" on the start page.
         localStorage.setItem('ipm-verso:last', JSON.stringify({ href: location.pathname + location.hash, title: document.title }))
       } catch {}
       tasks[current].render()  // its board now has its size
+      fillAbout()
+      showTip(current)
     }
     const refreshDots = () => {
       dots.replaceChildren(...tasks.map((t, k) => {
         const d = el('button', 'ipm-dot' + (t.root.classList.contains('ipm-solved') ? ' ipm-dot-solved' : '') +
           (t.root.classList.contains('ipm-locked') ? ' ipm-dot-locked' : '') + (k === current ? ' ipm-dot-current' : ''))
         d.type = 'button'
-        d.title = tr('Task {i} of {n}', { i: k + 1, n: tasks.length })
+        d.title = tr('Level {i} of {n}', { i: k + 1, n: tasks.length })
         d.addEventListener('click', () => show(k))
         return d
       }))
@@ -1982,7 +2034,7 @@
     update()
     window.addEventListener('ipm-settings', update)
     // Which task: from the address, or the one played last, or the first one not solved.
-    const fromHash = () => Number(/^#task-(\d+)$/.exec(location.hash)?.[1] ?? 0) - 1
+    const fromHash = () => Number(/^#(?:level|task)-(\d+)$/.exec(location.hash)?.[1] ?? 0) - 1  // #task-3: the old form
     let start = fromHash()
     if (start < 0) { try { start = Number(localStorage.getItem(key) ?? -1) } catch { start = -1 } }
     if (start < 0) start = Math.max(0, tasks.findIndex(t => !t.root.classList.contains('ipm-solved')))

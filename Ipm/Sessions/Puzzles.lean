@@ -11,7 +11,7 @@ two puzzles of predicate logic.
 Each task carries a Lean proof, checked when the site is built.
 -/
 
-#doc (Manual) "Session 9: Two Puzzles" =>
+#doc (Manual) "World 9: Two Puzzles" =>
 
 :::en
 Two puzzles of predicate logic, with all the rules so far. Both need TND, and both need some
@@ -42,11 +42,11 @@ example (α : Type) [Inhabited α] (P : α → Prop) : ∃ x, P x → ∀ y, P y
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "∀ x, (R x → ⊥) → R (f x)") (conclusions := "∃ x, R x ∧ R (f (f x))")
 :::en
-The hardest task of the Proof Machine. Find an object `b` with `R b` first; then look at `R (f (f b))`.
+The hardest level of the Proof Machine. Find an object `b` with `R b` first; then look at `R (f (f b))`.
 :::
 
 :::de
-Die schwerste Aufgabe der Proof Machine. Finde zuerst ein Objekt `b` mit `R b`; dann schau dir `R (f (f b))` an.
+Das schwerste Level der Proof Machine. Finde zuerst ein Objekt `b` mit `R b`; dann schau dir `R (f (f b))` an.
 :::
 
 ```lean -show

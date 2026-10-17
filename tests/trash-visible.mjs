@@ -5,7 +5,7 @@ const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/
 const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 })
 const page = await ctx.newPage()
 await allTasks(page)
-await page.goto((process.env.BASE ?? 'http://127.0.0.1:8002/') + 'Session-2___-Implication/')
+await page.goto((process.env.BASE ?? 'http://127.0.0.1:8002/') + 'World-2___-Implication/')
 await page.evaluate(() => localStorage.clear()); await page.reload()
 const t = page.locator('.ipm-task').nth(0)
 await t.locator('.ipm-menu-item[title^="→E"]').dispatchEvent('click'); await page.waitForTimeout(200)

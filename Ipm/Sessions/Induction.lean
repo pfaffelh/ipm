@@ -10,7 +10,7 @@ Induction over the natural numbers, a rule that the Incredible Proof Machine doe
 Each task carries a Lean proof, checked when the site is built.
 -/
 
-#doc (Manual) "Session 10: Induction" =>
+#doc (Manual) "World 10: Induction" =>
 
 :::en
 Statements about natural numbers `0, 1, 2, …`, where `n + 1` is the number after `n`. One new rule:
@@ -19,7 +19,7 @@ Statements about natural numbers `0, 1, 2, …`, where `n + 1` is the number aft
   from the hypothesis `?1 c₁`, for an arbitrary number `c₁` (an eigenvariable, as in ∀I). In Lean:
   `Nat.rec`, or the tactic `induction n`.
 
-The tasks have no arithmetic: properties like `P`, `Even`, `Odd` are only described by the
+The levels have no arithmetic: properties like `P`, `Even`, `Odd` are only described by the
 assumptions.
 :::
 
@@ -30,7 +30,7 @@ Aussagen über natürliche Zahlen `0, 1, 2, …`, wobei `n + 1` die Zahl nach `n
   `?1 (c₁ + 1)` aus der Annahme `?1 c₁`, für eine beliebige Zahl `c₁` (eine Eigenvariable, wie bei
   ∀I). In Lean: `Nat.rec`, oder die Taktik `induction n`.
 
-Die Aufgaben enthalten keine Arithmetik: Eigenschaften wie `P`, `Even`, `Odd` sind nur durch die
+Die Levels enthalten keine Arithmetik: Eigenschaften wie `P`, `Even`, `Odd` sind nur durch die
 Annahmen beschrieben.
 :::
 
@@ -114,11 +114,11 @@ example (P Q : Nat → Prop) (p0 : P 0) (q0 : Q 0) (pq : ∀ n, P n → Q (n + 1
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE, ind") (assumptions := "P 0 ∨ Q 0; ∀ n, P n → Q (n + 1); ∀ n, Q n → P (n + 1)") (conclusions := "∀ n, P n ∨ Q n")
 :::en
-The final task: the start is a case distinction too.
+The final level: the start is a case distinction too.
 :::
 
 :::de
-Die letzte Aufgabe: Auch der Anfang ist eine Fallunterscheidung.
+Das letzte Level: Auch der Anfang ist eine Fallunterscheidung.
 :::
 
 ```lean -show

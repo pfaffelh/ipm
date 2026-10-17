@@ -4,7 +4,7 @@
 import { chromium } from 'playwright-core'
 import { allTasks } from './all-tasks.mjs'
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })
-const base = (process.env.BASE ?? 'http://127.0.0.1:8002/') + 'Session-2___-Implication/'
+const base = (process.env.BASE ?? 'http://127.0.0.1:8002/') + 'World-2___-Implication/'
 const center = async l => { const b = await l.boundingBox(); return { x: b.x + b.width / 2, y: b.y + b.height / 2 } }
 async function open(opts) {
   const page = await (await browser.newContext(opts)).newPage()

@@ -11,7 +11,7 @@ implication. Lean's conventions: `→` groups to the right, so `A → B → C` i
 Each task carries a Lean proof, checked when the site is built.
 -/
 
-#doc (Manual) "Session 2: Implication" =>
+#doc (Manual) "World 2: Implication" =>
 
 :::en
 Two new rules, for implication:
@@ -99,6 +99,19 @@ you get from it into the block's input.
 :::de
 Dein erstes →I. Nimm einen →I-Block für das Ziel; verwende dann seine lokale Annahme `A` (den
 blauen Punkt mit dem lila Ring) und führe, was du daraus bekommst, in den Eingang des Blocks.
+:::
+
+
+:::tip (lang := "en")
+To prove `A → C`, use →I. On top it has a compartment `?1 ⇒ ?2`: the *local hypothesis* `?1`
+(the blue dot with the purple ring) is something you have, but only for proving the input `?2`
+next to it. Whatever uses it lies in a dashed box.
+:::
+
+:::tip (lang := "de")
+Um `A → C` zu beweisen, nimm →I. Oben hat er ein Fach `?1 ⇒ ?2`: Die *lokale Annahme* `?1` (der
+blaue Punkt mit lila Ring) ist etwas, das du hast, aber nur, um den Eingang `?2` daneben zu beweisen.
+Was sie verwendet, liegt in einem gestrichelten Kasten.
 :::
 
 ```lean -show
@@ -220,11 +233,11 @@ example (A B C : Prop) (h : (A → B) ∧ (A → C)) : A → B ∧ C := fun a =>
 
 ::::task (assumptions := "A → A → B, (A → B) → A") (conclusions := "B")
 :::en
-The final task of the session.
+The final level of the world.
 :::
 
 :::de
-Die letzte Aufgabe der Sitzung.
+Das letzte Level der Welt.
 :::
 
 ```lean -show

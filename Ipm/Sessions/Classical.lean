@@ -11,7 +11,7 @@ classical logic, with the law of the excluded middle. Each task carries a Lean p
 the site is built.
 -/
 
-#doc (Manual) "Session 5: Classical Logic" =>
+#doc (Manual) "World 5: Classical Logic" =>
 
 :::en
 One more rule, which is different from all the others: it has no input.
@@ -52,11 +52,11 @@ example (A : Prop) : A ∨ (A → False) := Classical.em A
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "(B → ⊥) → A → ⊥") (conclusions := "A → B")
 :::en
-The converse of task 7 of the previous session. Distinguish the cases `B` and `B → ⊥`.
+The converse of level 7 of the previous world. Distinguish the cases `B` and `B → ⊥`.
 :::
 
 :::de
-Die Umkehrung von Aufgabe 7 der letzten Sitzung. Unterscheide die Fälle `B` und `B → ⊥`.
+Die Umkehrung von Level 7 der letzten Welt. Unterscheide die Fälle `B` und `B → ⊥`.
 :::
 
 ```lean -show
@@ -142,11 +142,11 @@ example (A B : Prop) : ((A → B) → A) → A :=
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "A ∧ B ∧ C → ⊥") (conclusions := "(A → ⊥) ∨ (B → ⊥) ∨ (C → ⊥)")
 :::en
-Task 3, with three parts.
+Level 3, with three parts.
 :::
 
 :::de
-Aufgabe 3, mit drei Teilen.
+Level 3, mit drei Teilen.
 :::
 
 ```lean -show
@@ -160,11 +160,11 @@ example (A B C : Prop) (h : A ∧ B ∧ C → False) : (A → False) ∨ (B → 
 
 ::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "(A → B) → ⊥") (conclusions := "A ∧ (B → ⊥)")
 :::en
-The final task: if the implication is false, then `A` is true and `B` is false.
+The final level: if the implication is false, then `A` is true and `B` is false.
 :::
 
 :::de
-Die letzte Aufgabe: Wenn die Implikation falsch ist, ist `A` wahr und `B` falsch.
+Das letzte Level: Wenn die Implikation falsch ist, ist `A` wahr und `B` falsch.
 :::
 
 ```lean -show

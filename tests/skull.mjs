@@ -9,7 +9,7 @@ for (const [opts, how] of [[{ viewport: { width: 390, height: 844 }, hasTouch: t
   const p = await (await b.newContext(opts)).newPage()
   await allTasks(p)
   p.on('pageerror', e => console.log('PAGEERROR', e.message))
-  await p.goto(base + 'Session-1___-Conjunction/'); await p.evaluate(() => localStorage.clear()); await p.reload()
+  await p.goto(base + 'World-1___-Conjunction/'); await p.evaluate(() => localStorage.clear()); await p.reload()
   await p.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => { x.classList.remove('ipm-locked'); x.inert = false }))
   const t = p.locator('.ipm-task').nth(1)  // A, B ⊢ A: connect B (wrong)
   const press = async l => { await l.scrollIntoViewIfNeeded(); const r = await l.boundingBox(); const x = r.x + r.width / 2, y = r.y + r.height / 2

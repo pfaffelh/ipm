@@ -31,7 +31,7 @@ proof is a set of lines that lead from the assumptions to the goals, through *ru
   glows green: tap that to draw the line.
 * A *blue dot* is something you have. Tap it, and the red circles it fits glow green.
 * Tactics: tapping a red circle or a blue dot can also show buttons with the step that fits, as a
-  Lean tactic: for the goal `A → B` it is *→I · intro h*. You earn each tactic by solving the task
+  Lean tactic: for the goal `A → B` it is *→I · intro h*. You earn each tactic by solving the level
   that introduces it by hand (in the settings ⚙ you can also switch them all on, or off). One tap
   puts the block in and connects it.
 * New blocks come from the button *＋* below the picture: it opens a menu with the rules. Tap one
@@ -41,26 +41,15 @@ proof is a set of lines that lead from the assumptions to the goals, through *ru
 * Blocks can be dragged around. To remove a rule block, drag it onto the trash can 🗑, which
   appears at the corner of the board while you drag. The board always shows the whole proof.
 * Below the board you see the same proof in Lean, updated with every step.
-* A solved task becomes a *lemma*: in the menu of *＋*, under “Lemmas from solved tasks”, you can use
-  it as a block of its own in other tasks.
-
-You are done when no red circle is left. Your progress is kept in your browser.
-:::
-
-:::de
-Beweise als Bilder, nach der [Incredible Proof Machine](https://incredible.pm) von Joachim Breitner,
-neu gebaut zum Spielen durch Antippen, auch auf dem Handy.
-
-Was du weißt (die Annahmen), steht oben, was du zeigen willst (die Ziele), unten. Ein Beweis besteht
-aus Linien, die über *Regelblöcke* von den Annahmen zu den Zielen führen.
-
+* Some solved levels become *lemmas*: in the menu of *＋*, under “Lemmas from solved levels”, you
+  can use them as blocks of their own in later levels.
 * Ein *roter Kreis* ist etwas, das noch zu beweisen ist. Tippe ihn an, und alles im Bild, was passt,
   leuchtet grün: Tippe es an, um die Linie zu ziehen.
 * Ein *blauer Punkt* ist etwas, das du hast. Tippe ihn an, und die roten Kreise, zu denen er passt,
   leuchten grün.
 * Taktiken: Ein angetippter roter Kreis oder blauer Punkt kann auch Knöpfe mit dem passenden
   Schritt als Lean-Taktik zeigen: für das Ziel `A → B` ist das *→I · intro h*. Jede Taktik spielst du
-  frei, indem du die Aufgabe, die sie einführt, von Hand löst (in den Einstellungen ⚙ kannst du auch
+  frei, indem du das Level, das sie einführt, von Hand löst (in den Einstellungen ⚙ kannst du auch
   alle ein- oder ausschalten). Ein Tipp setzt den Block ein und verbindet ihn.
 * Neue Blöcke kommen über den Knopf *＋* unter dem Bild: Er öffnet ein Menü mit den Regeln. Tippe
   eine an, um sie hinzuzufügen, oder zieh sie aufs Spielfeld. In einer Regel stehen `?1` und `?2` für
@@ -70,8 +59,8 @@ aus Linien, die über *Regelblöcke* von den Annahmen zu den Zielen führen.
 * Blöcke lassen sich verschieben. Um einen Regelblock zu entfernen, zieh ihn auf den Mülleimer 🗑, der
   beim Ziehen an der Ecke des Spielfelds erscheint. Das Spielfeld zeigt immer den ganzen Beweis.
 * Unter dem Spielfeld steht derselbe Beweis in Lean, bei jedem Schritt aktualisiert.
-* Eine gelöste Aufgabe wird zum *Hilfssatz*: Im Menü von *＋* kannst du sie unter „Hilfssätze aus
-  gelösten Aufgaben“ in anderen Aufgaben als eigenen Block verwenden.
+* Manche gelösten Levels werden zu *Hilfssätzen*: Im Menü von *＋* findest du sie unter „Hilfssätze
+  aus gelösten Levels“ und kannst sie in späteren Levels als eigene Blöcke verwenden.
 
 Du bist fertig, wenn kein roter Kreis mehr übrig ist. Dein Fortschritt wird in deinem Browser
 gespeichert.

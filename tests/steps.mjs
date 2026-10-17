@@ -23,7 +23,7 @@ const open = async (path, tactics = true) => {
   await page.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => { x.classList.remove('ipm-locked'); x.inert = false }))
 }
 
-await open('Session-2___-Implication/', false)
+await open('World-2___-Implication/', false)
 // A → B, B → C ⊢ A → C, with steps
 let t = page.locator('.ipm-task').nth(4)
 await tap(goal(t))
@@ -55,12 +55,12 @@ const code = await t.locator('.ipm-lean-code').innerText()
 console.log(code)
 if (process.env.SHOT) { await t.scrollIntoViewIfNeeded(); await t.screenshot({ path: process.env.SHOT }) }
 
-await open('Session-3___-Disjunction/')
+await open('World-3___-Disjunction/')
 t = page.locator('.ipm-task').nth(0)
 await tap(goal(t)); console.log('goal A ∨ B:', await steps(t))
 t = page.locator('.ipm-task').nth(4)
 await tap(hyp(t, 0)); console.log('assumption A ∨ B:', await steps(t))
-await open('Session-7___-Equivalence-and-Truth/')
+await open('World-7___-Equivalence-and-Truth/')
 t = page.locator('.ipm-task').nth(6)
 await tap(goal(t)); console.log('goal (P ↔ Q) ↔ …:', await steps(t))
 await tap(t.locator('.ipm-step').first())
@@ -70,7 +70,7 @@ await tap(goal(t)); await tap(t.locator('.ipm-step').first())
 await tap(inp(rule(t, 0))); console.log('goal ⊤ inside P → ⊤:', await steps(t))
 await tap(t.locator('.ipm-step').first()); console.log('P → ⊤ with steps only:', await t.locator('.ipm-status').innerText())
 // exact and apply from the goal: A, A → B ⊢ B in two taps
-await open('Session-2___-Implication/')
+await open('World-2___-Implication/')
 t = page.locator('.ipm-task').nth(0)
 await tap(goal(t)); console.log('goal B:', await steps(t))
 await tap(t.locator('.ipm-step', { hasText: 'apply' }))

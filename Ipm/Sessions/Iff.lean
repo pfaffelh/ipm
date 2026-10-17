@@ -11,7 +11,7 @@ Equivalence (↔) and truth (⊤), with tasks from the logic exercises of the Le
 Each task carries a Lean proof, checked when the site is built.
 -/
 
-#doc (Manual) "Session 7: Equivalence and Truth" =>
+#doc (Manual) "World 7: Equivalence and Truth" =>
 
 :::en
 Two more connectives, and four new rules:
@@ -23,7 +23,7 @@ Two more connectives, and four new rules:
   Lean: `trivial`.
 
 In Lean, `↔` binds less strongly than `→`: `P → Q ↔ R` means `(P → Q) ↔ R`. Here such brackets are
-shown anyway. The tasks come from the [Lean course](https://pfaffelh.github.io/leancourse/); the
+shown anyway. The levels come from the [Lean course](https://pfaffelh.github.io/leancourse/); the
 last ones need TND.
 :::
 
@@ -38,7 +38,7 @@ Zwei weitere Verknüpfungen und vier neue Regeln:
   Lean: `trivial`.
 
 In Lean bindet `↔` schwächer als `→`: `P → Q ↔ R` bedeutet `(P → Q) ↔ R`. Hier werden solche
-Klammern trotzdem gezeigt. Die Aufgaben stammen aus dem [Lean-Kurs](https://pfaffelh.github.io/leancourse/);
+Klammern trotzdem gezeigt. Die Levels stammen aus dem [Lean-Kurs](https://pfaffelh.github.io/leancourse/);
 die letzten brauchen TND.
 :::
 
@@ -144,11 +144,11 @@ example (P Q : Prop) : (P ↔ Q) ↔ (P → Q) ∧ (Q → P) :=
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "P → Q, Q → T, Q → R, R → S, T → P, R → T") (conclusions := "Q ↔ R")
 :::en
-The puzzle from session 6, with a new goal.
+The puzzle from world 6, with a new goal.
 :::
 
 :::de
-Das Rätsel aus Sitzung 6, mit einem neuen Ziel.
+Das Rätsel aus Welt 6, mit einem neuen Ziel.
 :::
 
 ```lean -show
@@ -179,6 +179,15 @@ example (P Q R : Prop) (h : P ↔ Q) : P ∧ R ↔ Q ∧ R :=
 
 :::de
 `⊤` (in Lean `True`) gilt immer: ⊤I beweist es, ganz ohne Eingang.
+:::
+
+
+:::tip (lang := "en")
+`⊤` (in Lean `True`) always holds: the block ⊤I proves it, without any input.
+:::
+
+:::tip (lang := "de")
+`⊤` (in Lean `True`) gilt immer: Der Block ⊤I beweist es, ganz ohne Eingang.
 :::
 
 ```lean -show
@@ -319,11 +328,11 @@ example (P Q R : Prop) : P ∧ (Q ∨ R) ↔ P ∧ Q ∨ P ∧ R :=
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "P ∨ Q ∧ R ↔ (P ∨ Q) ∧ (P ∨ R)")
 :::en
-The other distributive law. Lemmas from session 6 may help.
+The other distributive law. Lemmas from world 6 may help.
 :::
 
 :::de
-Das andere Distributivgesetz. Hilfssätze aus Sitzung 6 können helfen.
+Das andere Distributivgesetz. Hilfssätze aus Welt 6 können helfen.
 :::
 
 ```lean -show
@@ -382,11 +391,11 @@ example (P Q : Prop) : (P → Q) ↔ (P → False) ∨ Q :=
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "((P → Q) → ⊥) ↔ P ∧ (Q → ⊥)")
 :::en
-The final task: negating an implication.
+The final level: negating an implication.
 :::
 
 :::de
-Die letzte Aufgabe: eine Implikation verneinen.
+Das letzte Level: eine Implikation verneinen.
 :::
 
 ```lean -show

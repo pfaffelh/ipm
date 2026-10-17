@@ -14,7 +14,7 @@
 .ipm-task.ipm-locked > :not(.ipm-task-label) { opacity: 0.45; filter: grayscale(1); pointer-events: none; user-select: none; }
 .ipm-task.ipm-locked :is(.ipm-menu, .ipm-tools, .ipm-lean, .ipm-sheet) { display: none; }
 .ipm-task.ipm-locked .ipm-task-label { color: #888; }
-.ipm-task.ipm-locked .ipm-task-label::after { content: " 🔒 solve the previous task first"; font-weight: normal; }
+.ipm-task.ipm-locked .ipm-task-label::after { content: " 🔒 solve the previous level first"; font-weight: normal; }
 
 .ipm-canvas { overflow-x: auto; }
 .ipm-svg { width: 100%; max-width: 640px; height: auto; display: block; margin: 0 auto; touch-action: manipulation; }
@@ -238,7 +238,7 @@
 .ipm-lang-de { display: none; }
 :root.ipm-de .ipm-lang-de { display: block; }
 :root.ipm-de .ipm-lang-en { display: none; }
-:root.ipm-de .ipm-task.ipm-locked .ipm-task-label::after { content: " 🔒 löse erst die Aufgabe davor"; }
+:root.ipm-de .ipm-task.ipm-locked .ipm-task-label::after { content: " 🔒 löse erst das Level davor"; }
 @media screen and (max-width: 700px) { :root.ipm-de header .header-title h1::after { content: "Die IPM in Lean"; } }
 .ipm-lang-switch { display: flex; gap: 0.1em; margin: 0 0.8em 0 0.5em; align-self: center; }
 .ipm-lang-switch button {
@@ -307,8 +307,8 @@
 .ipm-stage .ipm-task-label { display: none; }
 .ipm-stage .ipm-task.ipm-locked .ipm-task-label { display: block; }
 .ipm-stage .ipm-task.ipm-locked .ipm-task-label { font-size: 0; }
-.ipm-stage .ipm-task.ipm-locked .ipm-task-label::after { font-size: 0.8rem; content: "🔒 solve the previous task first"; }
-:root.ipm-de .ipm-stage .ipm-task.ipm-locked .ipm-task-label::after { content: "🔒 löse erst die Aufgabe davor"; }
+.ipm-stage .ipm-task.ipm-locked .ipm-task-label::after { font-size: 0.8rem; content: "🔒 solve the previous level first"; }
+:root.ipm-de .ipm-stage .ipm-task.ipm-locked .ipm-task-label::after { content: "🔒 löse erst das Level davor"; }
 .ipm-dots { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
 .ipm-dot { width: 14px; height: 14px; padding: 0; border-radius: 50%; border: 1.5px solid #8a9bb3; background: white; cursor: pointer; }
 .ipm-dot-next { animation: ipm-pulse 1.2s ease-in-out infinite; border-color: #3b6db3; }
@@ -365,3 +365,17 @@
 html.ipm-playing, html.ipm-playing body { overflow: hidden; }
 html.ipm-playing main, html.ipm-playing .content-wrapper, html.ipm-playing section { padding-top: 0; padding-bottom: 0; margin-top: 0; }
 .ipm-foot:empty { display: none; }
+
+/* Tips: hidden in the level; shown once in a box, and under "About this level". */
+.ipm-task .ipm-tip { display: none; }
+.ipm-tip-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(20, 30, 50, 0.35); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.ipm-tip-card {
+  background: white; border-radius: 12px; padding: 1em 1.2em; max-width: 34rem; width: 100%; max-height: 80vh; overflow: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); box-sizing: border-box;
+}
+.ipm-tip-head { font-weight: bold; color: #3b6db3; font-family: var(--verso-structure-font-family, sans-serif); margin-bottom: 0.3em; }
+.ipm-tip-ok {
+  display: block; margin: 0.8em 0 0 auto; font: inherit; font-family: var(--verso-structure-font-family, sans-serif); font-weight: bold; color: white; background: #3b6db3; border: none;
+  border-radius: 22px; padding: 0.55em 1.4em; min-height: 44px; cursor: pointer;
+}
+.ipm-rules-head { font-weight: bold; margin-top: 0.6em; color: #555; font-family: var(--verso-structure-font-family, sans-serif); }

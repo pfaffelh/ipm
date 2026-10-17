@@ -6,7 +6,7 @@ redone to be played by tapping — on a phone as well as with a mouse.
 **Play:** https://pfaffelh.github.io/ipm/
 
 Assumptions are at the top, goals at the bottom; a proof connects them through rule blocks of
-natural deduction. The site has the first five sessions of the Incredible Proof Machine: conjunction (12 tasks),
+natural deduction. The site has the first five sessions of the Incredible Proof Machine, here called *worlds*: conjunction (12 tasks),
 implication (14), disjunction (12), falsity and negation (15) and classical logic (9). Two more
 sessions take tasks from the logic exercises of the [Lean course](https://pfaffelh.github.io/leancourse/)
 that the Proof Machine does not have: session 6 with the rules so far (28 tasks), session 7 with
@@ -44,10 +44,11 @@ induction over the natural numbers (6 tasks), which the Proof Machine does not h
   (nothing to scroll in it); layers wider than the board are broken into several lines.
 * Below the board, the same proof is shown in Lean, updated with every change (`sorry` marks what
   is still missing); a complete proof can be opened in the Lean web editor.
-* A session page is a stage as high as the screen: one task at a time, a tool bar below the board
+* A world's page is a stage as high as the screen: one level (task) at a time, a tool bar below the board
   (＋, Undo, Start over, Tidy up, Lean, Next ›), a dot per task above on the right (← → also go to
-  the previous and next task), and at its foot the rules of the session, folded away (“About this
-  session”). Nothing scrolls while one plays; the
+  the previous and next level), and at its foot “About this level”: the level's tip and the rules of
+  the world. The tip of a level (`:::tip (lang := "en")` in the task; for the first level of a world
+  its rules) also appears once, when the level is played for the first time. Nothing scrolls while one plays; the
   task is in the address (`#task-3`). The start page has a big Start (or Continue) button.
 * Tasks come one after another; the ones not yet playable are shown greyed out.
 * Solved tasks marked `(lemma := true)` become lemmas, offered only in the tasks after them (no circles): in the menu of ＋, “Lemmas from solved tasks” offers each solved task as a
@@ -106,7 +107,7 @@ and `start.mjs` test the stage and the start page): `cd tests && npm install && 
 `node checker.mjs` tests the proof checker without a browser (wrong proofs, the drinker paradox).
 
 Pushing to `main` builds the site and publishes it on GitHub Pages
-(`.github/workflows/deploy.yml`).
+(`.github/workflows/deploy.yml`); `redirects.sh` adds pages at the old addresses `Session-N___-…/`, which forward to `World-N___-…/`.
 
 ## License
 

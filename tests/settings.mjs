@@ -20,7 +20,7 @@ const steps = async t => (await t.locator('.ipm-step text').allTextContents()).j
 const task = n => page.locator('.ipm-task').nth(n)
 const locked = () => page.locator('.ipm-task.ipm-locked').count()
 
-await page.goto(base + 'Session-2___-Implication/')
+await page.goto(base + 'World-2___-Implication/')
 await page.evaluate(() => localStorage.clear()); await page.reload()
 console.log('locked tasks at first:', await locked(), '| note at 2.7:', await task(6).locator('.ipm-unlock').innerText())
 await page.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => { x.classList.remove('ipm-locked'); x.inert = false }))

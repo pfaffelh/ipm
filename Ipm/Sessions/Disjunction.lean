@@ -11,7 +11,7 @@ disjunction. Lean's conventions: `∨` groups to the right, so `A ∨ B ∨ C` i
 Each task carries a Lean proof, checked when the site is built.
 -/
 
-#doc (Manual) "Session 3: Disjunction" =>
+#doc (Manual) "World 3: Disjunction" =>
 
 :::en
 Three new rules, for disjunction (`∨`, “or”):
@@ -100,6 +100,17 @@ Your first ∨E: prove `B ∨ A` in the case `A` and in the case `B`.
 
 :::de
 Dein erstes ∨E: Beweise `B ∨ A` im Fall `A` und im Fall `B`.
+:::
+
+
+:::tip (lang := "en")
+∨E is a case distinction. From `A ∨ B`, prove the goal twice: in the compartment `?1 ⇒ ?3` with
+the hypothesis `A`, and in `?2 ⇒ ?3` with the hypothesis `B`.
+:::
+
+:::tip (lang := "de")
+∨E ist eine Fallunterscheidung. Aus `A ∨ B` beweist du das Ziel zweimal: im Fach `?1 ⇒ ?3` mit der
+Annahme `A` und im Fach `?2 ⇒ ?3` mit der Annahme `B`.
 :::
 
 ```lean -show
@@ -198,11 +209,11 @@ example (A B C : Prop) (h : A ∨ B → C) : (A → C) ∧ (B → C) :=
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "(A → B) ∨ (A → C)") (conclusions := "A → B ∨ C")
 :::en
-The final task of the session.
+The final level of the world.
 :::
 
 :::de
-Die letzte Aufgabe der Sitzung.
+Das letzte Level der Welt.
 :::
 
 ```lean -show

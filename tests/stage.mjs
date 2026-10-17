@@ -8,14 +8,15 @@ const base = process.env.BASE ?? 'http://127.0.0.1:8002/'
 for (const [opts, name] of [[{ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 }, 'phone'], [{ viewport: { width: 1300, height: 900 } }, 'desktop']]) {
   const page = await (await browser.newContext(opts)).newPage()
   page.on('pageerror', e => console.log('PAGEERROR', e.message))
-  await page.goto(base + 'Session-1___-Conjunction/'); await page.evaluate(() => localStorage.clear()); await page.reload(); await page.waitForTimeout(300)
+  await page.goto(base + 'World-1___-Conjunction/'); await page.evaluate(() => localStorage.clear()); await page.reload(); await page.waitForTimeout(300)
   const cur = () => page.locator('.ipm-task.ipm-current')
   const where = async () => `task ${await page.locator('.ipm-dot').evaluateAll(ds => ds.findIndex(d => d.classList.contains('ipm-dot-current')) + 1)} (${new URL(page.url()).hash})`
   const fits = async () => page.evaluate(() => {
     const st = document.querySelector('.ipm-stage').getBoundingClientRect(), bar = document.querySelector('.ipm-current .ipm-bar').getBoundingClientRect()
     return st.top >= 0 && bar.bottom <= innerHeight + 1
   })
-  console.log(`${name}: ${await where()}, ${await page.locator('.ipm-task.ipm-current').count()} task shown, intro open: ${await page.locator('.ipm-intro').evaluate(d => d.open)}, stage and tool bar on the screen: ${await fits()}`)
+  console.log(`${name}: ${await where()}, ${await page.locator('.ipm-task.ipm-current').count()} level shown, tip: ${await page.locator('.ipm-tip-overlay').count()}, stage and tool bar on the screen: ${await fits()}`)
+  await page.locator('.ipm-tip-ok').click()
   // solve task 1 (A ⊢ A) by tapping, with the real pointer
   const y0 = await page.evaluate(() => scrollY)
   const tapOn = async l => { const b = await l.boundingBox(); if (opts.hasTouch) await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2); else await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2); await page.waitForTimeout(150) }

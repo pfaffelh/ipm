@@ -37,6 +37,10 @@ jobs:
       - name: Generate the site
         run: lake exe ipm --output _out/
 
+      # The old addresses of the worlds (Session-N___-…) forward to the new ones (World-N___-…)
+      - name: Forward old addresses
+        run: ./redirects.sh _out/html-multi
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:

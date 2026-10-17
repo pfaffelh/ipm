@@ -6,7 +6,7 @@ for (const [name, opts] of [['large', { viewport: { width: 1920, height: 1080 } 
   const page = await (await browser.newContext(opts)).newPage()
   await allTasks(page)
   page.on('pageerror', e => console.log('PAGEERROR', e.message))
-  await page.goto((process.env.BASE ?? 'http://127.0.0.1:8002/') + 'Session-2___-Implication/')
+  await page.goto((process.env.BASE ?? 'http://127.0.0.1:8002/') + 'World-2___-Implication/')
   await page.evaluate(() => localStorage.clear()); await page.reload()
   const t = page.locator('.ipm-task').nth(0)
   await t.scrollIntoViewIfNeeded()

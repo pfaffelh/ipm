@@ -6,7 +6,7 @@ const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, ha
 const page = await ctx.newPage()
 await allTasks(page)
 page.on('pageerror', e => console.log('PAGEERROR', e.message))
-await page.goto((process.env.BASE ?? 'http://127.0.0.1:8002/') + 'Session-1___-Conjunction/')
+await page.goto((process.env.BASE ?? 'http://127.0.0.1:8002/') + 'World-1___-Conjunction/')
 await page.evaluate(() => localStorage.clear()); await page.reload()
 const task = i => page.locator('.ipm-task').nth(i)
 const tap = async loc => { await loc.dispatchEvent('click'); await page.waitForTimeout(150) }

@@ -101,4 +101,29 @@ def de : DirectiveExpanderOf Unit
     let blocks ← contents.mapM elabBlock
     ``(Verso.Doc.Block.other (Block.lang "de") #[$blocks,*])
 
+-- A tip for a task, in one language: `:::tip (lang := "en")`. It is shown when the task is played for
+-- the first time, and always under "About this level".
+block_extension Block.tip (lang : String) where
+  data := Json.str lang
+  traverse _ _ _ := pure none
+  extraJs := {JS.mk ipmJs}
+  extraCss := {CSS.mk ipmCss}
+  toHtml := some fun _ goB _ data content => do
+    let lang := data.getStr?.toOption.getD "en"
+    pure <| .tag "div" #[("class", s!"ipm-tip ipm-lang-{lang}"), ("lang", lang)] (← content.mapM goB)
+  toTeX := none
+
+structure TipConfig where
+  lang : String
+
+instance : FromArgs TipConfig DocElabM where
+  fromArgs := TipConfig.mk <$> .namedD `lang .string "en"
+
+/-- A tip for the task it is in; see `Block.tip`. -/
+@[directive]
+def tip : DirectiveExpanderOf TipConfig
+  | cfg, contents => do
+    let blocks ← contents.mapM elabBlock
+    ``(Verso.Doc.Block.other (Block.tip $(quote cfg.lang)) #[$blocks,*])
+
 end Ipm

@@ -7,7 +7,7 @@ const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, ha
 const page = await ctx.newPage()
 await allTasks(page)
 page.on('pageerror', e => console.log('PAGEERROR', e.message))
-await page.goto((process.env.BASE ?? 'http://127.0.0.1:8002/') + 'Session-2___-Implication/')
+await page.goto((process.env.BASE ?? 'http://127.0.0.1:8002/') + 'World-2___-Implication/')
 await page.evaluate(() => localStorage.clear()); await page.reload()
 await page.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => { x.classList.remove('ipm-locked'); x.inert = false }))
 const tap = async l => { await l.dispatchEvent('click'); await page.waitForTimeout(120) }

@@ -7,7 +7,8 @@ export async function allTasks(page) {
       .ipm-stage { height: auto !important; display: block !important; }
       .ipm-stage > .ipm-task { display: block !important; margin: 1.2em 0 !important; }
       .ipm-stage .ipm-board { display: block !important; }
-      .ipm-stage .ipm-canvas { height: 560px !important; flex: none !important; }`
+      .ipm-stage .ipm-canvas { height: 560px !important; flex: none !important; }
+      .ipm-tip-overlay { display: none !important; }`
     document.head.append(style)
   }))
 }

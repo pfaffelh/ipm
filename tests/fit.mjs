@@ -9,7 +9,7 @@ for (const [opts, name] of [[{ viewport: { width: 390, height: 844 }, hasTouch: 
   const page = await (await browser.newContext(opts)).newPage()
   await allTasks(page)
   page.on('pageerror', e => console.log('PAGEERROR', e.message))
-  await page.goto(base + 'Session-5___-Classical-Logic/')
+  await page.goto(base + 'World-5___-Classical-Logic/')
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('ipm-verso:in-order', 'off') }); await page.reload()
   const t = page.locator('.ipm-task').nth(6)
   const check = async label => {

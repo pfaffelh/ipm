@@ -11,7 +11,7 @@ quantifiers, written as in Lean.
 Each task carries a Lean proof, checked when the site is built.
 -/
 
-#doc (Manual) "Session 8: Quantifiers" =>
+#doc (Manual) "World 8: Quantifiers" =>
 
 :::en
 Statements about objects: `P a` says that the object `a` has the property `P`, `R a b` that `a`
@@ -86,6 +86,15 @@ Your first ∃I: `a` is an example.
 Dein erstes ∃I: `a` ist ein Beispiel.
 :::
 
+
+:::tip (lang := "en")
+∃I: to prove `∃ x, P x`, give an example. From `P a` you get `∃ x, P x`.
+:::
+
+:::tip (lang := "de")
+∃I: Um `∃ x, P x` zu beweisen, gib ein Beispiel an. Aus `P a` bekommst du `∃ x, P x`.
+:::
+
 ```lean -show
 example (α : Type) (P : α → Prop) (a : α) (h : P a) : ∃ x, P x := ⟨a, h⟩
 ```
@@ -128,6 +137,17 @@ Your first ∃E. Its eigenvariable `c₁` is the object that exists; its hypothe
 Dein erstes ∃E. Seine Eigenvariable `c₁` ist das Objekt, das existiert; seine Annahme ist `A`.
 :::
 
+
+:::tip (lang := "en")
+∃E: from `∃ x, A` you may use the hypothesis `A` about an object `c₁` that exists, the block's
+*eigenvariable*. Nothing else is known about `c₁`: it must not appear in the goal.
+:::
+
+:::tip (lang := "de")
+∃E: Aus `∃ x, A` darfst du die Annahme `A` über ein Objekt `c₁` verwenden, das existiert, die
+*Eigenvariable* des Blocks. Sonst ist über `c₁` nichts bekannt: Es darf nicht im Ziel vorkommen.
+:::
+
 ```lean -show
 example (α : Type) (A : Prop) (h : ∃ _ : α, A) : A := h.elim (fun _ a => a)
 ```
@@ -140,6 +160,17 @@ Your first ∀I: prove `A ∧ P c₁` for an arbitrary `c₁`.
 
 :::de
 Dein erstes ∀I: Beweise `A ∧ P c₁` für ein beliebiges `c₁`.
+:::
+
+
+:::tip (lang := "en")
+∀I: to prove `∀ x, A ∧ P x`, prove `A ∧ P c₁` for an arbitrary object `c₁`, the block's
+eigenvariable. Arbitrary means: `c₁` must not appear in an assumption that you use.
+:::
+
+:::tip (lang := "de")
+∀I: Um `∀ x, A ∧ P x` zu beweisen, beweise `A ∧ P c₁` für ein beliebiges Objekt `c₁`, die
+Eigenvariable des Blocks. Beliebig heißt: `c₁` darf in keiner Annahme vorkommen, die du verwendest.
 :::
 
 ```lean -show
@@ -279,11 +310,11 @@ example (α : Type) (P : α → Prop) (h : (∀ x, P x) → False) : ∃ x, P x 
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "(∀ x, P x) → A") (conclusions := "∃ x, P x → A")
 :::en
-The final task, and a hard one. Distinguish the cases `∀ x, P x` and its negation.
+The final level, and a hard one. Distinguish the cases `∀ x, P x` and its negation.
 :::
 
 :::de
-Die letzte Aufgabe, und eine schwere. Unterscheide die Fälle `∀ x, P x` und seine Negation.
+Das letzte Level, und ein schweres. Unterscheide die Fälle `∀ x, P x` und seine Negation.
 :::
 
 ```lean -show
