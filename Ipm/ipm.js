@@ -30,6 +30,8 @@
     '∨-introduction (left)': '∨-Einführung (links)', '∨-introduction (right)': '∨-Einführung (rechts)',
     '∨-elimination': '∨-Beseitigung', '⊥-elimination': '⊥-Beseitigung',
     'tertium non datur': 'Tertium non datur',
+    '↔-introduction': '↔-Einführung', '↔-elimination (forwards)': '↔-Beseitigung (vorwärts)',
+    '↔-elimination (backwards)': '↔-Beseitigung (rückwärts)', '⊤-introduction': '⊤-Einführung',
     '＋ Add a block': '＋ Baustein hinzufügen', 'Add a block': 'Baustein hinzufügen', 'Rules': 'Regeln', 'Close': 'Schließen',
     '↶ Undo': '↶ Zurück', 'Start over': 'Neu anfangen', 'Tidy up': 'Aufräumen',
     'Arrange the blocks automatically again': 'Die Blöcke wieder automatisch anordnen',
@@ -56,7 +58,7 @@
     'The Incredible Proof Machine in Lean': 'Die Incredible Proof Machine in Lean',
     'Session 1: Conjunction': 'Sitzung 1: Konjunktion', 'Session 2: Implication': 'Sitzung 2: Implikation',
     'Session 3: Disjunction': 'Sitzung 3: Disjunktion', 'Session 4: Falsity and Negation': 'Sitzung 4: Falsum und Negation',
-    'Session 5: Classical Logic': 'Sitzung 5: Klassische Logik', 'Table of Contents': 'Inhalt', 'Contents': 'Inhalt',
+    'Session 5: Classical Logic': 'Sitzung 5: Klassische Logik', 'Session 6: From the Lean Course': 'Sitzung 6: Aus dem Lean-Kurs', 'Session 7: Equivalence and Truth': 'Sitzung 7: Äquivalenz und Wahrheit', 'Table of Contents': 'Inhalt', 'Contents': 'Inhalt',
   }
   function translatePage() {
     if (LANG !== 'de') return
@@ -90,43 +92,50 @@
 
   // ---------------------------------------------------------------- formulas
 
-  // Formulas: {t: 'atom', n} | {t: 'and'|'or'|'imp', a, b} | {t: 'not', a} | {t: 'bot'} | {t: 'meta', id}
+  // Formulas: {t: 'atom', n} | {t: 'and'|'or'|'imp'|'iff', a, b} | {t: 'not', a} | {t: 'bot'} | {t: 'top'} | {t: 'meta', id}
   function parse(src) {
-    const tokens = src.match(/[A-Za-z][\w']*|∧|∨|→|¬|⊥|\(|\)|->|\/\\|\\\/|~/g) ?? []
+    const tokens = src.match(/[A-Za-z][\w']*|∧|∨|↔|→|¬|⊥|⊤|\(|\)|<->|->|\/\\|\\\/|~/g) ?? []
     let i = 0
     const eat = t => { if (tokens[i] === t) { i++; return true } return false }
-    const norm = { '/\\': '∧', '\\/': '∨', '->': '→', '~': '¬' }
+    const norm = { '/\\': '∧', '\\/': '∨', '->': '→', '<->': '↔', '~': '¬' }
     tokens.forEach((t, k) => { tokens[k] = norm[t] ?? t })
     // As in Lean, →, ∨ and ∧ are right-associative (the Incredible Proof Machine reads ∧ and ∨
-    // to the left), and ∧ binds more strongly than ∨, which binds more strongly than →.
+    // to the left), and ∧ binds more strongly than ∨, which binds more strongly than →, then ↔.
+    const iff = () => { const a = imp(); return eat('↔') ? { t: 'iff', a, b: imp() } : a }
     const imp = () => { const a = or(); return eat('→') ? { t: 'imp', a, b: imp() } : a }
     const or = () => { const a = and(); return eat('∨') ? { t: 'or', a, b: or() } : a }
     const and = () => { const a = un(); return eat('∧') ? { t: 'and', a, b: and() } : a }
     const un = () => {
       if (eat('¬')) return { t: 'not', a: un() }
       if (eat('⊥')) return { t: 'bot' }
-      if (eat('(')) { const a = imp(); eat(')'); return a }
+      if (eat('⊤')) return { t: 'top' }
+      if (eat('(')) { const a = iff(); eat(')'); return a }
       const n = tokens[i++]
       if (!n) throw new Error(`Cannot parse ${src}`)
+      if (n === 'True') return { t: 'top' }
+      if (n === 'False') return { t: 'bot' }
       return { t: 'atom', n }
     }
-    const f = imp()
+    const f = iff()
     if (i < tokens.length) throw new Error(`Cannot parse ${src}`)
     return f
   }
 
-  const prec = { imp: 1, or: 2, and: 3, not: 4 }
+  const prec = { iff: 0, imp: 1, or: 2, and: 3, not: 4 }
   function show(f, s = {}, ctx = 0) {
     f = resolve(f, s)
     const wrap = (p, txt) => (p < ctx ? `(${txt})` : txt)
     switch (f.t) {
       case 'atom': return f.n
       case 'bot': return '⊥'
+      case 'top': return '⊤'
       case 'meta': return '?' + metaNumber(f.id.split('.').pop())
       case 'not': return wrap(4, '¬' + show(f.a, s, 4))
       case 'and': return wrap(3, `${show(f.a, s, 4)} ∧ ${show(f.b, s, 3)}`)
       case 'or': return wrap(2, `${show(f.a, s, 3)} ∨ ${show(f.b, s, 2)}`)
       case 'imp': return wrap(1, `${show(f.a, s, 2)} → ${show(f.b, s, 1)}`)
+      // Implications beside ↔ get brackets, though Lean does not need them: easier to read.
+      case 'iff': return wrap(1, `${show(f.a, s, 2)} ↔ ${show(f.b, s, 2)}`)
     }
   }
 
@@ -152,7 +161,7 @@
     if (y.t === 'meta') return unify(y, x, s)
     if (x.t !== y.t) return null
     if (x.t === 'atom') return x.n === y.n ? s : null
-    if (x.t === 'bot') return s
+    if (x.t === 'bot' || x.t === 'top') return s
     if (x.t === 'not') return unify(x.a, y.a, s)
     const s1 = unify(x.a, y.a, s)
     return s1 && unify(x.b, y.b, s1)
@@ -161,7 +170,7 @@
   // Replaces the rule's variables by metavariables private to one block.
   function instantiate(f, vars, block) {
     if (f.t === 'atom' && vars.includes(f.n)) return { t: 'meta', id: `${block}.${f.n}` }
-    if (f.t === 'atom' || f.t === 'bot') return f
+    if (f.t === 'atom' || f.t === 'bot' || f.t === 'top') return f
     const g = { ...f }
     if (f.a) g.a = instantiate(f.a, vars, block)
     if (f.b) g.b = instantiate(f.b, vars, block)
@@ -183,6 +192,10 @@
              outputs: ['C', 'A', 'B'], local: { 1: 1, 2: 2 } },
     falseE: { label: '⊥E', name: '⊥-elimination', vars: ['A'], inputs: ['⊥'], outputs: ['A'] },
     TND: { label: 'TND', name: 'tertium non datur', vars: ['A'], inputs: [], outputs: ['A∨(A→⊥)'] },
+    iffI: { label: '↔I', name: '↔-introduction', vars: ['A', 'B'], inputs: ['A→B', 'B→A'], outputs: ['A↔B'] },
+    iffE1: { label: '↔E₁', name: '↔-elimination (forwards)', vars: ['A', 'B'], inputs: ['A↔B', 'A'], outputs: ['B'] },
+    iffE2: { label: '↔E₂', name: '↔-elimination (backwards)', vars: ['A', 'B'], inputs: ['A↔B', 'B'], outputs: ['A'] },
+    trueI: { label: '⊤I', name: '⊤-introduction', vars: [], inputs: [], outputs: ['⊤'] },
   }
 
   // Whether output `j` of block `b` is a local hypothesis.
@@ -317,7 +330,7 @@
     const p = proof, s = analysis.s, uses = new Set()
     const assumptions = p.blocks.filter(b => b.kind === 'assumption')
     const names = {}, locals = {}
-    const lean = f => show(f, s).replace(/⊥/g, 'False')
+    const lean = f => show(f, s).replace(/⊥/g, 'False').replace(/⊤/g, 'True')
     const hyp = (b, j) => (locals[`${b.id}.${j}`] ??= localName(Object.keys(locals).length))
     const app = (f, ...args) => args.reduce((t, a) => ({ k: 'app', f: t, a }), { k: 'var', n: f })
     assumptions.forEach((b, k) => { names[b.id] = 'h' + sub(k + 1) })
@@ -343,6 +356,10 @@
         }
         case 'falseE': return app('False.elim', arg(0))
         case 'TND': return app('Classical.em', { k: 'var', n: '_' })
+        case 'iffI': return app('Iff.intro', arg(0), arg(1))
+        case 'iffE1': return app('Iff.mp', arg(0), arg(1))
+        case 'iffE2': return app('Iff.mpr', arg(0), arg(1))
+        case 'trueI': return { k: 'var', n: 'trivial' }
       }
       const L = RULES[b.rule]?.lemma
       if (L) {
@@ -394,7 +411,7 @@
   function leanProof(proof, analysis) {
     const { uses, goals } = leanParts(proof, analysis)
     const examples = goals.map(g =>
-      `example ${[g.atoms.length ? `(${g.atoms.join(' ')} : Prop)` : '', ...g.hyps].filter(x => x).join(' ')} : ${g.goal} :=\n  ${g.term}`)
+      ['example', g.atoms.length ? `(${g.atoms.join(' ')} : Prop)` : '', ...g.hyps, `: ${g.goal} :=\n  ${g.term}`].filter(x => x).join(' '))
     return [...lemmaTheorems(uses), ...examples].join('\n\n')
   }
 
@@ -410,8 +427,12 @@
   function registerLemmas() {
     for (const [key, L] of Object.entries(loadLemmas())) {
       L.key = key
-      RULES['lemma:' + key] = { label: L.label, name: `${L.label}: ${L.statement}`, vars: L.atoms,
-        inputs: L.assumptions, outputs: L.conclusions, lemma: L }
+      // The statements of the lemma are renamed A, B, C, …, so that they are shown as ?1, ?2, ?3, ….
+      const letter = Object.fromEntries(L.atoms.map((x, i) => [x, String.fromCharCode(65 + i)]))
+      const rename = f => (f.t === 'atom' ? { t: 'atom', n: letter[f.n] ?? f.n } : { ...f, ...(f.a && { a: rename(f.a) }), ...(f.b && { b: rename(f.b) }) })
+      const renamed = x => show(rename(parse(x)))
+      RULES['lemma:' + key] = { label: L.label, name: `${L.label}: ${L.statement}`, vars: L.atoms.map(x => letter[x]),
+        inputs: L.assumptions.map(renamed), outputs: L.conclusions.map(renamed), lemma: L }
     }
   }
   // Whether lemma `key` uses lemma `target`, directly or through other lemmas.
@@ -1015,10 +1036,10 @@
       const norm = x => show(parse(x))
       const L = {
         label: `L${session}.${n}`, session, task: n,
-        statement: `${this.assumptions.map(norm).join(', ')} ⊢ ${this.conclusions.map(norm).join(', ')}`,
+        statement: [this.assumptions.map(norm).join(', '), '⊢', this.conclusions.map(norm).join(', ')].filter(x => x).join(' '),
         atoms: goals[0]?.atoms ?? [], assumptions: this.assumptions, conclusions: this.conclusions, leanNames, uses,
         theorems: goals.map((g, j) =>
-          `theorem ${leanNames[j]} ${[g.atoms.length ? `{${g.atoms.join(' ')} : Prop}` : '', ...g.hyps].filter(x => x).join(' ')} : ${g.goal} :=\n  ${g.term}`),
+          ['theorem', leanNames[j], g.atoms.length ? `{${g.atoms.join(' ')} : Prop}` : '', ...g.hyps, `: ${g.goal} :=\n  ${g.term}`].filter(x => x).join(' ')),
       }
       const all = loadLemmas()
       const old = all[this.key]
