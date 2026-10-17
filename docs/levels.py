@@ -8,7 +8,7 @@ ORDER = ['Conjunction', 'Implication', 'Disjunction', 'Falsity', 'Classical', 'I
 NEEDS = [  # word in the Lean proof → rule
     (r'⟨', 'conjI'), (r'\.[12]\b', 'conjE'), (r'\bfun\b', 'impI'), (r'\bOr\.inl\b', 'disjI1'), (r'\bOr\.inr\b', 'disjI2'),
     (r'\bClassical\.em\b', 'TND'), (r'\bIff\.intro\b', 'iffI'), (r'\.mp\b', 'iffE1'), (r'\.mpr\b', 'iffE2'), (r'\btrivial\b', 'trueI'),
-    (r'\bNat\.rec\b', 'ind'),
+    (r'\bNat\.rec\b', 'ind'), (r'\bbyContradiction\b', 'raa'),
 ]
 USES = {  # lemma (statement) → levels (statements) that it shortens, as they were chosen
     'A → B, B → C ⊢ A → C': ['A → ⊥, B → A ⊢ B → ⊥', 'A → B, B → C ⊢ (A → ⊥) ∨ C'],

@@ -25,11 +25,16 @@ induction. `docs/levels.md` lists all levels with what they need and give (lemma
 * Tactics, earned: a task marked `(unlocks := "intro")` unlocks the tactic `intro` once solved (the
   settings ⚙ in the header switch tactics off, to earned, or to all; and whether tasks come in
   order). A selected port offers the block that fits its statement, named after the Lean
-  command (goal `A → B`: `intro h`; `A ∧ B`, `A ↔ B`: `constructor`; `A ∨ B`: `left`/`right`; `⊤`:
-  `trivial`; assumption `h₁ : A ∧ B`: `obtain ⟨ha, hb⟩ := h₁`; `A ∨ B`: `obtain (ha | hb) := h₁`;
-  `A → B`: `apply h₁`; `⊥`: `exact h₁.elim`; `A ↔ B`: `apply h₁.mp`/`apply h₁.mpr`). One tap adds
-  the block, already connected. A goal also offers `exact h₁` for an assumption that fits it, and
-  `apply h₁` for an assumption `h₁ : A → B` whose `B` fits it.
+  command, with the names the Lean proof below the board uses (goal `A → B`: `intro h₃`; `A ∧ B`,
+  `A ↔ B`: `constructor`; `A ∨ B`: `left`/`right`; `⊤`: `trivial`; `∃ x, P x`: `use a` for each
+  object of the level, or `use default`; any goal: `exfalso` (⊥E), `by_contra h₃` (proof by
+  contradiction, RAA), `by_cases h₃ : A` (TND with ∨E); assumption `h₁ : A ∧ B`:
+  `obtain ⟨h₃, h₄⟩ := h₁`; `A ∨ B`: `obtain (h₃ | h₄) := h₁`; `A → B`: `apply h₁`; `⊥`:
+  `exact h₁.elim`; `A ↔ B`: `apply h₁.mp`/`apply h₁.mpr`; `∀ x, P x`: `specialize h₁ a`). One tap
+  adds the block, already connected. A goal also offers `exact h₁` for an assumption that fits it,
+  and `apply h₁` for an assumption `h₁ : A → B` whose `B` fits it.
+* Proof by contradiction (RAA, from world 5 level 5 on): from `?1 ⇒ ⊥` get `?1`; in Lean
+  `Classical.byContradiction`.
 * A line that does not fit gets a ☠, a local hypothesis used outside its box a ⚠; tap them for an
   explanation.
 * Red circles are inputs (still to be proved), blue dots outputs (what you have).

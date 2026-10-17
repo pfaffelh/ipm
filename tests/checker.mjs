@@ -48,6 +48,12 @@ run('(∃ x, P x) → ∀ x, P x (wrong)', [], ['(∃ x, P x) → ∀ x, P x'], 
   const impI = p.addRule('impI').id, allI = p.addRule('allI').id, exE = p.addRule('exE').id
   L(p, impI, 0, h.goal(), 0); L(p, allI, 0, impI, 0); L(p, exE, 0, allI, 0); L(p, impI, 1, exE, 0); L(p, exE, 1, exE, 1)
 })
+// Proof by contradiction: (A → ⊥) → ⊥ ⊢ A
+const raa = run('by contradiction', ['(A → ⊥) → ⊥'], ['A'], (p, h) => {
+  const r = p.addRule('raa').id, e = p.addRule('impE').id
+  L(p, r, 0, h.goal(), 0); L(p, e, 0, r, 0); L(p, h.hyp(), 0, e, 0); L(p, r, 1, e, 1)
+})
+console.log(raa.lean)
 // The drinker paradox: ⊢ ∃ x, D x → ∀ y, D y, with TND, both quantifiers and two eigenvariables
 const d = run('drinker paradox', [], ['∃ x, D x → ∀ y, D y'], (p, h) => {
   const n = r => p.addRule(r).id
@@ -66,5 +72,5 @@ const d = run('drinker paradox', [], ['∃ x, D x → ∀ y, D y'], (p, h) => {
   L(p, B[15], 0, B[13], 0); L(p, B[14], 0, B[15], 0); L(p, B[15], 1, B[15], 1)
   L(p, B[16], 0, B[15], 2); L(p, B[17], 0, B[16], 0); L(p, B[5], 2, B[17], 0); L(p, B[18], 0, B[17], 1); L(p, B[15], 2, B[18], 0)
 })
-if (process.env.LEANOUT) fs.writeFileSync(process.env.LEANOUT, d.lean + '\n')
+if (process.env.LEANOUT) fs.writeFileSync(process.env.LEANOUT, raa.lean + '\n\n' + d.lean + '\n')
 console.log(d.lean)

@@ -105,11 +105,11 @@ Columns: level, statement, rules its Lean proof uses (roughly), lemma (L) / tact
 
 | | statement | rules used | gives |
 |---|---|---|---|
-| 5.1 | ` ⊢ A ∨ (A → ⊥)` | TND | tip |
+| 5.1 | ` ⊢ A ∨ (A → ⊥)` | TND | by_cases tip |
 | 5.2 | `(B → ⊥) → A → ⊥ ⊢ A → B` | TND, falseE, impI |  |
 | 5.3 | `A ∧ B → ⊥ ⊢ (A → ⊥) ∨ (B → ⊥)` | TND, conjI, disjI1, disjI2, falseE, impI | L |
-| 5.4 | `(A → ⊥) → ⊥ ⊢ A` | TND, falseE, impI | L |
-| 5.5 | `A → B ⊢ (A → ⊥) ∨ B` | TND, disjI1, disjI2, falseE, impI | L |
+| 5.4 | `(A → ⊥) → ⊥ ⊢ A` | TND, falseE, impI | L by_contra |
+| 5.5 | `A → B ⊢ (A → ⊥) ∨ B` | TND, disjI1, disjI2, falseE, impI | L tip |
 | 5.6 | `A → B, B → C ⊢ (A → ⊥) ∨ C` | TND, disjI1, disjI2, falseE, impI |  |
 | 5.7 | ` ⊢ ((A → B) → A) → A` | TND, impI |  |
 | 5.8 | `A ∧ B ∧ C → ⊥ ⊢ (A → ⊥) ∨ (B → ⊥) ∨ (C → ⊥)` | TND, conjI, disjI1, disjI2, falseE, impI |  |

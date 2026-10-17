@@ -49,7 +49,7 @@ in einer Annahme, die der Beweis verwendet. Sonst bekommt ihr Block ein ⚠. Wie
 Lean als `default`.
 :::
 
-::::task (unlocks := "specialize") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "∀ x, P x") (conclusions := "P a")
+::::task (unlocks := "specialize") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "∀ x, P x") (conclusions := "P a")
 :::en
 Your first ∀E: what holds for all `x` holds for `a`.
 :::
@@ -67,7 +67,7 @@ example (α : Type) (P : α → Prop) (a : α) (h : ∀ x, P x) : P a := h a
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "∀ x, P x") (conclusions := "P a ∧ P b")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "∀ x, P x") (conclusions := "P a ∧ P b")
 :::en
 For two objects.
 :::
@@ -81,7 +81,7 @@ example (α : Type) (P : α → Prop) (a b : α) (h : ∀ x, P x) : P a ∧ P b 
 ```
 ::::
 
-::::task (unlocks := "use") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "P a") (conclusions := "∃ x, P x")
+::::task (unlocks := "use") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "P a") (conclusions := "∃ x, P x")
 :::en
 Your first ∃I: `a` is an example.
 :::
@@ -104,7 +104,7 @@ example (α : Type) (P : α → Prop) (a : α) (h : P a) : ∃ x, P x := ⟨a, h
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "∀ x, P x") (conclusions := "∃ x, P x")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "∀ x, P x") (conclusions := "∃ x, P x")
 :::en
 No object is named. Here (as in Lean with `Inhabited`) there is always at least one.
 :::
@@ -118,7 +118,7 @@ example (α : Type) [Inhabited α] (P : α → Prop) (h : ∀ x, P x) : ∃ x, P
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "∀ x, A") (conclusions := "A")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "∀ x, A") (conclusions := "A")
 :::en
 `A` does not depend on `x`.
 :::
@@ -132,7 +132,7 @@ example (α : Type) [Inhabited α] (A : Prop) (h : ∀ _ : α, A) : A := h defau
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "∃ x, A") (conclusions := "A")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "∃ x, A") (conclusions := "A")
 :::en
 Your first ∃E. Its eigenvariable `c₁` is the object that exists; its hypothesis is `A`.
 :::
@@ -157,7 +157,7 @@ example (α : Type) (A : Prop) (h : ∃ _ : α, A) : A := h.elim (fun _ a => a)
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "A ∧ (∀ x, P x)") (conclusions := "∀ x, A ∧ P x")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "A ∧ (∀ x, P x)") (conclusions := "∀ x, A ∧ P x")
 :::en
 Your first ∀I: prove `A ∧ P c₁` for an arbitrary `c₁`.
 :::
@@ -182,7 +182,7 @@ example (α : Type) (P : α → Prop) (A : Prop) (h : A ∧ (∀ x, P x)) : ∀ 
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "(∀ x, P x) ∧ (∀ x, Q x)") (conclusions := "∀ x, P x ∧ Q x")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "(∀ x, P x) ∧ (∀ x, Q x)") (conclusions := "∀ x, P x ∧ Q x")
 :::en
 Two ∀ statements into one.
 :::
@@ -196,7 +196,7 @@ example (α : Type) (P Q : α → Prop) (h : (∀ x, P x) ∧ (∀ x, Q x)) : �
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "(∃ x, P x) ∨ (∃ x, Q x)") (conclusions := "∃ x, P x ∨ Q x")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "(∃ x, P x) ∨ (∃ x, Q x)") (conclusions := "∃ x, P x ∨ Q x")
 :::en
 A case distinction, and in each case an ∃E.
 :::
@@ -211,7 +211,7 @@ example (α : Type) (P Q : α → Prop) (h : (∃ x, P x) ∨ (∃ x, Q x)) : �
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "(∃ x, P x) → A") (conclusions := "∀ x, P x → A")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "(∃ x, P x) → A") (conclusions := "∀ x, P x → A")
 :::en
 Here `∀ x, P x → A` means `∀ x, (P x → A)`.
 :::
@@ -225,7 +225,7 @@ example (α : Type) (P : α → Prop) (A : Prop) (h : (∃ x, P x) → A) : ∀ 
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "∀ x, P x → Q x; P a") (conclusions := "Q a")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "∀ x, P x → Q x; P a") (conclusions := "Q a")
 :::en
 First ∀E, then →E.
 :::
@@ -239,7 +239,7 @@ example (α : Type) (P Q : α → Prop) (a : α) (h : ∀ x, P x → Q x) (p : P
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "∀ x, ∀ y, P x y") (conclusions := "∀ y, ∀ x, P x y")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "∀ x, ∀ y, P x y") (conclusions := "∀ y, ∀ x, P x y")
 :::en
 Swap two ∀.
 :::
@@ -253,7 +253,7 @@ example (α : Type) (P : α → α → Prop) (h : ∀ x, ∀ y, P x y) : ∀ y, 
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "∃ x, ∃ y, P x y") (conclusions := "∃ y, ∃ x, P x y")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "∃ x, ∃ y, P x y") (conclusions := "∃ y, ∃ x, P x y")
 :::en
 Swap two ∃.
 :::
@@ -268,7 +268,7 @@ example (α : Type) (P : α → α → Prop) (h : ∃ x, ∃ y, P x y) : ∃ y, 
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "∃ x, ∀ y, P x y") (conclusions := "∀ y, ∃ x, P x y")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "∃ x, ∀ y, P x y") (conclusions := "∀ y, ∃ x, P x y")
 :::en
 ∃∀ gives ∀∃. (The other way round it does not work: try it, and watch the ⚠.)
 :::
@@ -282,7 +282,7 @@ example (α : Type) (P : α → α → Prop) (h : ∃ x, ∀ y, P x y) : ∀ y, 
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "∀ x, P x") (conclusions := "(∃ x, P x → ⊥) → ⊥")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "∀ x, P x") (conclusions := "(∃ x, P x → ⊥) → ⊥")
 :::en
 In Lean: from `∀ x, P x` follows `¬∃ x, ¬P x`.
 :::
@@ -296,7 +296,7 @@ example (α : Type) (P : α → Prop) (h : ∀ x, P x) : (∃ x, P x → False) 
 ```
 ::::
 
-::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "(∀ x, P x) → ⊥") (conclusions := "∃ x, P x → ⊥")
+::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "(∀ x, P x) → ⊥") (conclusions := "∃ x, P x → ⊥")
 :::en
 Classical: if not all `x` have `P`, then one does not. Use TND twice.
 :::
@@ -312,7 +312,7 @@ example (α : Type) (P : α → Prop) (h : (∀ x, P x) → False) : ∃ x, P x 
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "(∀ x, P x) → A") (conclusions := "∃ x, P x → A")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "(∀ x, P x) → A") (conclusions := "∃ x, P x → A")
 :::en
 The final level, and a hard one. Distinguish the cases `∀ x, P x` and its negation.
 :::

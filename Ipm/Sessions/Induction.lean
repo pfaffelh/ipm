@@ -34,7 +34,7 @@ Die Levels enthalten keine Arithmetik: Eigenschaften wie `P`, `Even`, `Odd` sind
 Annahmen beschrieben.
 :::
 
-::::task (unlocks := "induction") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE, ind") (assumptions := "P 0; ∀ n, P n → P (n + 1)") (conclusions := "∀ n, P n")
+::::task (unlocks := "induction") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE, ind") (assumptions := "P 0; ∀ n, P n → P (n + 1)") (conclusions := "∀ n, P n")
 :::en
 The induction rule itself: connect the start and the step.
 :::
@@ -53,7 +53,7 @@ example (P : Nat → Prop) (h0 : P 0) (hs : ∀ n, P n → P (n + 1)) : ∀ n, P
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE, ind") (assumptions := "∀ n, P n → P (n + 1)") (conclusions := "P 0 → ∀ n, P n")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE, ind") (assumptions := "∀ n, P n → P (n + 1)") (conclusions := "P 0 → ∀ n, P n")
 :::en
 The same, with the start as a hypothesis.
 :::
@@ -68,7 +68,7 @@ example (P : Nat → Prop) (hs : ∀ n, P n → P (n + 1)) : P 0 → ∀ n, P n 
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE, ind") (assumptions := "P (0 + 1); ∀ n, P n → P (n + 1)") (conclusions := "∀ n, P (n + 1)")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE, ind") (assumptions := "P (0 + 1); ∀ n, P n → P (n + 1)") (conclusions := "∀ n, P (n + 1)")
 :::en
 Induction for `P (n + 1)`: here the start is `P (0 + 1)`.
 :::
@@ -83,7 +83,7 @@ example (P : Nat → Prop) (h1 : P (0 + 1)) (hs : ∀ n, P n → P (n + 1)) : �
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE, ind") (assumptions := "Even 0; ∀ n, Even n → Odd (n + 1); ∀ n, Odd n → Even (n + 1)") (conclusions := "∀ n, Even n ∨ Odd n")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE, ind") (assumptions := "Even 0; ∀ n, Even n → Odd (n + 1); ∀ n, Odd n → Even (n + 1)") (conclusions := "∀ n, Even n ∨ Odd n")
 :::en
 Every number is even or odd. In the step, distinguish the two cases of the hypothesis.
 :::
@@ -100,7 +100,7 @@ example (Even Odd : Nat → Prop) (e0 : Even 0) (eo : ∀ n, Even n → Odd (n +
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE, ind") (assumptions := "P 0; Q 0; ∀ n, P n → Q (n + 1); ∀ n, Q n → P (n + 1)") (conclusions := "∀ n, P n ∧ Q n")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE, ind") (assumptions := "P 0; Q 0; ∀ n, P n → Q (n + 1); ∀ n, Q n → P (n + 1)") (conclusions := "∀ n, P n ∧ Q n")
 :::en
 Two properties at once: prove both together.
 :::
@@ -116,7 +116,7 @@ example (P Q : Nat → Prop) (p0 : P 0) (q0 : Q 0) (pq : ∀ n, P n → Q (n + 1
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE, ind") (assumptions := "P 0 ∨ Q 0; ∀ n, P n → Q (n + 1); ∀ n, Q n → P (n + 1)") (conclusions := "∀ n, P n ∨ Q n")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE, ind") (assumptions := "P 0 ∨ Q 0; ∀ n, P n → Q (n + 1); ∀ n, Q n → P (n + 1)") (conclusions := "∀ n, P n ∨ Q n")
 :::en
 The final level: the start is a case distinction too.
 :::

@@ -23,7 +23,7 @@ Zwei Rätsel der Prädikatenlogik, mit allen bisherigen Regeln. Beide brauchen T
 etwas Planung: Überlege dir den Beweis zuerst, dann baue ihn.
 :::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "") (conclusions := "∃ x, P x → ∀ y, P y")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "") (conclusions := "∃ x, P x → ∀ y, P y")
 :::en
 The drinker paradox: in every pub there is someone such that, if they drink (`P`), everybody drinks. Classical, with TND.
 :::
@@ -40,7 +40,7 @@ example (α : Type) [Inhabited α] (P : α → Prop) : ∃ x, P x → ∀ y, P y
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, allI, allE, exI, exE") (assumptions := "∀ x, (R x → ⊥) → R (f x)") (conclusions := "∃ x, R x ∧ R (f (f x))")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "∀ x, (R x → ⊥) → R (f x)") (conclusions := "∃ x, R x ∧ R (f (f x))")
 :::en
 The hardest level of the Proof Machine. Find an object `b` with `R b` first; then look at `R (f (f b))`.
 :::

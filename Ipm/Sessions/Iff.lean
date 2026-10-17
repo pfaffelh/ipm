@@ -42,7 +42,7 @@ Klammern trotzdem gezeigt. Die Levels stammen aus dem [Lean-Kurs](https://pfaffe
 die letzten brauchen TND.
 :::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "P → Q, Q → P") (conclusions := "P ↔ Q")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "P → Q, Q → P") (conclusions := "P ↔ Q")
 :::en
 Your first ↔I: an equivalence is two implications.
 :::
@@ -60,7 +60,7 @@ example (P Q : Prop) (f : P → Q) (g : Q → P) : P ↔ Q := Iff.intro f g
 ```
 ::::
 
-::::task (unlocks := "mp") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "P, P ↔ Q") (conclusions := "Q")
+::::task (unlocks := "mp") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "P, P ↔ Q") (conclusions := "Q")
 :::en
 ↔E₁ uses an equivalence forwards.
 :::
@@ -74,7 +74,7 @@ example (P Q : Prop) (p : P) (h : P ↔ Q) : Q := h.mp p
 ```
 ::::
 
-::::task (unlocks := "mpr") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "Q, P ↔ Q") (conclusions := "P")
+::::task (unlocks := "mpr") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "Q, P ↔ Q") (conclusions := "P")
 :::en
 … and ↔E₂ backwards.
 :::
@@ -88,7 +88,7 @@ example (P Q : Prop) (q : Q) (h : P ↔ Q) : P := h.mpr q
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "P ↔ P")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "P ↔ P")
 :::en
 No assumptions. Each direction is an →I.
 :::
@@ -102,7 +102,7 @@ example (P : Prop) : P ↔ P := Iff.intro (fun p => p) (fun p => p)
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "P ↔ Q") (conclusions := "Q ↔ P")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "P ↔ Q") (conclusions := "Q ↔ P")
 :::en
 Symmetry of `↔`.
 :::
@@ -116,7 +116,7 @@ example (P Q : Prop) (h : P ↔ Q) : Q ↔ P := Iff.intro h.mpr h.mp
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "P ↔ Q, Q ↔ R") (conclusions := "P ↔ R")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "P ↔ Q, Q ↔ R") (conclusions := "P ↔ R")
 :::en
 Transitivity of `↔`.
 :::
@@ -131,7 +131,7 @@ example (P Q R : Prop) (h1 : P ↔ Q) (h2 : Q ↔ R) : P ↔ R :=
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "(P ↔ Q) ↔ (P → Q) ∧ (Q → P)")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "(P ↔ Q) ↔ (P → Q) ∧ (Q → P)")
 :::en
 `↔` really is a conjunction of two implications.
 :::
@@ -146,7 +146,7 @@ example (P Q : Prop) : (P ↔ Q) ↔ (P → Q) ∧ (Q → P) :=
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "P → Q, Q → T, Q → R, R → S, T → P, R → T") (conclusions := "Q ↔ R")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "P → Q, Q → T, Q → R, R → S, T → P, R → T") (conclusions := "Q ↔ R")
 :::en
 The puzzle from world 2, with a new goal.
 :::
@@ -161,7 +161,7 @@ example (P Q R S T : Prop) (hPQ : P → Q) (_ : Q → T) (hQR : Q → R) (_ : R 
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "P ↔ Q") (conclusions := "P ∧ R ↔ Q ∧ R")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "P ↔ Q") (conclusions := "P ∧ R ↔ Q ∧ R")
 :::en
 Replace `P` by `Q` inside a conjunction.
 :::
@@ -176,7 +176,7 @@ example (P Q R : Prop) (h : P ↔ Q) : P ∧ R ↔ Q ∧ R :=
 ```
 ::::
 
-::::task (unlocks := "trivial") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "P → ⊤")
+::::task (unlocks := "trivial") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "P → ⊤")
 :::en
 `⊤` (in Lean `True`) always holds: ⊤I proves it, with no input.
 :::
@@ -199,7 +199,7 @@ example (P : Prop) : P → True := fun _ => trivial
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "(⊤ → P) ↔ P")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "(⊤ → P) ↔ P")
 :::en
 An assumption that always holds tells you nothing.
 :::
@@ -213,7 +213,7 @@ example (P : Prop) : (True → P) ↔ P := Iff.intro (fun f => f trivial) (fun p
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "(⊤ → ⊥) ↔ ⊥")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "(⊤ → ⊥) ↔ ⊥")
 :::en
 In Lean: `¬True ↔ False`.
 :::
@@ -227,7 +227,7 @@ example : (True → False) ↔ False := Iff.intro (fun f => f trivial) (fun f _ 
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "⊤ ↔ (⊥ → ⊥)")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "⊤ ↔ (⊥ → ⊥)")
 :::en
 In Lean: `True ↔ ¬False`.
 :::
@@ -241,7 +241,7 @@ example : True ↔ (False → False) := Iff.intro (fun _ f => f) (fun _ => trivi
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "P → ⊥") (conclusions := "P ↔ ⊥")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "P → ⊥") (conclusions := "P ↔ ⊥")
 :::en
 `¬P` says exactly that `P` is false.
 :::
@@ -255,7 +255,7 @@ example (P : Prop) (np : P → False) : P ↔ False := Iff.intro np (fun f => f.
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "P → ⊥, Q") (conclusions := "P ↔ (Q → ⊥)")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "P → ⊥, Q") (conclusions := "P ↔ (Q → ⊥)")
 :::en
 Both sides are false.
 :::
@@ -270,7 +270,7 @@ example (P Q : Prop) (np : P → False) (q : Q) : P ↔ (Q → False) :=
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "P ∨ Q ↔ Q ∨ P")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "P ∨ Q ↔ Q ∨ P")
 :::en
 Commutativity of `∨`, both directions.
 :::
@@ -285,7 +285,7 @@ example (P Q : Prop) : P ∨ Q ↔ Q ∨ P :=
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "P ∨ P ∧ Q ↔ P")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "P ∨ P ∧ Q ↔ P")
 :::en
 Absorption. Here `P ∨ P ∧ Q` means `P ∨ (P ∧ Q)`.
 :::
@@ -299,7 +299,7 @@ example (P Q : Prop) : P ∨ P ∧ Q ↔ P := Iff.intro (fun h => h.elim (fun p 
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "(P ∨ Q → ⊥) ↔ (P → ⊥) ∧ (Q → ⊥)")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "(P ∨ Q → ⊥) ↔ (P → ⊥) ∧ (Q → ⊥)")
 :::en
 De Morgan: `¬(P ∨ Q) ↔ ¬P ∧ ¬Q`.
 :::
@@ -314,7 +314,7 @@ example (P Q : Prop) : (P ∨ Q → False) ↔ (P → False) ∧ (Q → False) :
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "P ∧ (Q ∨ R) ↔ P ∧ Q ∨ P ∧ R")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "P ∧ (Q ∨ R) ↔ P ∧ Q ∨ P ∧ R")
 :::en
 Distributivity, both directions.
 :::
@@ -330,7 +330,7 @@ example (P Q R : Prop) : P ∧ (Q ∨ R) ↔ P ∧ Q ∨ P ∧ R :=
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "P ∨ Q ∧ R ↔ (P ∨ Q) ∧ (P ∨ R)")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "P ∨ Q ∧ R ↔ (P ∨ Q) ∧ (P ∨ R)")
 :::en
 The other distributive law. Lemmas from world 3 may help.
 :::
@@ -346,7 +346,7 @@ example (P Q R : Prop) : P ∨ Q ∧ R ↔ (P ∨ Q) ∧ (P ∨ R) :=
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "((P → ⊥) → ⊥) ↔ P")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "((P → ⊥) → ⊥) ↔ P")
 :::en
 Classical: double negation, both directions.
 :::
@@ -361,7 +361,7 @@ example (P : Prop) : ((P → False) → False) ↔ P :=
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "(P ∧ Q → ⊥) ↔ (P → ⊥) ∨ (Q → ⊥)")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "(P ∧ Q → ⊥) ↔ (P → ⊥) ∨ (Q → ⊥)")
 :::en
 The De Morgan law that needs TND.
 :::
@@ -377,7 +377,7 @@ example (P Q : Prop) : (P ∧ Q → False) ↔ (P → False) ∨ (Q → False) :
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "(P → Q) ↔ (P → ⊥) ∨ Q")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "(P → Q) ↔ (P → ⊥) ∨ Q")
 :::en
 An implication is a disjunction in disguise.
 :::
@@ -393,7 +393,7 @@ example (P Q : Prop) : (P → Q) ↔ (P → False) ∨ Q :=
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "((P → Q) → ⊥) ↔ P ∧ (Q → ⊥)")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "((P → Q) → ⊥) ↔ P ∧ (Q → ⊥)")
 :::en
 The final level: negating an implication.
 :::
