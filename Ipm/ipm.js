@@ -1025,6 +1025,7 @@
         })
         root.append(g)
       }
+      this.drawSteps(root, pos)
       root.addEventListener('click', ev => {
         if (ev.target === root && (this.selected || this.selectedConn)) {
           this.selected = null; this.selectedConn = null; this.render()
@@ -1102,6 +1103,54 @@
     }
 
     // Draws a line from output `o` to input `i`; one that does not fit gets a ☠.
+    // ------------------------------------------------------------ steps
+
+    // The steps for the selected port, by the shape of its statement, as in Lean: for a goal `A → B`
+    // the →I block (`intro`), for an assumption `A ∧ B` the ∧E block (`obtain`), and so on.
+    steps() {
+      const sel = this.selected
+      if (!sel) return []
+      const b = this.proof.block(sel.block)
+      const f = resolve(sel.kind === 'in' ? b.inputs[sel.port] : b.outputs[sel.port], this.analysis.s)
+      const goal = { imp: [['impI', 'intro']], and: [['conjI', 'constructor']], iff: [['iffI', 'constructor']],
+        or: [['disjI1', 'left'], ['disjI2', 'right']], top: [['trueI', 'trivial']] }
+      const have = { and: [['conjE', 'obtain']], or: [['disjE', 'cases']], imp: [['impE', 'apply']],
+        bot: [['falseE', 'exfalso']], iff: [['iffE1', 'mp'], ['iffE2', 'mpr']] }
+      if (sel.kind === 'in' && !this.analysis.openInputs.some(o => o.block === sel.block && o.port === sel.port)) return []
+      return ((sel.kind === 'in' ? goal : have)[f.t] ?? []).filter(([rule]) => this.rules.includes(rule))
+    }
+
+    // Puts the block of a step in and connects it to the selected port.
+    takeStep(rule) {
+      const sel = this.selected
+      this.selected = null
+      this.change(() => {
+        const nb = this.proof.addRule(rule)
+        if (sel.kind === 'in') this.proof.connect({ block: nb.id, port: 0 }, { block: sel.block, port: sel.port })
+        else this.proof.connect({ block: sel.block, port: sel.port }, { block: nb.id, port: 0 })
+      })
+    }
+
+    // The steps as small buttons beside the selected port: above a red circle, below a blue dot.
+    drawSteps(root, pos) {
+      const steps = this.steps()
+      if (!steps.length) return
+      const sel = this.selected, b = this.proof.block(sel.block)
+      const at = portAt(pos[b.id], b, sel.kind, sel.port)
+      const pills = steps.map(([rule, tactic]) => ({ rule, text: `${RULES[rule].label} · ${tactic}` }))
+      const w = t => t.length * 8.2 + 22, gap = 8
+      let x = at.x - (pills.reduce((s, p) => s + w(p.text), 0) + gap * (pills.length - 1)) / 2
+      const y = sel.kind === 'in' ? at.y - 52 : at.y + 18
+      for (const p of pills) {
+        const g = svg('g', { class: 'ipm-step', 'data-rule': p.rule })
+        g.append(svg('rect', { x, y, width: w(p.text), height: 32, rx: 16 }),
+          svg('text', { x: x + w(p.text) / 2, y: y + 21, 'text-anchor': 'middle' }, p.text))
+        g.addEventListener('click', ev => { ev.stopPropagation(); this.takeStep(p.rule) })
+        root.append(g)
+        x += w(p.text) + gap
+      }
+    }
+
     link(o, i) {
       const local = isLocal(this.proof.block(o.block), o.port)
       if (!local && (o.block === i.block || this.proof.createsCycle(o.block, i.block))) {

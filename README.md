@@ -21,6 +21,10 @@ equivalence `↔` and truth `⊤` and their rules ↔I, ↔E₁, ↔E₂, ⊤I (
   onto the board), and the menu closes again. You then connect the block.
   Unification fills in `?1`, `?2`. Rule blocks you no longer need go into the trash can 🗑, which
   appears while you drag a block.
+* Steps as in Lean: a selected port offers the block that fits its statement, named after the Lean
+  tactic (goal `A → B`: →I · intro; `A ∧ B`, `A ↔ B`: constructor; `A ∨ B`: left/right; `⊤`:
+  trivial; assumption `A ∧ B`: obtain; `A ∨ B`: cases; `A → B`: apply; `⊥`: exfalso; `A ↔ B`:
+  mp/mpr). One tap adds the block, already connected.
 * A line that does not fit gets a ☠, a local hypothesis used outside its box a ⚠; tap them for an
   explanation.
 * Red circles are inputs (still to be proved), blue dots outputs (what you have).
