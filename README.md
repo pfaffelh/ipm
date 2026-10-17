@@ -28,7 +28,7 @@ induction. `docs/levels.md` lists all levels with what they need and give (lemma
   command, with the names the Lean proof below the board uses (goal `A → B`: `intro h₃`; `A ∧ B`,
   `A ↔ B`: `constructor`; `A ∨ B`: `left`/`right`; `⊤`: `trivial`; `∃ x, P x`: `use a` for each
   object of the level, or `use default`; any goal: `exfalso` (⊥E), `by_contra h₃` (proof by
-  contradiction, RAA), `by_cases h₃ : A` (TND with ∨E); assumption `h₁ : A ∧ B`:
+  contradiction, RAA), `by_cases h₃ : A` (TND with ∨E, one button for each proposition of the level); assumption `h₁ : A ∧ B`:
   `obtain ⟨h₃, h₄⟩ := h₁`; `A ∨ B`: `obtain (h₃ | h₄) := h₁`; `A → B`: `apply h₁`; `⊥`:
   `exact h₁.elim`; `A ↔ B`: `apply h₁.mp`/`apply h₁.mpr`; `∀ x, P x`: `specialize h₁ a`). One tap
   adds the block, already connected. A goal also offers `exact h₁` for an assumption that fits it,

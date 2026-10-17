@@ -32,7 +32,7 @@ await tap(goal(t)); console.log('2.5 goal A → C:', await steps(t))
 // 5.5 A → B ⊢ (A → ⊥) ∨ B: by_cases and by_contra on the goal
 t = await open('World-5___-Classical-Logic/', 5)
 await tap(goal(t)); console.log('5.5 goal:', await steps(t))
-await step(t, 'by_cases'); console.log('   after by_cases: blocks', JSON.stringify(await t.locator('.ipm-canvas .ipm-rule').evaluateAll(xs => xs.map(x => x.querySelector('.ipm-lemma-tag')?.textContent))))
+await step(t, 'by_cases h₂ : A'); console.log('   after by_cases h₂ : A:', (await t.locator('.ipm-canvas .ipm-rule').allTextContents()).join(' / '))
 // 7.1 ∀ x, P x ⊢ P a: specialize h₁ a
 t = await open('World-7___-Quantifiers/', 1)
 await tap(hyp(t, 0)); console.log('7.1 assumption ∀ x, P x:', await steps(t))

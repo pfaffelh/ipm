@@ -1762,17 +1762,26 @@
         any.push({ rule: 'falseE', text: '⊥E · exfalso', act: () => this.takeStep('falseE') })
       if (f.t !== 'bot' && this.rules.includes('raa') && tacticAllowed('by_contra'))
         any.push({ rule: 'raa', text: `RAA · by_contra ${fresh()}`, act: () => this.takeStep('raa') })
-      if (this.rules.includes('TND') && this.rules.includes('disjE') && tacticAllowed('by_cases'))
-        any.push({ rule: 'TND', text: `TND · by_cases ${fresh()} : …`, act: () => this.takeCases() })
+      // by_cases needs the statement to split on: one button for each proposition of the level
+      if (this.rules.includes('TND') && this.rules.includes('disjE') && tacticAllowed('by_cases')) {
+        const props = new Set()
+        const atoms = g => { if (g.t === 'atom') props.add(g.n); else parts(g).forEach(atoms) }
+        for (const x of this.proof.blocks) if (x.kind !== 'rule') [...x.inputs, ...x.outputs].forEach(atoms)
+        for (const p of [...props].slice(0, 4))
+          any.push({ rule: 'TND', text: `TND · by_cases ${fresh()} : ${p}`, act: () => this.takeCases(p) })
+        if (!props.size) any.push({ rule: 'TND', text: `TND · by_cases ${fresh()} : …`, act: () => this.takeCases() })
+      }
       return [...exact, ...steps, ...apply, ...any]
     }
 
-    // by_cases: a case distinction (∨E) on A ∨ ¬A (TND) for the selected goal; A is left open.
-    takeCases() {
+    // by_cases: a case distinction (∨E) on A ∨ ¬A (TND) for the selected goal; A is the chosen
+    // proposition (or left open).
+    takeCases(prop = null) {
       const sel = this.selected
       this.selected = null
       this.change(() => {
         const cases = this.proof.addRule('disjE'), tnd = this.proof.addRule('TND')
+        if (prop) tnd.fix = { [`${tnd.id}.A`]: { t: 'atom', n: prop } }
         this.proof.connect({ block: cases.id, port: 0 }, { block: sel.block, port: sel.port })
         this.proof.connect({ block: tnd.id, port: 0 }, { block: cases.id, port: 0 })
       })
