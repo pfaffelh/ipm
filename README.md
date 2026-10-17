@@ -44,9 +44,9 @@ induction over the natural numbers (6 tasks), which the Proof Machine does not h
   (nothing to scroll in it); layers wider than the board are broken into several lines.
 * Below the board, the same proof is shown in Lean, updated with every change (`sorry` marks what
   is still missing); a complete proof can be opened in the Lean web editor.
-* A session page is a stage as high as the screen: one task at a time, with ‹ Task 3 of 12 › and a
-  dot per task above it, the rules of the session folded away (“About this session”), and a tool bar
-  below the board (＋, Undo, Start over, Tidy up, Lean, Next ›). Nothing scrolls while one plays; the
+* A session page is a stage as high as the screen: one task at a time, a tool bar below the board
+  (＋, Undo, Start over, Tidy up, Lean, Next ›), and at its foot a dot per task (← → also go to the
+  previous and next task) and the rules of the session, folded away (“About this session”). Nothing scrolls while one plays; the
   task is in the address (`#task-3`). The start page has a big Start (or Continue) button.
 * Tasks come one after another; the ones not yet playable are shown greyed out.
 * Solved tasks marked `(lemma := true)` become lemmas, offered only in the tasks after them (no circles): in the menu of ＋, “Lemmas from solved tasks” offers each solved task as a

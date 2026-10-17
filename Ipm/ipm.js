@@ -1885,8 +1885,9 @@
   }
 
   // A session page shows one task at a time, on a stage as high as the screen: the task's text,
-  // its board (which takes the room that is left), ＋ and the tools. Above it: ‹ Task 3 of 12 ›
-  // and a dot for each task. Nothing scrolls while one plays; the task is in the address (#task-3).
+  // its board (which takes the room that is left), ＋ and the tools. At its foot: a dot for each
+  // task (to go there; ← → also do) and the rules of the session, folded away. Nothing scrolls
+  // while one plays; the task is in the address (#task-3).
   function init() {
     translatePage()
     languageSwitch()
@@ -1896,13 +1897,9 @@
     if (!tasks.length) { startButton(); return }
     const stage = el('div', 'ipm-stage')
     tasks[0].root.before(stage)
-    const nav = el('div', 'ipm-nav'), dots = el('div', 'ipm-dots')
-    const prev = el('button', 'ipm-nav-step', '‹'), next = el('button', 'ipm-nav-step', '›')
-    const label = el('span', 'ipm-nav-label')
-    prev.type = next.type = 'button'
-    prev.title = tr('Previous task'); next.title = tr('Next task')
-    nav.append(prev, label, next, dots)
-    stage.append(nav, ...tasks.map(t => t.root))
+    const foot = el('div', 'ipm-foot'), dots = el('div', 'ipm-dots')
+    foot.append(dots)
+    stage.append(...tasks.map(t => t.root), foot)
     // The text before the tasks (the rules of the session) folds away above them; open at first.
     const intro = el('details', 'ipm-intro')
     const before = []
@@ -1912,7 +1909,7 @@
       body.append(...before)
       intro.append(el('summary', '', tr('About this session')), body)
       intro.open = !tasks.some(t => t.proof.connections.length || t.root.classList.contains('ipm-solved'))
-      stage.prepend(intro)
+      foot.append(intro)
       intro.addEventListener('toggle', () => tasks[current].render())
     }
     let current = 0
@@ -1920,9 +1917,6 @@
     const show = i => {
       current = Math.max(0, Math.min(tasks.length - 1, i))
       tasks.forEach((t, k) => t.root.classList.toggle('ipm-current', k === current))
-      label.textContent = tr('Task {i} of {n}', { i: current + 1, n: tasks.length })
-      prev.disabled = current === 0
-      next.disabled = current === tasks.length - 1
       refreshDots()
       // (with the path: the page has a <base>, against which a bare #task-3 would point elsewhere)
       history.replaceState(null, '', `${location.pathname}${location.search}#task-${current + 1}`)
@@ -1942,11 +1936,15 @@
         d.addEventListener('click', () => show(k))
         return d
       }))
-      // The arrow to the next task glows once this one is solved.
-      next.classList.toggle('ipm-nav-glow', tasks[current].root.classList.contains('ipm-solved') && current < tasks.length - 1)
+      // The dot of the next task glows once this one is solved.
+      dots.children[current + 1]?.classList.toggle('ipm-dot-next', tasks[current].root.classList.contains('ipm-solved'))
     }
-    prev.addEventListener('click', () => show(current - 1))
-    next.addEventListener('click', () => show(current + 1))
+    // ← and → go to the previous and next task (not while typing, or with a menu open).
+    document.addEventListener('keydown', ev => {
+      if (ev.target.closest?.('input, textarea') || ev.altKey || ev.ctrlKey || ev.metaKey) return
+      if (ev.key === 'ArrowLeft') show(current - 1)
+      if (ev.key === 'ArrowRight') show(current + 1)
+    })
     // "Next task ›" below a solved task.
     tasks.forEach((t, k) => {
       if (k === tasks.length - 1) return
