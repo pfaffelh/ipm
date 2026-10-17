@@ -9,7 +9,7 @@ page.on('pageerror', e => console.log('PAGEERROR', e.message))
 const worlds = process.argv.slice(2).length ? process.argv.slice(2) : ['World-1___-Conjunction/', 'World-2___-Implication/',
   'World-3___-Disjunction/', 'World-4___-Falsity-and-Negation/', 'World-5___-Classical-Logic/', 'World-6___-Equivalence-and-Truth/',
   'World-7___-Quantifiers/', 'World-8___-Two-Puzzles/', 'World-9___-Induction/']
-const failed = []
+const failed = [], solutions = []
 let solved = 0, total = 0
 for (const w of worlds) {
   await page.goto(base + w)
@@ -28,15 +28,18 @@ for (const w of worlds) {
       // moves: the steps at the first open goal, and at each named thing one has
       const moves = () => {
         const a = t.analysis, out = []
-        const goal = a.openInputs[0]
+        // as in Lean: the newest goal, and what one has there
+        const goal = a.openInputs.at(-1)
         if (!goal) return out
         t.selected = { kind: 'in', ...goal }
         for (const s of t.steps()) out.push({ sel: { kind: 'in', ...goal }, s })
         const blocks = t.proof.blocks
+        const usable = t.usableAt(goal)
         for (const b of blocks) b.outputs.forEach((_, j) => {
-          if (b.kind === 'conclusion') return
+          if (b.kind === 'conclusion' || !usable[`${b.id}.${j}`]) return
           // like `obtain` in Lean, which uses up what it takes apart: only what is not used yet
-          if (t.proof.connections.some(c => c.from.block === b.id && c.from.port === j)) return
+          // (∀, → and ↔ may be used again: specialize, apply)
+          if (!['all', 'imp', 'iff'].includes(b.outputs[j].t) && t.proof.connections.some(c => c.from.block === b.id && c.from.port === j)) return
           t.selected = { kind: 'out', block: b.id, port: j }
           for (const s of t.steps()) out.push({ sel: { kind: 'out', block: b.id, port: j }, s })
         })
@@ -49,6 +52,7 @@ for (const w of worlds) {
         if (depth === 0 || Date.now() > deadline) return false
         const k = t.proof.snapshot().replace(/"(b|c)\d+"/g, '') + '|' + t.analysis.openInputs.length
         if ((seen.get(k) ?? -1) >= depth) return false
+        if (seen.size > 200000) return false
         seen.set(k, depth)
         for (const m of moves()) {
           const snap = t.proof.snapshot()
@@ -65,13 +69,14 @@ for (const w of worlds) {
         }
         return false
       }
-      for (let d = 1; d <= 14; d++) { seen.clear(); const r = search(d); if (r) return { ok: true, steps: r }; if (Date.now() > deadline) break }
+      for (let d = 1; d <= 14; d++) { seen.clear(); const r = search(d); if (r) return { ok: true, steps: r, graph: t.proof.snapshot() }; if (Date.now() > deadline) break }
       return { ok: false }
     }, i)
     const name = `${w.match(/World-(\d+)/)[1]}.${i + 1}`
-    if (r.ok) { solved++; if (process.env.VERBOSE) console.log(name, r.steps.join(' ; ')) }
+    if (r.ok) { solved++; solutions.push({ level: name, graph: r.graph }); if (process.env.VERBOSE) console.log(name, r.steps.join(' ; ')) }
     else { failed.push(name); console.log(name, 'not found') }
   }
 }
 console.log(`solved with tactics alone: ${solved}/${total}`, failed.length ? `not found: ${failed.join(', ')}` : '')
+if (process.env.SNAPOUT) (await import('node:fs')).writeFileSync(process.env.SNAPOUT, JSON.stringify(solutions))
 await browser.close()

@@ -755,6 +755,23 @@
     leanDomain = nat ? 'Nat' : 'α'
     const D = leanDomain
     const lean = f => show(f, s, 0, true)
+    // `f` in Lean with what is still undetermined filled in: True for a statement, `default` for an
+    // object (a proof is a proof of the statement with any of them).
+    const closed = f => {
+      const s2 = { ...s }
+      const fill = g => {
+        g = norm(g, s2)
+        if (g.t === 'meta') { if (g.term) needDefault = true; s2[g.id] = g.term ? { t: 'con', n: 'default' } : { t: 'top' }; return }
+        parts(g).forEach(fill)
+      }
+      for (let k = 0; k < 5 && undetermined(f, s2); k++) fill(f)
+      return show(f, s2, 0, true)
+    }
+    // The major premise of an elimination, with its type if Lean could not find it: ⟨a, b⟩.1 or
+    // Or.elim (Or.inl a) … do not elaborate, (⟨a, b⟩ : A ∧ B).1 does.
+    const head = t => (t.k === 'app' ? head(t.f) : t)
+    const typed = (t, f) => (['pair', 'fun'].includes(t.k) || (t.k === 'app' && ['Or.inl', 'Or.inr', 'Iff.intro', 'False.elim',
+      'Classical.byContradiction', 'Or.elim', 'Exists.elim'].includes(head(t).n)) ? { k: 'typed', a: t, type: closed(f) } : t)
     // A term in the proof: an object of α; an undetermined one is `default`.
     const leanTerm = (t, atomic) => {
       t = resolve(t, s)
@@ -780,28 +797,29 @@
       if (b.kind === 'assumption') return { k: 'var', n: names[b.id] }
       if (isLocal(b, j)) return { k: 'var', n: hyp(b, j) }
       const arg = i => input(b, i, depth)
+      const major = i => typed(arg(i), b.inputs[i])
       switch (b.rule) {
         case 'conjI': return { k: 'pair', a: arg(0), b: arg(1) }
-        case 'conjE': return { k: 'proj', a: arg(0), i: j + 1 }
-        case 'impE': return { k: 'app', f: arg(0), a: arg(1) }
+        case 'conjE': return { k: 'proj', a: major(0), i: j + 1 }
+        case 'impE': return { k: 'app', f: major(0), a: arg(1) }
         case 'impI': { const x = hyp(b, 1); return { k: 'fun', x, body: arg(0) } }
         case 'disjI1': return app('Or.inl', arg(0))
         case 'disjI2': return app('Or.inr', arg(0))
         case 'disjE': {
-          const h = arg(0), x = hyp(b, 1), y = hyp(b, 2)
+          const h = major(0), x = hyp(b, 1), y = hyp(b, 2)
           return app('Or.elim', h, { k: 'fun', x, body: arg(1) }, { k: 'fun', x: y, body: arg(2) })
         }
         case 'falseE': return app('False.elim', arg(0))
         case 'TND': return app('Classical.em', { k: 'var', n: '_' })
         case 'raa': { const x = hyp(b, 1); return app('Classical.byContradiction', { k: 'fun', x, body: arg(0) }) }
         case 'iffI': return app('Iff.intro', arg(0), arg(1))
-        case 'iffE1': return app('Iff.mp', arg(0), arg(1))
-        case 'iffE2': return app('Iff.mpr', arg(0), arg(1))
+        case 'iffE1': return app('Iff.mp', major(0), arg(1))
+        case 'iffE2': return app('Iff.mpr', major(0), arg(1))
         case 'trueI': return { k: 'var', n: 'trivial' }
         case 'allI': return { k: 'fun', x: b.eig, body: arg(0) }
-        case 'allE': return { k: 'app', f: arg(0), a: { k: 'term', t: termMeta(b.id) } }
+        case 'allE': return { k: 'app', f: major(0), a: { k: 'term', t: termMeta(b.id) } }
         case 'exI': return { k: 'pair', a: { k: 'term', t: termMeta(b.id) }, b: arg(0) }
-        case 'exE': return app('Exists.elim', arg(0), { k: 'fun', x: b.eig, body: { k: 'fun', x: hyp(b, 1), body: arg(1) } })
+        case 'exE': return app('Exists.elim', major(0), { k: 'fun', x: b.eig, body: { k: 'fun', x: hyp(b, 1), body: arg(1) } })
         case 'ind': {
           // Nat.rec needs the motive: the body of ∀ n, … as a function.
           const all = norm(b.outputs[0], s)
@@ -821,7 +839,7 @@
       return { k: 'sorry' }
     }
     // Printing, with as few parentheses as Lean needs.
-    const atomic = t => ['var', 'sorry', 'pair', 'proj'].includes(t.k) || (t.k === 'term' && resolve(t.t, s).t !== 'fn')
+    const atomic = t => ['var', 'sorry', 'pair', 'proj', 'typed'].includes(t.k) || (t.k === 'term' && resolve(t.t, s).t !== 'fn')
     // In a complete proof, unused names are written `_`, as Lean asks for.
     const used = new Set()
     const useTerm = t => { t = resolve(t, s); if (t.t === 'eig') used.add(t.n); parts(t).forEach(useTerm) }
@@ -839,6 +857,7 @@
         case 'sorry': return 'sorry'
         case 'pair': return `⟨${pr(t.a)}, ${pr(t.b)}⟩`
         case 'proj': return `${atomic(t.a) ? pr(t.a) : `(${pr(t.a)})`}.${t.i}`
+        case 'typed': return `(${pr(t.a)} : ${t.type})`
         case 'app': return `${t.f.k === 'fun' ? `(${pr(t.f)})` : pr(t.f)} ${atomic(t.a) ? pr(t.a) : `(${pr(t.a)})`}`
         case 'fun': {  // fun x => fun y => … is written fun x y => …
           const xs = []
@@ -1742,7 +1761,8 @@
       if (!sel || (SETTINGS.tactics === 'off' && !this.tacticsOnly)) return []
       const tacticAllowed = key => this.tacticsOnly || allowedTactic(key)
       const b = this.proof.block(sel.block)
-      const f = resolve(sel.kind === 'in' ? b.inputs[sel.port] : b.outputs[sel.port], this.analysis.s)
+      // (norm: also below ∀I, where the statement is the body with c₁ for the variable)
+      const f = norm(sel.kind === 'in' ? b.inputs[sel.port] : b.outputs[sel.port], this.analysis.s)
       // The Lean command, with the names as in the Lean proof: assumptions h₁, h₂, …, local
       // hypotheses on from there (a new one gets the next name); `h` for what has no name.
       const { names, count } = hypNames(this.proof)
@@ -1798,11 +1818,18 @@
           }
           if (this.tryOut(build)) apply.push({ rule, text, act: () => { this.selected = null; this.change(() => build(this.proof)) } })
         }
-        if (g.t === 'imp' && this.rules.includes('impE') && tacticAllowed('apply'))
-          for (let k = 1, t = g.b; k <= 4; k++, t = norm(t, this.analysis.s).b) {
-            if (unify(t, f, this.analysis.s)) { chain('impE', `→E · apply ${name}`, Array(k).fill('impE')); break }
-            if (norm(t, this.analysis.s).t !== 'imp') break
+        // h : A → B → C or ∀ x, P x → Q x: as many →E and ∀E blocks as it takes to reach the goal
+        if ((g.t === 'imp' || g.t === 'all') && tacticAllowed('apply')) {
+          const seq = []
+          for (let t = g; seq.length < 4; ) {
+            if (t.t === 'imp' && this.rules.includes('impE')) { seq.push('impE'); t = norm(t.b, this.analysis.s) }
+            else if (t.t === 'all' && this.rules.includes('allE')) { seq.push('allE'); t = norm(t.a, this.analysis.s) }
+            else break
+            const n = apply.length
+            chain(seq[0], `${RULES[seq[0]].label} · apply ${name}`, [...seq])
+            if (apply.length > n) break
           }
+        }
         if (g.t === 'iff') {
           if (this.rules.includes('iffE1') && tacticAllowed('mp') && unify(g.b, f, this.analysis.s)) chain('iffE1', `↔E₁ · apply ${name}.mp`, ['iffE1'])
           if (this.rules.includes('iffE2') && tacticAllowed('mpr') && unify(g.a, f, this.analysis.s)) chain('iffE2', `↔E₂ · apply ${name}.mpr`, ['iffE2'])
