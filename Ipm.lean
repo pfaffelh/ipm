@@ -27,8 +27,8 @@ proof is a set of lines that lead from the assumptions to the goals, through *ru
 * A *red circle* is something still to be proved. Tap it, and everything in the picture that fits
   glows green: tap that to draw the line.
 * A *blue dot* is something you have. Tap it, and the red circles it fits glow green.
-* When you tap a red circle or a blue dot, buttons beside it offer the step that fits its statement,
-  named after the Lean tactic: for the goal `A → B` it is *→I · intro h*, for an assumption
+* With *Allow tactics* switched on (below the board), tapping a red circle or a blue dot also shows
+  buttons with the step that fits its statement, as a Lean tactic: for the goal `A → B` it is *→I · intro h*, for an assumption
   `h₁ : A ∧ B` *∧E · obtain ⟨ha, hb⟩ := h₁*. One tap puts the block in and connects it.
 * New blocks come from the button *＋* below the picture: it opens a menu with the rules. Tap one
   to add it, or drag it onto the board. In a rule, `?1` and `?2` stand for any statements; they are
@@ -54,8 +54,8 @@ aus Linien, die über *Regelblöcke* von den Annahmen zu den Zielen führen.
   leuchtet grün: Tippe es an, um die Linie zu ziehen.
 * Ein *blauer Punkt* ist etwas, das du hast. Tippe ihn an, und die roten Kreise, zu denen er passt,
   leuchten grün.
-* Wenn du einen roten Kreis oder einen blauen Punkt antippst, bieten Knöpfe daneben den passenden
-  Schritt an, benannt nach der Lean-Taktik: für das Ziel `A → B` ist das *→I · intro h*, für eine
+* Wenn *Taktiken erlauben* (unter dem Spielfeld) eingeschaltet ist, zeigen Knöpfe neben einem
+  angetippten roten Kreis oder blauen Punkt den passenden Schritt als Lean-Taktik: für das Ziel `A → B` ist das *→I · intro h*, für eine
   Annahme `h₁ : A ∧ B` *∧E · obtain ⟨ha, hb⟩ := h₁*. Ein Tipp setzt den Block ein und verbindet ihn.
 * Neue Blöcke kommen über den Knopf *＋* unter dem Bild: Er öffnet ein Menü mit den Regeln. Tippe
   eine an, um sie hinzuzufügen, oder zieh sie aufs Spielfeld. In einer Regel stehen `?1` und `?2` für

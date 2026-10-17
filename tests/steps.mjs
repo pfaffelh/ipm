@@ -1,4 +1,4 @@
-// Steps beside a selected port, as in Lean: tapping the goal A → C offers "→I · intro", which puts
+// Tactics: off by default; with "Allow tactics" on, steps appear beside a selected port, as in Lean: tapping the goal A → C offers "→I · intro", which puts
 // the block in and connects it; an assumption B → C offers "→E · apply"; and so on.
 // Usage: BASE=http://localhost:8002/ node steps.mjs   (LEANOUT=file for the Lean proof, SHOT=file)
 import { chromium } from 'playwright-core'
@@ -15,17 +15,24 @@ const local = (b, n = 0) => b.locator('.ipm-port.ipm-local').nth(n)
 const goal = t => t.locator('.ipm-conclusion .ipm-port.ipm-in')
 const hyp = (t, n) => t.locator('.ipm-assumption .ipm-port.ipm-out').nth(n)
 const steps = async t => (await t.locator('.ipm-step text').allTextContents()).join(', ') || '(none)'
-const open = async path => {
+const open = async (path, tactics = true) => {
   await page.goto(base + path)
-  await page.evaluate(() => localStorage.clear()); await page.reload()
+  await page.evaluate(on => { localStorage.clear(); if (on) localStorage.setItem('ipm-verso:tactics', 'on') }, tactics); await page.reload()
   await page.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => { x.classList.remove('ipm-locked'); x.inert = false }))
 }
 
-await open('Session-2___-Implication/')
+await open('Session-2___-Implication/', false)
 // A → B, B → C ⊢ A → C, with steps
 let t = page.locator('.ipm-task').nth(4)
 await tap(goal(t))
-console.log('goal A → C:', await steps(t))
+console.log('tactics off by default, goal A → C:', await steps(t))
+await t.locator('.ipm-tactics input').check(); await page.waitForTimeout(150)
+console.log('after "Allow tactics": goal A → C:', await steps(t), '| switch on in task 1 too:', await page.locator('.ipm-task').nth(0).locator('.ipm-tactics input').isChecked())
+await page.reload()
+await page.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => { x.classList.remove('ipm-locked'); x.inert = false }))
+t = page.locator('.ipm-task').nth(4)
+await tap(goal(t))
+console.log('after reload:', await steps(t))
 await tap(t.locator('.ipm-step').first())
 console.log('after intro: blocks', await t.locator('.ipm-canvas .ipm-rule').count(), '| lines', await t.locator('.ipm-conn').count(), '|', await t.locator('.ipm-status').innerText())
 await tap(local(rule(t, 0)))

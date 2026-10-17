@@ -51,7 +51,8 @@
       'Was aus einer lokalen Annahme (eines →I- oder ∨E-Blocks) folgt, darf nur für den Eingang des Blocks verwendet werden, zu dem sie gehört. Diese Linie führt über {x} zu einem Ziel außerhalb.',
     '☠ {x} does not fit {y}': '☠ {x} passt nicht zu {y}',
     'Cancel': 'Abbrechen', 'more ▸': 'mehr ▸', 'less ▾': 'weniger ▾', '1 rule ▸': '1 Regel ▸', '{n} rules ▸': '{n} Regeln ▸',
-    '{name} block': '{name}-Block', 'Task {i} of {n}': 'Aufgabe {i} von {n}',
+    '{name} block': '{name}-Block', 'Allow tactics': 'Taktiken erlauben',
+    'Show the Lean command that fits a tapped circle or dot': 'Zu einem angetippten Kreis oder Punkt den passenden Lean-Befehl zeigen', 'Task {i} of {n}': 'Aufgabe {i} von {n}',
   }
   // Headings of the site, which come from Verso.
   const DE_TITLES = {
@@ -88,6 +89,11 @@
     }
     header.append(box)
   }
+  // Tactics: buttons beside a selected port with the Lean command that fits (intro h, constructor, …).
+  // The game does not need them; they are off unless switched on (for all tasks, kept in the browser).
+  let TACTICS = false
+  try { TACTICS = localStorage.getItem('ipm-verso:tactics') === 'on' } catch {}
+
   const tr = (en, vars = {}) => (LANG === 'de' ? DE[en] ?? en : en).replace(/\{(\w+)\}/g, (_, k) => vars[k])
 
   // ---------------------------------------------------------------- formulas
@@ -632,11 +638,24 @@
         z.addEventListener('click', () => { this.zoom = f(this.zoom); this.render() })
         return z
       }
+      // The switch for tactics; it holds for all tasks.
+      const tactics = el('label', 'ipm-tactics')
+      tactics.title = tr('Show the Lean command that fits a tapped circle or dot')
+      this.tacticsBox = el('input')
+      this.tacticsBox.type = 'checkbox'
+      this.tacticsBox.checked = TACTICS
+      this.tacticsBox.addEventListener('change', () => {
+        TACTICS = this.tacticsBox.checked
+        try { localStorage.setItem('ipm-verso:tactics', TACTICS ? 'on' : 'off') } catch {}
+        window.dispatchEvent(new Event('ipm-tactics'))
+      })
+      window.addEventListener('ipm-tactics', () => { this.tacticsBox.checked = TACTICS; this.render() })
+      tactics.append(this.tacticsBox, el('span', '', tr('Allow tactics')))
       tools.append(undo, reset, tidy,
         zoomButton('−', tr('Smaller'), z => Math.max(0.4, z / 1.25)),
         zoomButton('+', tr('Larger'), z => Math.min(4, z * 1.25)),
         zoomButton('Fit', tr('Fit to the page'), () => 1),
-        this.status)
+        tactics, this.status)
       this.sheet = el('div', 'ipm-sheet')
       this.sheet.hidden = true
       // The trash can appears while a rule block is dragged; dropping the block on it removes it.
@@ -1109,7 +1128,7 @@
     // the →I block (`intro`), for an assumption `A ∧ B` the ∧E block (`obtain`), and so on.
     steps() {
       const sel = this.selected
-      if (!sel) return []
+      if (!sel || !TACTICS) return []
       const b = this.proof.block(sel.block)
       const f = resolve(sel.kind === 'in' ? b.inputs[sel.port] : b.outputs[sel.port], this.analysis.s)
       // The Lean command, with the name of the assumption as in the Lean proof (h₁, h₂, …), or `h`.

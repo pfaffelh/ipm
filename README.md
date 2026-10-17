@@ -21,7 +21,7 @@ equivalence `↔` and truth `⊤` and their rules ↔I, ↔E₁, ↔E₂, ⊤I (
   onto the board), and the menu closes again. You then connect the block.
   Unification fills in `?1`, `?2`. Rule blocks you no longer need go into the trash can 🗑, which
   appears while you drag a block.
-* Steps as in Lean: a selected port offers the block that fits its statement, named after the Lean
+* Tactics (switched on with “Allow tactics” below a board; off by default): a selected port offers the block that fits its statement, named after the Lean
   command (goal `A → B`: `intro h`; `A ∧ B`, `A ↔ B`: `constructor`; `A ∨ B`: `left`/`right`; `⊤`:
   `trivial`; assumption `h₁ : A ∧ B`: `obtain ⟨ha, hb⟩ := h₁`; `A ∨ B`: `obtain (ha | hb) := h₁`;
   `A → B`: `apply h₁`; `⊥`: `exact h₁.elim`; `A ↔ B`: `apply h₁.mp`/`apply h₁.mpr`). One tap adds
