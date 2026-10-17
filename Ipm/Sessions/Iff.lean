@@ -56,7 +56,7 @@ example (P Q : Prop) (f : P → Q) (g : Q → P) : P ↔ Q := Iff.intro f g
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "P, P ↔ Q") (conclusions := "Q")
+::::task (unlocks := "mp") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "P, P ↔ Q") (conclusions := "Q")
 :::en
 ↔E₁ uses an equivalence forwards.
 :::
@@ -70,7 +70,7 @@ example (P Q : Prop) (p : P) (h : P ↔ Q) : Q := h.mp p
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "Q, P ↔ Q") (conclusions := "P")
+::::task (unlocks := "mpr") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "Q, P ↔ Q") (conclusions := "P")
 :::en
 … and ↔E₂ backwards.
 :::
@@ -172,7 +172,7 @@ example (P Q R : Prop) (h : P ↔ Q) : P ∧ R ↔ Q ∧ R :=
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "P → ⊤")
+::::task (unlocks := "trivial") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "P → ⊤")
 :::en
 `⊤` (in Lean `True`) always holds: ⊤I proves it, with no input.
 :::

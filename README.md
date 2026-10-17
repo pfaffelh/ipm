@@ -23,7 +23,9 @@ induction over the natural numbers (6 tasks), which the Proof Machine does not h
   onto the board), and the menu closes again. You then connect the block.
   Unification fills in `?1`, `?2`. Rule blocks you no longer need go into the trash can 🗑, which
   appears while you drag a block.
-* Tactics (switched on with “Allow tactics” below a board; off by default): a selected port offers the block that fits its statement, named after the Lean
+* Tactics, earned: a task marked `(unlocks := "intro")` unlocks the tactic `intro` once solved (the
+  settings ⚙ in the header switch tactics off, to earned, or to all; and whether tasks come in
+  order). A selected port offers the block that fits its statement, named after the Lean
   command (goal `A → B`: `intro h`; `A ∧ B`, `A ↔ B`: `constructor`; `A ∨ B`: `left`/`right`; `⊤`:
   `trivial`; assumption `h₁ : A ∧ B`: `obtain ⟨ha, hb⟩ := h₁`; `A ∨ B`: `obtain (ha | hb) := h₁`;
   `A → B`: `apply h₁`; `⊥`: `exact h₁.elim`; `A ↔ B`: `apply h₁.mp`/`apply h₁.mpr`). One tap adds

@@ -273,3 +273,18 @@
 .ipm-bubble rect { fill: #fff8f6; stroke: #c0392b; stroke-width: 1.5; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)); }
 .ipm-svg .ipm-bubble text { font-family: inherit; font-size: 13px !important; fill: #333; }
 .ipm-svg .ipm-bubble .ipm-conn-remove text { fill: white; font-size: 14px !important; }
+
+/* Settings (⚙ in the header) */
+.ipm-settings-button { font-size: 1.3em; background: none; border: none; cursor: pointer; color: #555; min-width: 40px; min-height: 40px; align-self: center; margin-right: 0.3em; }
+.ipm-settings {
+  position: fixed; top: calc(var(--verso-header-height, 3rem) + 4px); right: 8px; z-index: 50; width: min(22rem, calc(100vw - 16px));
+  box-sizing: border-box; background: white; border: 1px solid #b8c4d4; border-radius: 10px; padding: 0.4em 0.8em 0.8em;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); font-size: 0.95rem; font-family: var(--verso-text-font-family, sans-serif);
+}
+.ipm-settings[hidden] { display: none; }
+.ipm-setting { display: flex; align-items: center; gap: 0.5em; min-height: 36px; cursor: pointer; }
+.ipm-setting input { width: 1.1em; height: 1.1em; accent-color: #3b6db3; }
+.ipm-setting-note { font-size: 0.8em; color: #777; margin-left: 1.6em; }
+/* The tactic a task unlocks */
+.ipm-unlock { flex-basis: 100%; font-size: 0.85em; color: #6b5b00; }
+.ipm-unlock[hidden] { display: none; }

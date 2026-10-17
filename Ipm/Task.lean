@@ -7,7 +7,8 @@ import VersoManual
 graph editor `ipm.js`, in the style of the Incredible Proof Machine. The task is checked in the
 browser, without a server. A Lean proof of the task belongs inside the directive, in a hidden
 `lean` block, so that building the site checks that the task is provable. With `(lemma := true)`,
-the solved task is offered as a lemma (a block of its own) in the tasks after it:
+the solved task is offered as a lemma (a block of its own) in the tasks after it; with
+`(unlocks := "intro")`, solving it unlocks the tactic `intro`:
 
 ````
 ::::task (assumptions := "A ∧ B") (conclusions := "B ∧ A")
@@ -38,10 +39,11 @@ def items (s : String) : Array String :=
   parts.toArray.map (·.trimAscii.copy) |>.filter (· ≠ "")
 
 -- A task: assumptions, conclusions and the rules available, for `ipm.js`.
--- `lemma`: whether the task, once solved, is offered as a lemma in later tasks.
-block_extension Block.task (assumptions conclusions rules : Array String) (lemma : Bool) where
+-- `lemma`: whether the task, once solved, is offered as a lemma in later tasks; `unlocks`: the
+-- tactics that solving it unlocks.
+block_extension Block.task (assumptions conclusions rules : Array String) (lemma : Bool) (unlocks : Array String) where
   data := Json.mkObj [("assumptions", toJson assumptions), ("conclusions", toJson conclusions),
-    ("rules", toJson rules), ("lemma", toJson lemma)]
+    ("rules", toJson rules), ("lemma", toJson lemma), ("unlocks", toJson unlocks)]
   traverse _ _ _ := pure none
   extraJs := {JS.mk ipmJs}
   extraCss := {CSS.mk ipmCss}
@@ -49,7 +51,7 @@ block_extension Block.task (assumptions conclusions rules : Array String) (lemma
     let get (k : String) := (data.getObjVal? k).toOption.getD (Json.arr #[])
     pure <| .tag "div" #[("class", "ipm-task"), ("data-assumptions", (get "assumptions").compress),
         ("data-conclusions", (get "conclusions").compress), ("data-rules", (get "rules").compress),
-        ("data-lemma", (data.getObjValD "lemma").compress)] <|
+        ("data-lemma", (data.getObjValD "lemma").compress), ("data-unlocks", (get "unlocks").compress)] <|
       .seq #[← content.mapM goB, .tag "div" #[("class", "ipm-board")] .empty]
   toTeX := none
 
@@ -58,10 +60,12 @@ structure TaskConfig where
   conclusions : String
   rules : String
   lemma : Bool
+  unlocks : String
 
 instance : FromArgs TaskConfig DocElabM where
   fromArgs := TaskConfig.mk <$> .namedD `assumptions .string "" <*> .named `conclusions .string false <*>
-    .namedD `rules .string "conjI, conjE, impI, impE" <*> .namedD `lemma .bool false
+    .namedD `rules .string "conjI, conjE, impI, impE" <*> .namedD `lemma .bool false <*>
+    .namedD `unlocks .string ""
 
 /-- A proof graph task; see the module documentation. -/
 @[directive]
@@ -69,7 +73,7 @@ def task : DirectiveExpanderOf TaskConfig
   | cfg, contents => do
     let blocks ← contents.mapM elabBlock
     ``(Verso.Doc.Block.other
-        (Block.task $(quote (items cfg.assumptions)) $(quote (items cfg.conclusions)) $(quote (items cfg.rules)) $(quote cfg.lemma))
+        (Block.task $(quote (items cfg.assumptions)) $(quote (items cfg.conclusions)) $(quote (items cfg.rules)) $(quote cfg.lemma) $(quote (items cfg.unlocks)))
         #[$blocks,*])
 
 -- Text in one language: `:::en` and `:::de` blocks; `ipm.js` shows the language chosen in the header.

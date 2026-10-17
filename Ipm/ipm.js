@@ -49,7 +49,11 @@
     '{x} does not fit {y}': '{x} passt nicht zu {y}',
     'A local hypothesis may only be used inside its box.': 'Eine lokale Annahme darf nur innerhalb ihres Kastens verwendet werden.',
     'Cancel': 'Abbrechen', 'more ▸': 'mehr ▸', 'less ▾': 'weniger ▾', '1 rule ▸': '1 Regel ▸', '{n} rules ▸': '{n} Regeln ▸',
-    '{name} block': '{name}-Block',
+    '{name} block': '{name}-Block', 'Settings': 'Einstellungen', 'Off': 'Aus', 'All': 'Alle',
+    'Tactics: buttons with the Lean command that fits a tapped circle or dot': 'Taktiken: Knöpfe mit dem passenden Lean-Befehl zu einem angetippten Kreis oder Punkt',
+    'Earned by solving tasks': 'Durch Lösen von Aufgaben freigespielt', 'Order': 'Reihenfolge', 'Tasks in order': 'Aufgaben der Reihe nach',
+    'A task can be played once the one before it is solved.': 'Eine Aufgabe ist spielbar, sobald die vorherige gelöst ist.',
+    '🔓 Unlocked: the tactic {t}': '🔓 Freigespielt: die Taktik {t}', '🔒 Solve this task to unlock the tactic {t}.': '🔒 Löse diese Aufgabe, um die Taktik {t} freizuspielen.',
     'induction': 'Induktion', '∀-introduction': '∀-Einführung', '∀-elimination': '∀-Beseitigung', '∃-introduction': '∃-Einführung', '∃-elimination': '∃-Beseitigung',
     '⚠ {c} escapes': '⚠ {c} entkommt',
     'The {c} of this induction block stands for an arbitrary number. So it must not occur in the conclusion, nor in an assumption other than its hypothesis that the proof of the step uses.':
@@ -93,12 +97,68 @@
       })
       box.append(b)
     }
-    header.append(box)
+    header.append(box, settingsButton())
   }
-  // Tactics: buttons beside a selected port with the Lean command that fits (intro h, constructor, …).
-  // The game does not need them; they are off unless switched on (for all tasks, kept in the browser).
-  let TACTICS = false
-  try { TACTICS = localStorage.getItem('ipm-verso:tactics') === 'on' } catch {}
+
+  // ⚙ in the header: the settings, in a panel below it.
+  function settingsButton() {
+    const button = el('button', 'ipm-settings-button', '⚙')
+    button.type = 'button'
+    button.title = tr('Settings')
+    button.setAttribute('aria-label', tr('Settings'))
+    const panel = el('div', 'ipm-settings')
+    panel.hidden = true
+    const close = el('button', 'ipm-pop-close', '✕')
+    close.type = 'button'
+    close.addEventListener('click', () => { panel.hidden = true })
+    const head = el('div', 'ipm-pop-head')
+    head.append(el('span', 'ipm-pop-title', tr('Settings')), close)
+    const radio = (value, text) => {
+      const l = el('label', 'ipm-setting')
+      const r = el('input')
+      r.type = 'radio'; r.name = 'ipm-tactics'; r.value = value; r.checked = SETTINGS.tactics === value
+      r.addEventListener('change', () => { SETTINGS.tactics = value; saveSettings() })
+      l.append(r, el('span', '', text))
+      return l
+    }
+    const order = el('label', 'ipm-setting')
+    const box = el('input')
+    box.type = 'checkbox'; box.name = 'ipm-in-order'; box.checked = SETTINGS.inOrder
+    box.addEventListener('change', () => { SETTINGS.inOrder = box.checked; saveSettings() })
+    order.append(box, el('span', '', tr('Tasks in order')))
+    panel.append(head,
+      el('div', 'ipm-pop-subtitle', tr('Tactics: buttons with the Lean command that fits a tapped circle or dot')),
+      radio('off', tr('Off')), radio('earned', tr('Earned by solving tasks')), radio('all', tr('All')),
+      el('div', 'ipm-pop-subtitle', tr('Order')), order,
+      el('div', 'ipm-setting-note', tr('A task can be played once the one before it is solved.')))
+    button.addEventListener('click', ev => { ev.stopPropagation(); panel.hidden = !panel.hidden })
+    document.addEventListener('pointerdown', ev => { if (!panel.hidden && !panel.contains(ev.target) && ev.target !== button) panel.hidden = true })
+    document.addEventListener('keydown', ev => { if (ev.key === 'Escape') panel.hidden = true })
+    document.body.append(panel)
+    return button
+  }
+  // Settings, for all tasks, kept in the browser (⚙ in the header).
+  // `tactics`: buttons beside a tapped port with the Lean command that fits (intro h, constructor, …):
+  // 'off', 'earned' (a tactic once a task that unlocks it is solved by hand) or 'all'.
+  // `inOrder`: a task can be played once the one before it is solved.
+  const SETTINGS = { tactics: 'earned', inOrder: true }
+  let UNLOCKED = new Set()
+  try {
+    const t = localStorage.getItem('ipm-verso:tactics')
+    if (t === 'on') SETTINGS.tactics = 'all'
+    else if (['off', 'earned', 'all'].includes(t)) SETTINGS.tactics = t
+    SETTINGS.inOrder = localStorage.getItem('ipm-verso:in-order') !== 'off'
+    UNLOCKED = new Set(JSON.parse(localStorage.getItem('ipm-verso:unlocked')) ?? [])
+  } catch {}
+  const tacticAllowed = key => SETTINGS.tactics === 'all' || (SETTINGS.tactics === 'earned' && UNLOCKED.has(key))
+  function saveSettings() {
+    try {
+      localStorage.setItem('ipm-verso:tactics', SETTINGS.tactics)
+      localStorage.setItem('ipm-verso:in-order', SETTINGS.inOrder ? 'on' : 'off')
+      localStorage.setItem('ipm-verso:unlocked', JSON.stringify([...UNLOCKED]))
+    } catch {}
+    window.dispatchEvent(new Event('ipm-settings'))
+  }
 
   const tr = (en, vars = {}) => (LANG === 'de' ? DE[en] ?? en : en).replace(/\{(\w+)\}/g, (_, k) => vars[k])
 
@@ -1018,24 +1078,15 @@
         z.addEventListener('click', () => { this.zoom = f(this.zoom); this.render() })
         return z
       }
-      // The switch for tactics; it holds for all tasks.
-      const tactics = el('label', 'ipm-tactics')
-      tactics.title = tr('Show the Lean command that fits a tapped circle or dot')
-      this.tacticsBox = el('input')
-      this.tacticsBox.type = 'checkbox'
-      this.tacticsBox.checked = TACTICS
-      this.tacticsBox.addEventListener('change', () => {
-        TACTICS = this.tacticsBox.checked
-        try { localStorage.setItem('ipm-verso:tactics', TACTICS ? 'on' : 'off') } catch {}
-        window.dispatchEvent(new Event('ipm-tactics'))
-      })
-      window.addEventListener('ipm-tactics', () => { this.tacticsBox.checked = TACTICS; this.render() })
-      tactics.append(this.tacticsBox, el('span', '', tr('Allow tactics')))
+      window.addEventListener('ipm-settings', () => this.render())
+      // The tactics this task unlocks, shown below it while tactics are earned.
+      this.unlocks = JSON.parse(root.dataset.unlocks ?? '[]')
+      this.unlockNote = el('div', 'ipm-unlock')
       tools.append(undo, reset, tidy,
         zoomButton('−', tr('Smaller'), z => Math.max(0.4, z / 1.25)),
         zoomButton('+', tr('Larger'), z => Math.min(4, z * 1.25)),
         zoomButton('Fit', tr('Fit to the page'), () => 1),
-        tactics, this.status)
+        this.status, this.unlockNote)
       this.sheet = el('div', 'ipm-sheet')
       this.sheet.hidden = true
       // The trash can appears while a rule block is dragged; dropping the block on it removes it.
@@ -1459,7 +1510,19 @@
         this.selected?.kind === 'out' ? 'Now tap a glowing green circle, or add a block with ＋' :
         n === 1 ? '1 red circle left — tap one' : '{n} red circles left — tap one', { n })
       try { localStorage.setItem(this.key, JSON.stringify({ proof: this.proof.snapshot(), solved: qed })) } catch {}
-      if (qed) { this.saveLemma(); this.onSolved?.() }
+      if (qed) { this.saveLemma(); this.unlock(); this.onSolved?.() }
+      this.unlockNote.hidden = !(SETTINGS.tactics === 'earned' && this.unlocks.length)
+      const ts = this.unlocks.join(', ')
+      this.unlockNote.textContent = this.unlocks.every(k => UNLOCKED.has(k))
+        ? tr('🔓 Unlocked: the tactic {t}', { t: ts }) : tr('🔒 Solve this task to unlock the tactic {t}.', { t: ts })
+    }
+
+    // Solving the task unlocks its tactics.
+    unlock() {
+      const fresh = this.unlocks.filter(k => !UNLOCKED.has(k))
+      if (!fresh.length) return
+      fresh.forEach(k => UNLOCKED.add(k))
+      saveSettings()
     }
 
     // ------------------------------------------------------------ lemmas
@@ -1557,21 +1620,23 @@
     // the →I block (`intro`), for an assumption `A ∧ B` the ∧E block (`obtain`), and so on.
     steps() {
       const sel = this.selected
-      if (!sel || !TACTICS) return []
+      if (!sel || SETTINGS.tactics === 'off') return []
       const b = this.proof.block(sel.block)
       const f = resolve(sel.kind === 'in' ? b.inputs[sel.port] : b.outputs[sel.port], this.analysis.s)
       // The Lean command, with the name of the assumption as in the Lean proof (h₁, h₂, …), or `h`.
       const assumptions = this.proof.blocks.filter(x => x.kind === 'assumption')
       const h = b.kind === 'assumption' ? 'h' + sub(assumptions.indexOf(b) + 1) : 'h'
-      const goal = { imp: [['impI', 'intro h']], and: [['conjI', 'constructor']], iff: [['iffI', 'constructor']],
-        or: [['disjI1', 'left'], ['disjI2', 'right']], top: [['trueI', 'trivial']],
-        all: [['allI', 'intro c'], ['ind', 'intro n; induction n']], ex: [['exI', 'use _']] }
-      const have = { and: [['conjE', `obtain ⟨ha, hb⟩ := ${h}`]], or: [['disjE', `obtain (ha | hb) := ${h}`]],
-        imp: [['impE', `apply ${h}`]], bot: [['falseE', `exact ${h}.elim`]],
-        iff: [['iffE1', `apply ${h}.mp`], ['iffE2', `apply ${h}.mpr`]],
-        all: [['allE', `specialize ${h} _`]], ex: [['exE', `obtain ⟨c, hc⟩ := ${h}`]] }
+      // [rule, Lean command, tactic (which must be allowed)]
+      const goal = { imp: [['impI', 'intro h', 'intro']], and: [['conjI', 'constructor', 'constructor']],
+        iff: [['iffI', 'constructor', 'constructor']], or: [['disjI1', 'left', 'left'], ['disjI2', 'right', 'right']],
+        top: [['trueI', 'trivial', 'trivial']], all: [['allI', 'intro c', 'intro'], ['ind', 'intro n; induction n', 'induction']],
+        ex: [['exI', 'use _', 'use']] }
+      const have = { and: [['conjE', `obtain ⟨ha, hb⟩ := ${h}`, 'obtain']], or: [['disjE', `obtain (ha | hb) := ${h}`, 'obtain']],
+        imp: [['impE', `apply ${h}`, 'apply']], bot: [['falseE', `exact ${h}.elim`, 'exfalso']],
+        iff: [['iffE1', `apply ${h}.mp`, 'mp'], ['iffE2', `apply ${h}.mpr`, 'mpr']],
+        all: [['allE', `specialize ${h} _`, 'specialize']], ex: [['exE', `obtain ⟨c, hc⟩ := ${h}`, 'obtain']] }
       if (sel.kind === 'in' && !this.analysis.openInputs.some(o => o.block === sel.block && o.port === sel.port)) return []
-      const steps = ((sel.kind === 'in' ? goal : have)[f.t] ?? []).filter(([rule]) => this.rules.includes(rule))
+      const steps = ((sel.kind === 'in' ? goal : have)[f.t] ?? []).filter(([rule, , key]) => this.rules.includes(rule) && tacticAllowed(key))
         .map(([rule, tactic]) => ({ rule, text: `${RULES[rule].label} · ${tactic}`, act: () => this.takeStep(rule) }))
       if (sel.kind !== 'in') return steps
       // For a goal also: `exact h₁` for an assumption that fits it, and `apply h₁` for an assumption
@@ -1579,8 +1644,8 @@
       const exact = [], apply = []
       assumptions.forEach((a, k) => {
         const o = { block: a.id, port: 0 }, name = 'h' + sub(k + 1), g = norm(a.outputs[0], this.analysis.s)
-        if (this.fits(o, sel)) exact.push({ text: `exact ${name}`, act: () => this.link(o, sel) })
-        else if (g.t === 'imp' && this.rules.includes('impE') && unify(g.b, f, this.analysis.s))
+        if (this.fits(o, sel) && tacticAllowed('exact')) exact.push({ text: `exact ${name}`, act: () => this.link(o, sel) })
+        else if (g.t === 'imp' && this.rules.includes('impE') && tacticAllowed('apply') && unify(g.b, f, this.analysis.s))
           apply.push({ rule: 'impE', text: `→E · apply ${name}`, act: () => {
             this.selected = null
             this.change(() => {
@@ -1784,7 +1849,7 @@
     const update = scroll => {
       const open = tasks.findIndex(t => !t.root.classList.contains('ipm-solved'))
       tasks.forEach((t, i) => {
-        const locked = open >= 0 && i > open
+        const locked = SETTINGS.inOrder && open >= 0 && i > open
         if (t.root.classList.contains('ipm-locked') === locked && t.drawn) return
         t.root.classList.toggle('ipm-locked', locked)
         t.root.inert = locked
@@ -1802,6 +1867,7 @@
       if (t.root.classList.contains('ipm-solved')) t.reported = true
     })
     update(false)
+    window.addEventListener('ipm-settings', () => update(false))
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init)

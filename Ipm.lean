@@ -30,9 +30,10 @@ proof is a set of lines that lead from the assumptions to the goals, through *ru
 * A *red circle* is something still to be proved. Tap it, and everything in the picture that fits
   glows green: tap that to draw the line.
 * A *blue dot* is something you have. Tap it, and the red circles it fits glow green.
-* With *Allow tactics* switched on (below the board), tapping a red circle or a blue dot also shows
-  buttons with the step that fits its statement, as a Lean tactic: for the goal `A → B` it is *→I · intro h*, for an assumption
-  `h₁ : A ∧ B` *∧E · obtain ⟨ha, hb⟩ := h₁*. One tap puts the block in and connects it.
+* Tactics: tapping a red circle or a blue dot can also show buttons with the step that fits, as a
+  Lean tactic: for the goal `A → B` it is *→I · intro h*. You earn each tactic by solving the task
+  that introduces it by hand (in the settings ⚙ you can also switch them all on, or off). One tap
+  puts the block in and connects it.
 * New blocks come from the button *＋* below the picture: it opens a menu with the rules. Tap one
   to add it, or drag it onto the board. In a rule, `?1` and `?2` stand for any statements; they are
   filled in when you connect the block.
@@ -57,9 +58,10 @@ aus Linien, die über *Regelblöcke* von den Annahmen zu den Zielen führen.
   leuchtet grün: Tippe es an, um die Linie zu ziehen.
 * Ein *blauer Punkt* ist etwas, das du hast. Tippe ihn an, und die roten Kreise, zu denen er passt,
   leuchten grün.
-* Wenn *Taktiken erlauben* (unter dem Spielfeld) eingeschaltet ist, zeigen Knöpfe neben einem
-  angetippten roten Kreis oder blauen Punkt den passenden Schritt als Lean-Taktik: für das Ziel `A → B` ist das *→I · intro h*, für eine
-  Annahme `h₁ : A ∧ B` *∧E · obtain ⟨ha, hb⟩ := h₁*. Ein Tipp setzt den Block ein und verbindet ihn.
+* Taktiken: Ein angetippter roter Kreis oder blauer Punkt kann auch Knöpfe mit dem passenden
+  Schritt als Lean-Taktik zeigen: für das Ziel `A → B` ist das *→I · intro h*. Jede Taktik spielst du
+  frei, indem du die Aufgabe, die sie einführt, von Hand löst (in den Einstellungen ⚙ kannst du auch
+  alle ein- oder ausschalten). Ein Tipp setzt den Block ein und verbindet ihn.
 * Neue Blöcke kommen über den Knopf *＋* unter dem Bild: Er öffnet ein Menü mit den Regeln. Tippe
   eine an, um sie hinzuzufügen, oder zieh sie aufs Spielfeld. In einer Regel stehen `?1` und `?2` für
   beliebige Aussagen; sie werden beim Verbinden ausgefüllt.
