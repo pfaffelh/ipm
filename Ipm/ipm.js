@@ -30,17 +30,17 @@
     '∨-introduction (left)': '∨-Einführung (links)', '∨-introduction (right)': '∨-Einführung (rechts)',
     '∨-elimination': '∨-Beseitigung', '⊥-elimination': '⊥-Beseitigung',
     'tertium non datur': 'Tertium non datur',
-    'Show blocks ▾': 'Blöcke zeigen ▾', 'Names only ▴': 'Nur Namen ▴',
+    '＋ Add a block': '＋ Baustein hinzufügen', 'Add a block': 'Baustein hinzufügen', 'Rules': 'Regeln', 'Close': 'Schließen',
     '↶ Undo': '↶ Zurück', 'Start over': 'Neu anfangen', 'Tidy up': 'Aufräumen',
     'Arrange the blocks automatically again': 'Die Blöcke wieder automatisch anordnen',
     'Smaller': 'Kleiner', 'Larger': 'Größer', 'Fit to the page': 'An die Seite anpassen',
-    'Add a rule:': 'Regel hinzufügen:', 'The proof in Lean': 'Der Beweis in Lean', 'Try it in Lean ↗': 'In Lean ausprobieren ↗',
+    'The proof in Lean': 'Der Beweis in Lean', 'Try it in Lean ↗': 'In Lean ausprobieren ↗',
     'Proof complete ✓': 'Beweis fertig ✓',
-    'Now tap a glowing green dot, or add a rule from the menu': 'Jetzt einen grün leuchtenden Punkt antippen oder eine Regel aus dem Menü nehmen',
-    'Now tap a glowing green circle, or add a rule from the menu': 'Jetzt einen grün leuchtenden Kreis antippen oder eine Regel aus dem Menü nehmen',
+    'Now tap a glowing green dot, or add a block with ＋': 'Jetzt einen grün leuchtenden Punkt antippen oder mit ＋ einen Baustein hinzufügen',
+    'Now tap a glowing green circle, or add a block with ＋': 'Jetzt einen grün leuchtenden Kreis antippen oder mit ＋ einen Baustein hinzufügen',
     '1 red circle left — tap one': 'Noch 1 roter Kreis — tippe ihn an',
     '{n} red circles left — tap one': 'Noch {n} rote Kreise — tippe einen an',
-    'Lemmas from solved tasks ({n})': 'Hilfssätze aus gelösten Aufgaben ({n})',
+    'Lemmas from solved tasks': 'Hilfssätze aus gelösten Aufgaben',
     'That would go round in a circle.': 'Das wäre ein Kreisschluss.',
     'Prove {x}': 'Beweise {x}', 'Disconnect': 'Verbindung lösen', 'This input is connected already.': 'Dieser Eingang ist schon verbunden.',
     'Remove this block': 'Diesen Block entfernen', 'Remove this connection': 'Diese Verbindung entfernen',
@@ -552,11 +552,6 @@
     return pic
   }
 
-  function setCompact(menu, compact) {
-    menu.classList.toggle('ipm-compact', compact)
-    menu.querySelector('.ipm-menu-toggle').textContent = tr(compact ? 'Show blocks ▾' : 'Names only ▴')
-  }
-
   class Task {
     constructor(root, index) {
       this.root = root
@@ -604,22 +599,36 @@
       // The trash can appears while a rule block is dragged; dropping the block on it removes it.
       this.trash = el('div', 'ipm-trash', '🗑')
       this.trash.setAttribute('aria-hidden', 'true')
-      // The rule menu: always visible below the picture.
+      // Adding a block: the button ＋ below the picture opens a popover with all blocks, the rules
+      // and the lemmas. Taking one (a tap, or dragging it onto the board) closes the popover again.
       this.menu = el('div', 'ipm-menu')
-      this.menu.append(el('span', 'ipm-menu-label', tr('Add a rule:')))
+      this.addButton = el('button', 'ipm-add', tr('＋ Add a block'))
+      this.addButton.type = 'button'
+      this.addButton.setAttribute('aria-expanded', 'false')
+      this.addButton.addEventListener('click', () => (this.popover.hidden ? this.openPopover() : this.closePopover()))
+      this.popover = el('div', 'ipm-popover')
+      this.popover.hidden = true
+      const head = el('div', 'ipm-pop-head')
+      const close = el('button', 'ipm-pop-close', '✕')
+      close.type = 'button'
+      close.title = tr('Close')
+      close.addEventListener('click', () => this.closePopover())
+      head.append(el('span', 'ipm-pop-title', tr('Add a block')), close)
+      const ruleList = el('div', 'ipm-pop-list')
       this.rules.forEach((name, k) => {
         const o = this.ruleOptions()[k]
-        const b = el('button', 'ipm-menu-item')
-        b.type = 'button'
-        b.dataset.rule = name
-        b.title = `${o.label} (${o.detail})`
-        b.append(o.picture, el('span', 'ipm-menu-caption', RULES[name].label))
-        b.addEventListener('mousedown', ev => ev.preventDefault())
-        this.makeMenuDraggable(b, name, o.act)
-        // A click that follows a tap already handled above does nothing; a click by keyboard adds.
-        b.addEventListener('click', () => { if (Date.now() - Number(b.dataset.added ?? 0) > 700) o.act() })
-        this.menu.append(b)
+        ruleList.append(this.menuItem(name, o.picture, RULES[name].label, `${o.label} (${o.detail})`, o.act))
       })
+      this.lemmaBox = el('div', 'ipm-pop-section')
+      this.lemmaList = el('div', 'ipm-pop-list')
+      this.lemmaBox.append(el('div', 'ipm-pop-subtitle', tr('Lemmas from solved tasks')), this.lemmaList)
+      this.popover.append(head, el('div', 'ipm-pop-subtitle', tr('Rules')), ruleList, this.lemmaBox)
+      this.menu.append(this.popover, this.addButton)
+      // A tap elsewhere, or Escape, closes the popover.
+      document.addEventListener('pointerdown', ev => {
+        if (!this.popover.hidden && !this.menu.contains(ev.target)) this.closePopover()
+      })
+      document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && !this.popover.hidden) this.closePopover() })
       // The same proof in Lean, updated with every change.
       this.lean = el('details', 'ipm-lean')
       this.lean.open = true
@@ -628,30 +637,38 @@
       this.leanLink.target = '_blank'
       this.leanLink.rel = 'noopener'
       this.lean.append(el('summary', '', tr('The proof in Lean')), this.leanCode, this.leanLink)
-      // Names only, or the pictures of the blocks: on phones names only, unless the player chose otherwise.
-      const toggle = el('button', 'ipm-menu-toggle')
-      toggle.type = 'button'
-      toggle.addEventListener('click', () => {
-        const compact = !this.menu.classList.contains('ipm-compact')
-        try { localStorage.setItem('ipm-verso:menu', compact ? 'compact' : 'pictures') } catch {}
-        for (const m of document.querySelectorAll('.ipm-menu')) setCompact(m, compact)
-      })
-      this.menu.append(toggle)
-      // The lemmas, folded away at first.
-      this.lemmaBox = el('div', 'ipm-lemmas')
-      this.lemmaHead = el('button', 'ipm-lemmas-head')
-      this.lemmaHead.type = 'button'
-      this.lemmaHead.addEventListener('click', () => { this.lemmasOpen = !this.lemmasOpen; this.refreshLemmas() })
-      this.lemmaList = el('div', 'ipm-lemmas-list')
-      this.lemmaBox.append(this.lemmaHead, this.lemmaList)
-      this.menu.append(this.lemmaBox)
       this.refreshLemmas()
       window.addEventListener('ipm-lemmas', () => this.refreshLemmas())
-      let pref = null
-      try { pref = localStorage.getItem('ipm-verso:menu') } catch {}
-      setCompact(this.menu, pref ? pref === 'compact' : window.matchMedia('(max-width: 600px)').matches)
       root.querySelector('.ipm-board').append(this.canvas, this.menu, tools, this.sheet, this.lean, this.trash)
       this.render()
+    }
+
+    // An entry of the popover: tapping it adds the block, dragging puts it where it is dropped.
+    menuItem(name, picture, caption, title, act) {
+      const b = el('button', 'ipm-menu-item')
+      b.type = 'button'
+      b.dataset.rule = name
+      b.title = title
+      b.append(picture, el('span', 'ipm-menu-caption', caption))
+      if (Number(picture.getAttribute('width')) > 220) b.classList.add('ipm-wide')  // two columns
+      b.addEventListener('mousedown', ev => ev.preventDefault())
+      const take = () => { this.closePopover(); act() }
+      this.makeMenuDraggable(b, name, take)
+      // A click that follows a tap already handled does nothing; a click by keyboard adds.
+      b.addEventListener('click', () => { if (Date.now() - Number(b.dataset.added ?? 0) > 700) take() })
+      return b
+    }
+
+    openPopover() {
+      this.popover.hidden = false
+      this.popover.scrollTop = 0
+      this.addButton.setAttribute('aria-expanded', 'true')
+    }
+
+    closePopover() {
+      this.popover.hidden = true
+      this.popover.classList.remove('ipm-pop-dragging')
+      this.addButton.setAttribute('aria-expanded', 'false')
     }
 
     change(act) {
@@ -736,6 +753,7 @@
         const move = e => {
           if (!ghost && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 6) return
           if (!ghost) {
+            this.popover.classList.add('ipm-pop-dragging')
             ghost = rulePicture(name)
             ghost.classList.add('ipm-ghost')
             document.body.append(ghost)
@@ -755,6 +773,7 @@
             return
           }
           ghost.remove()
+          this.closePopover()
           item.dataset.added = Date.now()  // the browser may follow the drag with a click
           if (e.type !== 'pointerup' || !overBoard(e) || !this.svgRoot) return
           // Where the pointer is, in the picture's coordinates; the block is centred there.
@@ -977,8 +996,8 @@
       this.leanLink.hidden = !qed
       const n = this.analysis.openInputs.length
       this.status.textContent = tr(qed ? 'Proof complete ✓' :
-        this.selected?.kind === 'in' ? 'Now tap a glowing green dot, or add a rule from the menu' :
-        this.selected?.kind === 'out' ? 'Now tap a glowing green circle, or add a rule from the menu' :
+        this.selected?.kind === 'in' ? 'Now tap a glowing green dot, or add a block with ＋' :
+        this.selected?.kind === 'out' ? 'Now tap a glowing green circle, or add a block with ＋' :
         n === 1 ? '1 red circle left — tap one' : '{n} red circles left — tap one', { n })
       try { localStorage.setItem(this.key, JSON.stringify({ proof: this.proof.snapshot(), solved: qed })) } catch {}
       if (qed) { this.saveLemma(); this.onSolved?.() }
@@ -1020,20 +1039,12 @@
         .sort((a, b) => a.session - b.session || a.task - b.task)
         .filter(L => !seen.has(L.statement) && seen.add(L.statement))
       this.lemmaBox.hidden = lemmas.length === 0
-      this.lemmaHead.textContent = `${tr('Lemmas from solved tasks ({n})', { n: lemmas.length })} ${this.lemmasOpen ? '▴' : '▾'}`
-      this.lemmaList.hidden = !this.lemmasOpen
       this.lemmaList.replaceChildren(...lemmas.map(L => {
         const name = 'lemma:' + L.key
-        const b = el('button', 'ipm-menu-item ipm-lemma-item')
-        b.type = 'button'
-        b.dataset.rule = name
-        b.title = RULES[name].name
-        b.append(rulePicture(name), el('span', 'ipm-menu-caption', `${L.label}: ${L.statement}`))
-        b.addEventListener('mousedown', ev => ev.preventDefault())
         const act = () => { this.undoStack.push(this.proof.snapshot()); this.proof.addRule(name); this.hideSheet(); this.render() }
-        this.makeMenuDraggable(b, name, act)
-        b.addEventListener('click', () => { if (Date.now() - Number(b.dataset.added ?? 0) > 700) act() })
-        return b
+        const item = this.menuItem(name, rulePicture(name), `${L.label}: ${L.statement}`, RULES[name].name, act)
+        item.classList.add('ipm-lemma-item')
+        return item
       }))
     }
 

@@ -25,14 +25,15 @@ proof is a set of lines that lead from the assumptions to the goals, through *ru
 * A *red circle* is something still to be proved. Tap it, and everything in the picture that fits
   glows green: tap that to draw the line.
 * A *blue dot* is something you have. Tap it, and the red circles it fits glow green.
-* New rule blocks come from the menu below the picture: drag one onto the board (or tap it). In a
-  rule, `?1` and `?2` stand for any statements; they are filled in when you connect the block.
+* New blocks come from the button *＋* below the picture: it opens a menu with the rules. Tap one
+  to add it, or drag it onto the board. In a rule, `?1` and `?2` stand for any statements; they are
+  filled in when you connect the block.
 * A line that does not fit gets a ☠; tap it to see why. Tap a line and then ✕ to remove it.
 * Blocks can be dragged around. To remove a rule block, drag it onto the trash can 🗑, which
   appears at the corner of the board while you drag. With −, + and Fit you can zoom.
 * Below the board you see the same proof in Lean, updated with every step.
-* A solved task becomes a *lemma*: under “Lemmas from solved tasks” in the menu, you can use it as a
-  block of its own in other tasks.
+* A solved task becomes a *lemma*: in the menu of *＋*, under “Lemmas from solved tasks”, you can use
+  it as a block of its own in other tasks.
 
 You are done when no red circle is left. Your progress is kept in your browser.
 :::
@@ -48,15 +49,16 @@ aus Linien, die über *Regelblöcke* von den Annahmen zu den Zielen führen.
   leuchtet grün: Tippe es an, um die Linie zu ziehen.
 * Ein *blauer Punkt* ist etwas, das du hast. Tippe ihn an, und die roten Kreise, zu denen er passt,
   leuchten grün.
-* Neue Regelblöcke kommen aus dem Menü unter dem Bild: Zieh einen aufs Spielfeld (oder tippe ihn an).
-  In einer Regel stehen `?1` und `?2` für beliebige Aussagen; sie werden beim Verbinden ausgefüllt.
+* Neue Blöcke kommen über den Knopf *＋* unter dem Bild: Er öffnet ein Menü mit den Regeln. Tippe
+  eine an, um sie hinzuzufügen, oder zieh sie aufs Spielfeld. In einer Regel stehen `?1` und `?2` für
+  beliebige Aussagen; sie werden beim Verbinden ausgefüllt.
 * Eine Linie, die nicht passt, bekommt ein ☠; tippe darauf, um zu sehen, warum. Tippe eine Linie und
   dann ✕ an, um sie zu entfernen.
 * Blöcke lassen sich verschieben. Um einen Regelblock zu entfernen, zieh ihn auf den Mülleimer 🗑, der
   beim Ziehen an der Ecke des Spielfelds erscheint. Mit −, + und Fit kannst du zoomen.
 * Unter dem Spielfeld steht derselbe Beweis in Lean, bei jedem Schritt aktualisiert.
-* Eine gelöste Aufgabe wird zum *Hilfssatz*: Unter „Hilfssätze aus gelösten Aufgaben“ im Menü kannst
-  du sie in anderen Aufgaben als eigenen Block verwenden.
+* Eine gelöste Aufgabe wird zum *Hilfssatz*: Im Menü von *＋* kannst du sie unter „Hilfssätze aus
+  gelösten Aufgaben“ in anderen Aufgaben als eigenen Block verwenden.
 
 Du bist fertig, wenn kein roter Kreis mehr übrig ist. Dein Fortschritt wird in deinem Browser
 gespeichert.

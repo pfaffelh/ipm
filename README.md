@@ -14,9 +14,9 @@ logic (9).
 
 * Tap a red circle (something to prove): everything in the picture that fits glows green; tap it to
   draw the line. It also works the other way round (tap an output first).
-* The rules are always available in a menu below the picture (on phones by name only; “Show blocks”
-  unfolds the pictures), drawn as the very blocks they add,
-  with `?1`, `?2` for arbitrary statements; tapping one adds the block, which you then connect.
+* The button ＋ below the picture opens a menu with the rules (and the lemmas), drawn as the very
+  blocks they add, with `?1`, `?2` for arbitrary statements; tapping one adds the block (or drag it
+  onto the board), and the menu closes again. You then connect the block.
   Unification fills in `?1`, `?2`. Rule blocks you no longer need go into the trash can 🗑, which
   appears while you drag a block.
 * A line that does not fit gets a ☠, a local hypothesis used outside its box a ⚠; tap them for an
@@ -24,13 +24,13 @@ logic (9).
 * Red circles are inputs (still to be proved), blue dots outputs (what you have).
 * →-introduction provides a local hypothesis (a blue dot with a purple ring, on top of the block); a dashed box shows the part of the proof
   that uses it, which must lead back into the block's own input.
-* Rules are dragged from the menu onto the board (or tapped). Blocks can be dragged with mouse or
+* Blocks can be dragged with mouse or
   finger; tap a line to select it and ✕ to remove it. Undo, Start over, Tidy up (automatic layout)
   and zoom (−, +, Fit; a larger picture scrolls inside the board).
 * Below the board, the same proof is shown in Lean, updated with every change (`sorry` marks what
   is still missing); a complete proof can be opened in the Lean web editor.
 * Tasks come one after another; the ones not yet playable are shown greyed out.
-* Solved tasks become lemmas: in the menu, “Lemmas from solved tasks” offers each solved task as a
+* Solved tasks become lemmas: in the menu of ＋, “Lemmas from solved tasks” offers each solved task as a
   block of its own (assumptions as inputs, goals as outputs, `?1`, `?2` for the statements). In the
   Lean proof, a lemma is a `theorem` that the proof applies.
 * English or German: the switch EN | DE in the header (the choice is kept).

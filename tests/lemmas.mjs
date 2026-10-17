@@ -14,7 +14,7 @@ const inp = (b, n = 0) => b.locator('.ipm-port.ipm-in').nth(n)
 const goal = t => t.locator('.ipm-conclusion .ipm-port.ipm-in')
 const hyp = (t, n) => t.locator('.ipm-assumption .ipm-port.ipm-out').nth(n)
 const link = async (i, o) => { await tap(i); await tap(o) }
-const lemmaHead = t => t.locator('.ipm-lemmas-head')
+const lemmaCount = async t => `${await t.locator('.ipm-lemma-item').count()} lemma(s), section shown: ${await t.locator('.ipm-pop-section').evaluate(x => !x.hidden)}`
 
 // Session 1, task 4 (A, B ⊢ A ∧ B), so that a lemma from another page exists
 await page.goto(base + 'Session-1___-Conjunction/')
@@ -27,15 +27,14 @@ console.log('S1 T4:', await t.locator('.ipm-status').innerText())
 
 await page.goto(base + 'Session-2___-Implication/')
 t = page.locator('.ipm-task').nth(1)
-console.log('S2 T2 before solving T1:', await lemmaHead(t).innerText(), '| shown:', await lemmaHead(t).isVisible())
+console.log('S2 T2 before solving T1:', await lemmaCount(t))
 // Task 1: A, A → B ⊢ B
 const t1 = page.locator('.ipm-task').nth(0)
 await tap(t1.locator(`.ipm-menu-item[data-rule="impE"]`))
 await link(goal(t1), out(rule(t1, 0))); await link(inp(rule(t1, 0), 0), hyp(t1, 1)); await link(inp(rule(t1, 0), 1), hyp(t1, 0))
 console.log('S2 T1:', await t1.locator('.ipm-status').innerText())
 await page.waitForTimeout(1500)
-console.log('S2 T2 after:', await lemmaHead(t).innerText())
-await tap(lemmaHead(t))
+console.log('S2 T2 after:', await lemmaCount(t))
 console.log('  lemmas:', await t.locator('.ipm-lemma-item').evaluateAll(xs => xs.map(x => x.title)))
 // Task 2: A, A → B, B → C ⊢ C with the lemma twice
 const L = t.locator('.ipm-lemma-item[data-rule$=":0"]').first()

@@ -71,13 +71,13 @@ example (A B : Prop) (a : A) (b : B) : B ∧ A := ⟨b, a⟩
 
 ::::task (rules := "conjI, conjE") (assumptions := "A, B") (conclusions := "A ∧ B")
 :::en
-Your first rule. Tap the red circle of the goal, then tap *∧I* in the menu below the picture. A new
+Your first rule. Tap the red circle of the goal, then *＋* below the picture, and choose *∧I*. A new
 block appears: connect its output to the goal, then fill its two red circles.
 :::
 
 :::de
-Deine erste Regel. Tippe den roten Kreis des Ziels an, dann *∧I* im Menü unter dem Bild. Ein neuer
-Block erscheint: Verbinde seinen Ausgang mit dem Ziel und fülle dann seine beiden roten Kreise.
+Deine erste Regel. Tippe den roten Kreis des Ziels an, dann *＋* unter dem Bild, und wähle *∧I*. Ein
+neuer Block erscheint: Verbinde seinen Ausgang mit dem Ziel und fülle dann seine beiden roten Kreise.
 :::
 
 ```lean -show
@@ -101,12 +101,12 @@ example (A : Prop) (a : A) : A ∧ A := ⟨a, a⟩
 
 ::::task (rules := "conjI, conjE") (assumptions := "A ∧ B") (conclusions := "A")
 :::en
-Now take a conjunction apart. Add an *∧E* block from the menu, feed `A ∧ B` into it and
+Now take a conjunction apart. Add an *∧E* block with *＋*, feed `A ∧ B` into it and
 connect the right one of its outputs to the goal.
 :::
 
 :::de
-Jetzt zerlegst du eine Konjunktion. Nimm einen *∧E*-Block aus dem Menü, gib `A ∧ B` hinein und
+Jetzt zerlegst du eine Konjunktion. Nimm mit *＋* einen *∧E*-Block, gib `A ∧ B` hinein und
 verbinde den richtigen seiner Ausgänge mit dem Ziel.
 :::
 
