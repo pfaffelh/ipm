@@ -25,6 +25,15 @@
   document.documentElement.classList.toggle('ipm-de', LANG === 'de')
   document.documentElement.lang = LANG
   const DE = {
+    'intro needs a goal of the form A → B; the goal is {g}.': 'intro braucht ein Ziel der Form A → B; das Ziel ist {g}.',
+    'constructor needs a goal of the form A ∧ B (or A ↔ B); the goal is {g}.': 'constructor braucht ein Ziel der Form A ∧ B (oder A ↔ B); das Ziel ist {g}.',
+    '{c} needs a goal of the form A ∨ B; the goal is {g}.': '{c} braucht ein Ziel der Form A ∨ B; das Ziel ist {g}.',
+    '{h} is {f}, but the goal is {g}.': '{h} ist {f}, das Ziel ist aber {g}.',
+    '{h} : {f} gives {b}, but the goal is {g}.': '{h} : {f} liefert {b}, das Ziel ist aber {g}.',
+    'After {c} you would have to prove {g} — that does not follow from the hypotheses.': 'Nach {c} müsstest du {g} beweisen – das folgt nicht aus den Annahmen.',
+    'That works, but there is a shorter way.': 'Das geht, aber es gibt einen kürzeren Weg.',
+    'Hint': 'Tipp', 'Next puzzle': 'Nächste Aufgabe', 'Puzzle {i} of {n}': 'Aufgabe {i} von {n}', 'from level {l}': 'aus Level {l}',
+    'goal {k} of {n}': 'Ziel {k} von {n}', '🎯 Tactic trainer': '🎯 Taktik-Trainer',
     '∧-introduction': '∧-Einführung', '∧-elimination': '∧-Beseitigung',
     '→-introduction': '→-Einführung', '→-elimination': '→-Beseitigung',
     '∨-introduction (left)': '∨-Einführung (links)', '∨-introduction (right)': '∨-Einführung (rechts)',
@@ -66,6 +75,7 @@
   }
   // Headings of the site, which come from Verso.
   const DE_TITLES = {
+    'Tactic Trainer': 'Taktik-Trainer',
     'The Incredible Proof Machine in Lean': 'Die Incredible Proof Machine in Lean',
     'World 1: Conjunction': 'Welt 1: Konjunktion', 'World 2: Implication': 'Welt 2: Implikation',
     'World 3: Disjunction': 'Welt 3: Disjunktion', 'World 4: Falsity and Negation': 'Welt 4: Falsum und Negation',
@@ -2031,6 +2041,13 @@
     }
     const box = el('div', 'ipm-worlds')
     box.append(el('div', 'ipm-worlds-title', tr('Worlds')), map)
+    // the tactic trainer, beside the way through the worlds
+    const train = toc.querySelector('a[href*="Tactic-Trainer"]')
+    if (train) {
+      const t = el('a', 'ipm-map-trainer' + (location.pathname.includes('Tactic-Trainer') ? ' ipm-map-here' : ''), tr('🎯 Tactic trainer'))
+      t.href = train.getAttribute('href')
+      box.append(t)
+    }
     toc.querySelector('.first')?.prepend(box) ?? toc.prepend(box)
     toc.classList.add('ipm-has-map')
   }
@@ -2051,6 +2068,12 @@
       const again = el('a', 'ipm-start-again', tr('or start from the beginning'))
       again.href = first.getAttribute('href')
       box.append(again)
+    }
+    const train = document.querySelector('#toc a[href*="Tactic-Trainer"], main a[href*="Tactic-Trainer"]')
+    if (train) {
+      const t = el('a', 'ipm-start-trainer', tr('🎯 Tactic trainer'))
+      t.href = train.getAttribute('href')
+      box.append(t)
     }
     h1.after(box)
   }
@@ -2091,6 +2114,171 @@
     } catch {}
   }
 
+  // ------------------------------------------------------------ tactic trainer
+
+  // A prototype of a second mode, like the tactics puzzles of chess programs: a proof state as Lean
+  // shows it (hypotheses, ⊢ goal), and buttons with tactics; one picks the next tactic, until no goal
+  // is left. A small prover knows how many tactics each state still needs, so every button can be
+  // judged: on a shortest way (right), a detour (it works, but costs a star), a dead end (the goal
+  // that cannot be proved any more), or not applicable (the reason Lean would give). Levels of the
+  // game, propositional only for now.
+  const PUZZLES = [
+    { level: 'World-1___-Conjunction/#level-10', name: '1.10', hyps: ['A ∧ B'], goal: 'B ∧ A' },
+    { level: 'World-2___-Implication/#level-5', name: '2.5', hyps: ['A → B', 'B → C'], goal: 'A → C' },
+    { level: 'World-3___-Disjunction/#level-5', name: '3.5', hyps: ['A ∨ B'], goal: 'B ∨ A' },
+  ]
+
+  // A goal: {hyps: [{n, f}], goal, next} (`next`: the number of the next name h₂, h₃, …) and the
+  // node of the tactic script it belongs to. The tactics for the first goal, each with the goals it
+  // leaves, or `null` and why not.
+  function trainerMoves(g) {
+    const G = g.goal, same = (a, b) => show(a) === show(b), h = k => 'h' + sub(g.next + k)
+    const goal = (hyps, f, k = 0) => ({ hyps, goal: f, next: g.next + k })
+    const without = n => g.hyps.filter(x => x.n !== n)
+    const ms = [], m = (cmd, goals, why) => ms.push({ cmd, goals, why })
+    m(`intro ${h(0)}`, G.t === 'imp' ? [goal([...g.hyps, { n: h(0), f: G.a }], G.b, 1)] : null,
+      tr('intro needs a goal of the form A → B; the goal is {g}.', { g: show(G) }))
+    m('constructor', G.t === 'and' ? [goal(g.hyps, G.a), goal(g.hyps, G.b)]
+      : G.t === 'iff' ? [goal(g.hyps, { t: 'imp', a: G.a, b: G.b }), goal(g.hyps, { t: 'imp', a: G.b, b: G.a })] : null,
+      tr('constructor needs a goal of the form A ∧ B (or A ↔ B); the goal is {g}.', { g: show(G) }))
+    for (const [cmd, part] of [['left', 'a'], ['right', 'b']])
+      m(cmd, G.t === 'or' ? [goal(g.hyps, G[part])] : null, tr('{c} needs a goal of the form A ∨ B; the goal is {g}.', { c: cmd, g: show(G) }))
+    for (const x of g.hyps) {
+      m(`exact ${x.n}`, same(x.f, G) ? [] : null, tr('{h} is {f}, but the goal is {g}.', { h: x.n, f: show(x.f), g: show(G) }))
+      if (x.f.t === 'imp')
+        m(`apply ${x.n}`, same(x.f.b, G) ? [goal(g.hyps, x.f.a)] : null,
+          tr('{h} : {f} gives {b}, but the goal is {g}.', { h: x.n, f: show(x.f), b: show(x.f.b), g: show(G) }))
+      if (x.f.t === 'and')
+        m(`obtain ⟨${h(0)}, ${h(1)}⟩ := ${x.n}`, [goal([...without(x.n), { n: h(0), f: x.f.a }, { n: h(1), f: x.f.b }], G, 2)])
+      if (x.f.t === 'or')
+        m(`obtain (${h(0)} | ${h(1)}) := ${x.n}`, [goal([...without(x.n), { n: h(0), f: x.f.a }], G, 2), goal([...without(x.n), { n: h(1), f: x.f.b }], G, 2)])
+      if (x.f.t === 'bot') m(`exact ${x.n}.elim`, [])
+    }
+    return ms
+  }
+
+  // The fewest tactics that prove the goal (searching up to `budget`), or Infinity.
+  function trainerCost(g, budget = 10, memo = new Map()) {
+    if (budget <= 0) return Infinity
+    const key = g.hyps.map(x => show(x.f)).sort().join(', ') + ' ⊢ ' + show(g.goal)
+    const e = memo.get(key)
+    if (e && (e.c <= e.b || e.b >= budget)) return e.c <= budget ? e.c : Infinity
+    memo.set(key, { b: budget, c: Infinity })  // while searching: no way round in a circle
+    let best = Infinity
+    for (const mv of trainerMoves(g)) {
+      if (!mv.goals) continue
+      let c = 1
+      for (const s of mv.goals) { c += trainerCost(s, Math.min(best, budget) - c, memo); if (c >= best) break }
+      if (c < best) best = c
+    }
+    memo.set(key, { b: budget, c: best })
+    return best
+  }
+
+  function trainer() {
+    const root = document.querySelector('.ipm-trainer')
+    const at = (() => { const m = /#puzzle-(\d+)/.exec(location.hash); return m ? Math.min(+m[1], PUZZLES.length) - 1 : 0 })()
+    const stars = i => { try { return +(localStorage.getItem(`ipm-verso:trainer:${i}`) ?? -1) } catch { return -1 } }
+    let i, goals, script, lost, hinted, msg
+    const head = el('div', 'ipm-tr-head'), dots = el('div', 'ipm-dots'), state = el('div', 'ipm-tr-state')
+    const buttons = el('div', 'ipm-tr-buttons'), say = el('div', 'ipm-tr-msg'), tools = el('div', 'ipm-tr-tools')
+    const lean = el('details', 'ipm-tr-lean'), code = el('pre', 'ipm-lean-code')
+    lean.open = true
+    lean.append(el('summary', null, 'Lean'), code)
+    root.append(head, state, say, buttons, tools, lean)
+    const hint = el('button', 'ipm-tr-tool', tr('Hint')), again = el('button', 'ipm-tr-tool', tr('Start over'))
+    const next = el('button', 'ipm-tr-tool', tr('Next puzzle'))
+    tools.append(hint, again, next)
+    // the tactic script so far, with · for each of several goals, and sorry for what is still open
+    const lines = (n, ind) => {
+      if (!n.cmd) return [ind + 'sorry']
+      if (n.kids.length === 1) return [ind + n.cmd, ...lines(n.kids[0], ind)]
+      return [ind + n.cmd, ...n.kids.flatMap(k => { const [a, ...r] = lines(k, ind + '  '); return [ind + '· ' + a.trimStart(), ...r] })]
+    }
+    const start = k => {
+      i = k; lost = 0; hinted = false; msg = null
+      const p = PUZZLES[i], f = parse(p.goal), hyps = p.hyps.map((s, j) => ({ n: 'h' + sub(j + 1), f: parse(s) }))
+      script = { cmd: null, kids: [] }
+      goals = [{ hyps, goal: f, next: hyps.length + 1, node: script }]
+      const atoms = new Set(), collect = g => { if (g.t === 'atom') atoms.add(g.n); parts(g).forEach(collect) }
+      ;[f, ...hyps.map(x => x.f)].forEach(collect)
+      p.header = `example (${[...atoms].sort().join(' ')} : Prop) ${hyps.map(x => `(${x.n} : ${show(x.f, {}, 0, true)})`).join(' ')} : ${show(f, {}, 0, true)} := by`
+      history.replaceState(null, '', location.pathname + `#puzzle-${i + 1}`)
+      draw()
+    }
+    const draw = () => {
+      const p = PUZZLES[i]
+      head.replaceChildren(el('span', 'ipm-tr-title', tr('Puzzle {i} of {n}', { i: i + 1, n: PUZZLES.length })), dots)
+      const lvl = el('a', 'ipm-tr-level', tr('from level {l}', { l: p.name }))
+      lvl.href = p.level
+      head.append(lvl)
+      dots.replaceChildren(...PUZZLES.map((_, k) => {
+        const d = el('button', 'ipm-dot' + (k === i ? ' ipm-dot-current' : '') + (stars(k) >= 0 ? ' ipm-dot-solved' : ''))
+        d.title = tr('Puzzle {i} of {n}', { i: k + 1, n: PUZZLES.length })
+        d.addEventListener('click', () => start(k))
+        return d
+      }))
+      state.replaceChildren()
+      if (!goals.length) state.append(el('div', 'ipm-tr-done', tr('goals accomplished 🎉')))
+      goals.forEach((g, k) => {
+        const box = el('div', 'ipm-tr-goal' + (k ? ' ipm-tr-later' : ''))
+        if (goals.length > 1) box.append(el('div', 'ipm-tr-case', tr('goal {k} of {n}', { k: k + 1, n: goals.length })))
+        for (const x of g.hyps) box.append(el('div', 'ipm-tr-hyp', `${x.n} : ${show(x.f)}`))
+        box.append(el('div', 'ipm-tr-target', `⊢ ${show(g.goal)}`))
+        state.append(box)
+      })
+      say.replaceChildren()
+      if (msg) say.append(el('span', msg.cls, msg.text))
+      if (!goals.length) {
+        const n = Math.max(0, 3 - lost - (hinted ? 1 : 0))
+        say.append(el('span', 'ipm-tr-stars', '★'.repeat(n) + '☆'.repeat(3 - n)))
+      }
+      buttons.replaceChildren()
+      if (goals.length) {
+        const g = goals[0], opt = trainerCost(g)
+        for (const mv of trainerMoves(g)) {
+          const b = el('button', 'ipm-tr-tactic', mv.cmd)
+          const cost = mv.goals ? 1 + mv.goals.reduce((c, s) => c + trainerCost(s), 0) : Infinity
+          if (hinted && cost === opt) b.classList.add('ipm-tr-hint')
+          b.addEventListener('click', () => play(g, mv, cost, opt, b))
+          buttons.append(b)
+        }
+      }
+      code.textContent = [p.header, ...lines(script, '  ')].join('\n')
+      hint.disabled = !goals.length
+    }
+    const wrong = (b, text) => {
+      lost = Math.min(3, lost + 1)
+      msg = { cls: 'ipm-tr-wrong', text }
+      draw()
+      const same = [...buttons.children].find(x => x.textContent === b.textContent)
+      same?.classList.add('ipm-tr-no')
+    }
+    const play = (g, mv, cost, opt, b) => {
+      if (!mv.goals) return wrong(b, mv.why)
+      if (cost === Infinity) {
+        const dead = mv.goals.find(s => trainerCost(s) === Infinity)
+        return wrong(b, tr('After {c} you would have to prove {g} — that does not follow from the hypotheses.', { c: mv.cmd, g: show(dead.goal) }))
+      }
+      if (cost > opt) { lost = Math.min(3, lost + 1); msg = { cls: 'ipm-tr-detour', text: tr('That works, but there is a shorter way.') } }
+      else msg = { cls: 'ipm-tr-right', text: '✓ ' + mv.cmd }
+      g.node.cmd = mv.cmd
+      const kids = mv.goals.map(s => ({ ...s, node: { cmd: null, kids: [] } }))
+      g.node.kids = kids.map(s => s.node)
+      goals = [...kids, ...goals.slice(1)]
+      hinted = hinted && goals.length > 0
+      if (!goals.length) {
+        const n = Math.max(0, 3 - lost - (hinted ? 1 : 0))
+        try { if (n > stars(i)) localStorage.setItem(`ipm-verso:trainer:${i}`, String(n)) } catch {}
+      }
+      draw()
+    }
+    hint.addEventListener('click', () => { hinted = true; draw() })
+    again.addEventListener('click', () => start(i))
+    next.addEventListener('click', () => start((i + 1) % PUZZLES.length))
+    start(at)
+  }
+
   function init() {
     moveProgress()
     setTimeout(worldMap)  // after translatePage, so that the names are in the language chosen
@@ -2100,6 +2288,7 @@
     registerLemmas()
     const tasks = [...document.querySelectorAll('.ipm-task')].map((root, i) => new Task(root, i))
     tasks.forEach((t, i) => t.root.prepend(el('div', 'ipm-task-label', tr('Level {i} of {n}', { i: i + 1, n: tasks.length }))))
+    if (document.querySelector('.ipm-trainer')) { trainer(); return }
     if (!tasks.length) { startButton(); return }
     const stage = el('div', 'ipm-stage')
     tasks[0].root.before(stage)

@@ -64,6 +64,13 @@ induction. `docs/levels.md` lists all levels with what they need and give (lemma
 * Solved tasks marked `(lemma := true)` become lemmas, offered only in the tasks after them (no circles): in the menu of ＋, “Lemmas from solved tasks” offers each solved task as a
   block of its own (assumptions as inputs, goals as outputs, `?1`, `?2` for the statements). In the
   Lean proof, a lemma is a `theorem` that the proof applies.
+* Tactic trainer (a prototype, on the branch `tactic-trainer`): a page of its own, reached from the
+  start page and below the world map. A proof state as Lean shows it (hypotheses, `⊢ goal`) and
+  buttons with tactics; one picks the next one, as in a chess puzzle, until no goal is left. A small
+  prover in `ipm.js` knows how many tactics each state still needs, so every button is judged: on a
+  shortest way (✓), a detour (works, costs a star), a dead end (the goal that would no longer
+  follow), or not applicable (why). A hint marks the best buttons (costs a star). At the end the
+  tactic script, real Lean, and up to three stars. For now three levels (1.10, 2.5, 3.5).
 * English or German: the switch EN | DE in the header (the choice is kept).
 * Progress is kept in the browser.
 

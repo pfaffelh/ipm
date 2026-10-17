@@ -129,4 +129,17 @@ def tip : DirectiveExpanderOf TipConfig
     let blocks ← contents.mapM elabBlock
     ``(Verso.Doc.Block.other (Block.tip $(quote cfg.lang) $(quote cfg.rules)) #[$blocks,*])
 
+-- The tactic trainer (a prototype): `ipm.js` fills the box with its puzzles.
+block_extension Block.trainer where
+  traverse _ _ _ := pure none
+  extraJs := {JS.mk ipmJs}
+  extraCss := {CSS.mk ipmCss}
+  toHtml := some fun _ _ _ _ _ => pure <| .tag "div" #[("class", "ipm-trainer")] .empty
+  toTeX := none
+
+/-- The tactic trainer: `:::trainer` with nothing inside. -/
+@[directive]
+def trainer : DirectiveExpanderOf Unit
+  | (), _ => ``(Verso.Doc.Block.other Block.trainer #[])
+
 end Ipm
