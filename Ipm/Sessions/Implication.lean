@@ -34,7 +34,7 @@ Zwei neue Regeln, für die Implikation:
   außerhalb des Kastens zu verwenden, ist nicht erlaubt (⚠).
 :::
 
-::::task (unlocks := "apply") (assumptions := "A, A → B") (conclusions := "B")
+::::task (rules := "conjI, conjE, impI, impE") (unlocks := "apply") (assumptions := "A, A → B") (conclusions := "B")
 :::en
 Your first →E: from `A → B` and `A` you get `B`.
 :::
@@ -52,7 +52,7 @@ example (A B : Prop) (a : A) (f : A → B) : B := f a
 ```
 ::::
 
-::::task (assumptions := "A, A → B, B → C") (conclusions := "C")
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "A, A → B, B → C") (conclusions := "C")
 :::en
 Two steps.
 :::
@@ -66,7 +66,7 @@ example (A B C : Prop) (a : A) (f : A → B) (g : B → C) : C := g (f a)
 ```
 ::::
 
-::::task (assumptions := "A, A → B, A → C, B → D, C → D") (conclusions := "D")
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "A, A → B, A → C, B → D, C → D") (conclusions := "D")
 :::en
 More assumptions than you need.
 :::
@@ -80,7 +80,7 @@ example (A B C D : Prop) (a : A) (f : A → B) (_ : A → C) (g : B → D) (_ : 
 ```
 ::::
 
-::::task (assumptions := "A, A → A") (conclusions := "A")
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "A, A → A") (conclusions := "A")
 :::en
 Is the implication needed at all?
 :::
@@ -94,7 +94,7 @@ example (A : Prop) (a : A) (_ : A → A) : A := a
 ```
 ::::
 
-::::task (lemma := true) (assumptions := "A → B, B → C") (conclusions := "A → C")
+::::task (rules := "conjI, conjE, impI, impE") (lemma := true) (assumptions := "A → B, B → C") (conclusions := "A → C")
 :::en
 Your first →I. Add an →I block for the goal; then use its local hypothesis `A` (the blue dot with the purple ring), and lead what
 you get from it into the block's input.
@@ -123,7 +123,7 @@ example (A B C : Prop) (f : A → B) (g : B → C) : A → C := fun a => g (f a)
 ```
 ::::
 
-::::task (assumptions := "A → B, A → B → C") (conclusions := "A → C")
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "A → B, A → B → C") (conclusions := "A → C")
 :::en
 The hypothesis `A` may be used more than once.
 :::
@@ -137,7 +137,7 @@ example (A B C : Prop) (f : A → B) (g : A → B → C) : A → C := fun a => g
 ```
 ::::
 
-::::task (unlocks := "intro") (conclusions := "A → A") (assumptions := "")
+::::task (rules := "conjI, conjE, impI, impE") (unlocks := "intro") (conclusions := "A → A") (assumptions := "")
 :::en
 No assumptions at all.
 :::
@@ -151,7 +151,7 @@ example (A : Prop) : A → A := fun a => a
 ```
 ::::
 
-::::task (assumptions := "A → C, B → C, A ∧ B") (conclusions := "C")
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "A → C, B → C, A ∧ B") (conclusions := "C")
 :::en
 Combine ∧ and →.
 :::
@@ -165,7 +165,7 @@ example (A B C : Prop) (f : A → C) (_ : B → C) (h : A ∧ B) : C := f h.1
 ```
 ::::
 
-::::task (assumptions := "A → C, B → C") (conclusions := "A ∧ B → C")
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "A → C, B → C") (conclusions := "A ∧ B → C")
 :::en
 In Lean, `A ∧ B → C` means `(A ∧ B) → C`.
 :::
@@ -179,7 +179,7 @@ example (A B C : Prop) (f : A → C) (_ : B → C) : A ∧ B → C := fun h => f
 ```
 ::::
 
-::::task (assumptions := "B") (conclusions := "A → B")
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "B") (conclusions := "A → B")
 :::en
 The hypothesis need not be used.
 :::
@@ -193,7 +193,7 @@ example (A B : Prop) (b : B) : A → B := fun _ => b
 ```
 ::::
 
-::::task (assumptions := "A ∧ B → C") (conclusions := "A → B → C")
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "A ∧ B → C") (conclusions := "A → B → C")
 :::en
 Two →I blocks, one inside the other. `A → B → C` means `A → (B → C)`.
 :::
@@ -207,7 +207,7 @@ example (A B C : Prop) (f : A ∧ B → C) : A → B → C := fun a b => f ⟨a,
 ```
 ::::
 
-::::task (assumptions := "A → B → C") (conclusions := "A ∧ B → C")
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "A → B → C") (conclusions := "A ∧ B → C")
 :::en
 And back.
 :::
@@ -221,7 +221,7 @@ example (A B C : Prop) (f : A → B → C) : A ∧ B → C := fun h => f h.1 h.2
 ```
 ::::
 
-::::task (assumptions := "(A → B) ∧ (A → C)") (conclusions := "A → B ∧ C")
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "(A → B) ∧ (A → C)") (conclusions := "A → B ∧ C")
 :::en
 Take apart, apply, put together.
 :::
@@ -235,7 +235,134 @@ example (A B C : Prop) (h : (A → B) ∧ (A → C)) : A → B ∧ C := fun a =>
 ```
 ::::
 
-::::task (assumptions := "A → A → B, (A → B) → A") (conclusions := "B")
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "") (conclusions := "P → Q → P")
+:::en
+If `P` holds, it holds under any further assumption.
+:::
+
+:::de
+Wenn `P` gilt, dann auch unter jeder weiteren Annahme.
+:::
+
+```lean -show
+example (P Q : Prop) : P → Q → P := fun p _ => p
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "") (conclusions := "P → Q → Q")
+:::en
+And the same with the second hypothesis.
+:::
+
+:::de
+Und dasselbe mit der zweiten Annahme.
+:::
+
+```lean -show
+example (P Q : Prop) : P → Q → Q := fun _ q => q
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "") (conclusions := "P → P → P")
+:::en
+From the Lean course, sheet 01-a. Two →I blocks; which hypothesis do you use?
+:::
+
+:::de
+Aus dem Lean-Kurs, Blatt 01-a. Zwei →I-Blöcke; welche Annahme verwendest du?
+:::
+
+```lean -show
+example (P : Prop) : P → P → P := fun p _ => p
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "") (conclusions := "P → (P → Q) → Q")
+:::en
+Modus ponens as a statement of its own.
+:::
+
+:::de
+Der Modus ponens als eigene Aussage.
+:::
+
+```lean -show
+example (P Q : Prop) : P → (P → Q) → Q := fun p f => f p
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "P → Q → R, Q") (conclusions := "P → R")
+:::en
+Supply the premises in the other order.
+:::
+
+:::de
+Liefere die Voraussetzungen in der anderen Reihenfolge.
+:::
+
+```lean -show
+example (P Q R : Prop) (h : P → Q → R) (q : Q) : P → R := fun p => h p q
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "") (conclusions := "(P → Q) → (Q → R) → P → R")
+:::en
+Transitivity, with no assumptions at all: three →I blocks.
+:::
+
+:::de
+Transitivität, ganz ohne Annahmen: drei →I-Blöcke.
+:::
+
+```lean -show
+example (P Q R : Prop) : (P → Q) → (Q → R) → P → R := fun f g p => g (f p)
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "") (conclusions := "(P → Q → R) → (P → Q) → P → R")
+:::en
+Nothing new, only →I and →E, but the proof of `P` is needed twice.
+:::
+
+:::de
+Nichts Neues, nur →I und →E, aber der Beweis von `P` wird zweimal gebraucht.
+:::
+
+```lean -show
+example (P Q R : Prop) : (P → Q → R) → (P → Q) → P → R := fun f g p => f p (g p)
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "P → Q, Q → T, Q → R, R → S, T → P, R → T") (conclusions := "T → R")
+:::en
+A puzzle. Not all assumptions are needed: find a path from `T` to `R`.
+:::
+
+:::de
+Ein Rätsel. Nicht alle Annahmen werden gebraucht: Finde einen Weg von `T` nach `R`.
+:::
+
+```lean -show
+example (P Q R S T : Prop) (hPQ : P → Q) (_ : Q → T) (hQR : Q → R) (_ : R → S) (hTP : T → P) (_ : R → T) :
+    T → R := fun t => hQR (hPQ (hTP t))
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "P → Q → R → S") (conclusions := "P ∧ Q ∧ R → S")
+:::en
+Three premises one after the other, or all three at once.
+:::
+
+:::de
+Drei Voraussetzungen nacheinander oder alle drei auf einmal.
+:::
+
+```lean -show
+example (P Q R S : Prop) (h : P → Q → R → S) : P ∧ Q ∧ R → S := fun x => h x.1 x.2.1 x.2.2
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "A → A → B, (A → B) → A") (conclusions := "B")
 :::en
 The final level of the world.
 :::

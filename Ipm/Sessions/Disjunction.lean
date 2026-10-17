@@ -55,7 +55,7 @@ example (A B : Prop) (a : A) (_ : B) : A ∨ B := Or.inl a
 ```
 ::::
 
-::::task (unlocks := "left") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "A") (conclusions := "A ∨ B")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (unlocks := "left") (assumptions := "A") (conclusions := "A ∨ B")
 :::en
 `B` need not be true at all.
 :::
@@ -69,7 +69,7 @@ example (A B : Prop) (a : A) : A ∨ B := Or.inl a
 ```
 ::::
 
-::::task (unlocks := "right") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "B") (conclusions := "A ∨ B")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (unlocks := "right") (assumptions := "B") (conclusions := "A ∨ B")
 :::en
 And from the other side.
 :::
@@ -97,7 +97,7 @@ example (A : Prop) (a : A) : A ∨ A := Or.inl a
 ```
 ::::
 
-::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "A ∨ B") (conclusions := "B ∨ A")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (lemma := true) (assumptions := "A ∨ B") (conclusions := "B ∨ A")
 :::en
 Your first ∨E: prove `B ∨ A` in the case `A` and in the case `B`.
 :::
@@ -151,6 +151,63 @@ example (A B : Prop) (h : A ∧ B) : A ∨ B := Or.inl h.1
 ```
 ::::
 
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "Q") (conclusions := "P ∨ Q ∨ R")
+:::en
+Sheet 01-c. `P ∨ Q ∨ R` means `P ∨ (Q ∨ R)`.
+:::
+
+:::de
+Blatt 01-c. `P ∨ Q ∨ R` bedeutet `P ∨ (Q ∨ R)`.
+:::
+
+```lean -show
+example (P Q R : Prop) (q : Q) : P ∨ Q ∨ R := Or.inr (Or.inl q)
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "P ∧ Q ∧ R") (conclusions := "P ∨ Q ∨ R")
+:::en
+Any one of the three will do.
+:::
+
+:::de
+Irgendeine der drei genügt.
+:::
+
+```lean -show
+example (P Q R : Prop) (h : P ∧ Q ∧ R) : P ∨ Q ∨ R := Or.inl h.1
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "(P ∨ Q) ∨ R") (conclusions := "P ∨ Q ∨ R")
+:::en
+Associativity of `∨`: the other direction of level 6.
+:::
+
+:::de
+Assoziativität von `∨`: die andere Richtung von Level 6.
+:::
+
+```lean -show
+example (P Q R : Prop) (h : (P ∨ Q) ∨ R) : P ∨ Q ∨ R :=
+  h.elim (fun pq => pq.elim Or.inl (fun q => Or.inr (Or.inl q))) (fun r => Or.inr (Or.inr r))
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "P ∨ P ∧ Q") (conclusions := "P")
+:::en
+Absorption, one direction: in both cases you have `P`.
+:::
+
+:::de
+Absorption, eine Richtung: In beiden Fällen hast du `P`.
+:::
+
+```lean -show
+example (P Q : Prop) (h : P ∨ P ∧ Q) : P := h.elim (fun p => p) (fun x => x.1)
+```
+::::
+
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "A ∧ B ∨ C") (conclusions := "(A ∨ C) ∧ (B ∨ C)")
 :::en
 In Lean, `∧` binds more strongly than `∨`: `A ∧ B ∨ C` is `(A ∧ B) ∨ C`.
@@ -181,7 +238,37 @@ example (A B C : Prop) (h : (A ∨ B) ∧ C) : A ∧ C ∨ B ∧ C :=
 ```
 ::::
 
-::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "(A → C) ∧ (B → C)") (conclusions := "A ∨ B → C")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (lemma := true) (assumptions := "P ∧ Q ∨ P ∧ R") (conclusions := "P ∧ (Q ∨ R)")
+:::en
+Distributivity, the direction back.
+:::
+
+:::de
+Distributivität, die Richtung zurück.
+:::
+
+```lean -show
+example (P Q R : Prop) (h : P ∧ Q ∨ P ∧ R) : P ∧ (Q ∨ R) :=
+  h.elim (fun x => ⟨x.1, Or.inl x.2⟩) (fun x => ⟨x.1, Or.inr x.2⟩)
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (lemma := true) (assumptions := "(P ∨ Q) ∧ (P ∨ R)") (conclusions := "P ∨ Q ∧ R")
+:::en
+The other distributive law, back. Two case distinctions, one inside the other.
+:::
+
+:::de
+Das andere Distributivgesetz, zurück. Zwei Fallunterscheidungen, eine in der anderen.
+:::
+
+```lean -show
+example (P Q R : Prop) (h : (P ∨ Q) ∧ (P ∨ R)) : P ∨ Q ∧ R :=
+  h.1.elim Or.inl (fun q => h.2.elim Or.inl (fun r => Or.inr ⟨q, r⟩))
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (lemma := true) (assumptions := "(A → C) ∧ (B → C)") (conclusions := "A ∨ B → C")
 :::en
 `A ∨ B → C` means `(A ∨ B) → C`.
 :::
@@ -196,7 +283,7 @@ example (A B C : Prop) (h : (A → C) ∧ (B → C)) : A ∨ B → C :=
 ```
 ::::
 
-::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "A ∨ B → C") (conclusions := "(A → C) ∧ (B → C)")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (lemma := true) (assumptions := "A ∨ B → C") (conclusions := "(A → C) ∧ (B → C)")
 :::en
 And back.
 :::
@@ -208,6 +295,35 @@ Und zurück.
 ```lean -show
 example (A B C : Prop) (h : A ∨ B → C) : (A → C) ∧ (B → C) :=
   ⟨fun a => h (Or.inl a), fun b => h (Or.inr b)⟩
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "P → R, Q → R") (conclusions := "(P ∨ Q) ∧ S → R")
+:::en
+Take apart, then distinguish the cases. `S` is not needed.
+:::
+
+:::de
+Zerlegen, dann die Fälle unterscheiden. `S` wird nicht gebraucht.
+:::
+
+```lean -show
+example (P Q R S : Prop) (f : P → R) (g : Q → R) : (P ∨ Q) ∧ S → R := fun x => x.1.elim f g
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "P → R, Q → S") (conclusions := "P ∨ Q → R ∨ S")
+:::en
+Weaken a disjunction on both sides at once.
+:::
+
+:::de
+Schwäche eine Disjunktion auf beiden Seiten zugleich ab.
+:::
+
+```lean -show
+example (P Q R S : Prop) (f : P → R) (g : Q → S) : P ∨ Q → R ∨ S :=
+  fun h => h.elim (fun p => Or.inl (f p)) (fun q => Or.inr (g q))
 ```
 ::::
 

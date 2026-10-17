@@ -5,7 +5,6 @@ import Ipm.Sessions.Implication
 import Ipm.Sessions.Disjunction
 import Ipm.Sessions.Falsity
 import Ipm.Sessions.Classical
-import Ipm.Sessions.Course
 import Ipm.Sessions.Iff
 import Ipm.Sessions.Quantifiers
 import Ipm.Sessions.Puzzles
@@ -92,8 +91,6 @@ gespeichert.
 {include 1 Ipm.Sessions.Falsity}
 
 {include 1 Ipm.Sessions.Classical}
-
-{include 1 Ipm.Sessions.Course}
 
 {include 1 Ipm.Sessions.Iff}
 

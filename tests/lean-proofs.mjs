@@ -33,7 +33,7 @@ const open = async path => {
 
 await open('World-1___-Conjunction/')
 // (A ∧ B) ∧ C ⊢ A ∧ C, using one ∧E block twice
-let t = page.locator('.ipm-task').nth(10)
+let t = page.locator('.ipm-task').nth(11)
 await add(t, '∧I'); await add(t, '∧E'); await add(t, '∧E')
 await link(goal(t), out(rule(t, 0)))
 await link(inp(rule(t, 0), 0), out(rule(t, 1), 0))
@@ -76,7 +76,7 @@ await link(inp(rule(t, 4), 1), local(rule(t, 0)))
 await done('S2 T13', t)
 
 // A → A → B, (A → B) → A ⊢ B: the →I block is used twice
-t = page.locator('.ipm-task').nth(13)
+t = page.locator('.ipm-task').nth(22)
 await add(t, '→I'); await add(t, '→E'); await add(t, '→E'); await add(t, '→E'); await add(t, '→E')
 await link(inp(rule(t, 0)), out(rule(t, 1)))
 await link(inp(rule(t, 1), 0), out(rule(t, 2)))

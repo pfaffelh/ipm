@@ -69,7 +69,7 @@ example (A B : Prop) (h : (B → False) → A → False) : A → B :=
 ```
 ::::
 
-::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "A ∧ B → ⊥") (conclusions := "(A → ⊥) ∨ (B → ⊥)")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (lemma := true) (assumptions := "A ∧ B → ⊥") (conclusions := "(A → ⊥) ∨ (B → ⊥)")
 :::en
 If not both are true, then one of them is false.
 :::
@@ -84,7 +84,7 @@ example (A B : Prop) (h : A ∧ B → False) : (A → False) ∨ (B → False) :
 ```
 ::::
 
-::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "(A → ⊥) → ⊥") (conclusions := "A")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (lemma := true) (assumptions := "(A → ⊥) → ⊥") (conclusions := "A")
 :::en
 Double negation: if `A` is not false, it is true.
 :::
@@ -99,7 +99,7 @@ example (A : Prop) (h : (A → False) → False) : A :=
 ```
 ::::
 
-::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "A → B") (conclusions := "(A → ⊥) ∨ B")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (lemma := true) (assumptions := "A → B") (conclusions := "(A → ⊥) ∨ B")
 :::en
 An implication as an “or”.
 :::
@@ -162,7 +162,64 @@ example (A B C : Prop) (h : A ∧ B ∧ C → False) : (A → False) ∨ (B → 
 ```
 ::::
 
-::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "(A → B) → ⊥") (conclusions := "A ∧ (B → ⊥)")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "P → Q, (P → ⊥) → Q") (conclusions := "Q")
+:::en
+Sheet 01-e. Classical: distinguish the cases `P` and `¬P`.
+:::
+
+:::de
+Blatt 01-e. Klassisch: Unterscheide die Fälle `P` und `¬P`.
+:::
+
+```lean -show
+example (P Q : Prop) (f : P → Q) (g : (P → False) → Q) : Q := (Classical.em P).elim f g
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "") (conclusions := "((P → ⊥) → P) → P")
+:::en
+A statement that follows from its own negation holds.
+:::
+
+:::de
+Eine Aussage, die aus ihrer eigenen Negation folgt, gilt.
+:::
+
+```lean -show
+example (P : Prop) : ((P → False) → P) → P := fun h => (Classical.em P).elim (fun p => p) (fun np => h np)
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "P → Q") (conclusions := "Q ∨ (P → ⊥)")
+:::en
+An implication as a disjunction.
+:::
+
+:::de
+Eine Implikation als Disjunktion.
+:::
+
+```lean -show
+example (P Q : Prop) (f : P → Q) : Q ∨ (P → False) := (Classical.em P).elim (fun p => Or.inl (f p)) Or.inr
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (assumptions := "") (conclusions := "(P → Q) ∨ (Q → P)")
+:::en
+The final level: one of the two implications always holds. Distinguish the cases for `Q`.
+:::
+
+:::de
+Das letzte Level: Eine der beiden Implikationen gilt immer. Unterscheide die Fälle für `Q`.
+:::
+
+```lean -show
+example (P Q : Prop) : (P → Q) ∨ (Q → P) :=
+  (Classical.em Q).elim (fun q => Or.inl (fun _ => q)) (fun nq => Or.inr (fun q => (nq q).elim))
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (lemma := true) (assumptions := "(A → B) → ⊥") (conclusions := "A ∧ (B → ⊥)")
 :::en
 The final level: if the implication is false, then `A` is true and `B` is false.
 :::

@@ -33,7 +33,7 @@ etwas Unmögliches“. Lean schreibt dafür `¬A`, und `¬A` ist tatsächlich al
 Um `A → ⊥` zu beweisen, verwendest du also →I, und `A → ⊥` zusammen mit `A` ergibt `⊥` mit →E.
 :::
 
-::::task (unlocks := "exfalso") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (assumptions := "⊥") (conclusions := "A")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (unlocks := "exfalso") (assumptions := "⊥") (conclusions := "A")
 :::en
 From something impossible, anything follows.
 :::
@@ -137,7 +137,7 @@ example (A B : Prop) (f : A → B) : (B → False) → A → False := fun nb a =
 ```
 ::::
 
-::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (assumptions := "A ∨ B → ⊥") (conclusions := "(A → ⊥) ∧ (B → ⊥)")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (lemma := true) (assumptions := "A ∨ B → ⊥") (conclusions := "(A → ⊥) ∧ (B → ⊥)")
 :::en
 If neither `A` nor `B` …
 :::
@@ -152,7 +152,7 @@ example (A B : Prop) (h : A ∨ B → False) : (A → False) ∧ (B → False) :
 ```
 ::::
 
-::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (assumptions := "(A → ⊥) ∧ (B → ⊥)") (conclusions := "A ∨ B → ⊥")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (lemma := true) (assumptions := "(A → ⊥) ∧ (B → ⊥)") (conclusions := "A ∨ B → ⊥")
 :::en
 … and back.
 :::
@@ -167,7 +167,7 @@ example (A B : Prop) (h : (A → False) ∧ (B → False)) : A ∨ B → False :
 ```
 ::::
 
-::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (assumptions := "(A → ⊥) ∨ (B → ⊥)") (conclusions := "A ∧ B → ⊥")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (lemma := true) (assumptions := "(A → ⊥) ∨ (B → ⊥)") (conclusions := "A ∧ B → ⊥")
 :::en
 If one of the two is false, then not both are true.
 :::
@@ -197,7 +197,7 @@ example (A : Prop) (h : ((A → False) → False) → False) : A → False :=
 ```
 ::::
 
-::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (assumptions := "(A → ⊥) ∨ B") (conclusions := "A → B")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (lemma := true) (assumptions := "(A → ⊥) ∨ B") (conclusions := "A → B")
 :::en
 Case by case.
 :::
@@ -238,6 +238,90 @@ Diesmal drei Fälle.
 ```lean -show
 example (A B C : Prop) (h : (A → False) ∨ (B → False) ∨ (C → False)) : A ∧ B ∧ C → False :=
   fun abc => h.elim (fun na => na abc.1) (fun h => h.elim (fun nb => nb abc.2.1) (fun nc => nc abc.2.2))
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (assumptions := "P, P → ⊥") (conclusions := "Q")
+:::en
+From a contradiction, anything follows.
+:::
+
+:::de
+Aus einem Widerspruch folgt alles.
+:::
+
+```lean -show
+example (P Q : Prop) (p : P) (np : P → False) : Q := (np p).elim
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (assumptions := "") (conclusions := "P → (P → ⊥) → ⊥")
+:::en
+Sheet 01-d. In Lean: `P → ¬¬P`.
+:::
+
+:::de
+Blatt 01-d. In Lean: `P → ¬¬P`.
+:::
+
+```lean -show
+example (P : Prop) : P → (P → False) → False := fun p np => np p
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (assumptions := "") (conclusions := "P ∧ (P → ⊥) → ⊥")
+:::en
+`P` and `¬P` never hold together.
+:::
+
+:::de
+`P` und `¬P` gelten nie zusammen.
+:::
+
+```lean -show
+example (P : Prop) : P ∧ (P → False) → False := fun h => h.2 h.1
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (assumptions := "P → Q, P → Q → ⊥") (conclusions := "P → ⊥")
+:::en
+If `P` implies both `Q` and `¬Q`, then `P` is false.
+:::
+
+:::de
+Wenn `P` sowohl `Q` als auch `¬Q` impliziert, ist `P` falsch.
+:::
+
+```lean -show
+example (P Q : Prop) (f : P → Q) (g : P → Q → False) : P → False := fun p => g p (f p)
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (assumptions := "") (conclusions := "P ∨ Q → (Q → ⊥) → P")
+:::en
+Sheet 01-f: one of the two, and not the second.
+:::
+
+:::de
+Blatt 01-f: eines von beiden, und das zweite nicht.
+:::
+
+```lean -show
+example (P Q : Prop) : P ∨ Q → (Q → False) → P := fun h nq => h.elim (fun p => p) (fun q => (nq q).elim)
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (assumptions := "P, Q → ⊥") (conclusions := "(P → Q) → ⊥")
+:::en
+If `P` holds and `Q` does not, then `P → Q` is false.
+:::
+
+:::de
+Wenn `P` gilt und `Q` nicht, ist `P → Q` falsch.
+:::
+
+```lean -show
+example (P Q : Prop) (p : P) (nq : Q → False) : (P → Q) → False := fun f => nq (f p)
 ```
 ::::
 

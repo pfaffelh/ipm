@@ -27,7 +27,7 @@ Zwei Regeln für die Konjunktion (`∧`, „und“):
 * *∧-Beseitigung* (∧E) zerlegt `A ∧ B` in `A` und `B`.
 :::
 
-::::task (unlocks := "exact") (rules := "conjI, conjE") (assumptions := "A") (conclusions := "A")
+::::task (rules := "conjI, conjE") (unlocks := "exact") (assumptions := "A") (conclusions := "A")
 :::en
 Tap the red circle on top of the goal `A`; the assumption `A` glows green. Tap it.
 :::
@@ -82,7 +82,7 @@ example (A B : Prop) (a : A) (b : B) : B ∧ A := ⟨b, a⟩
 ```
 ::::
 
-::::task (unlocks := "constructor") (rules := "conjI, conjE") (assumptions := "A, B") (conclusions := "A ∧ B")
+::::task (rules := "conjI, conjE") (unlocks := "constructor") (assumptions := "A, B") (conclusions := "A ∧ B")
 :::en
 Your first rule. Tap the red circle of the goal, then *＋* below the picture, and choose *∧I*. A new
 block appears: connect its output to the goal, then fill its two red circles.
@@ -125,7 +125,21 @@ example (A : Prop) (a : A) : A ∧ A := ⟨a, a⟩
 ```
 ::::
 
-::::task (unlocks := "obtain") (rules := "conjI, conjE") (assumptions := "A ∧ B") (conclusions := "A")
+::::task (rules := "conjI, conjE") (assumptions := "P, Q, R") (conclusions := "P ∧ Q ∧ R")
+:::en
+Sheet 01-b. `P ∧ Q ∧ R` means `P ∧ (Q ∧ R)`.
+:::
+
+:::de
+Blatt 01-b. `P ∧ Q ∧ R` bedeutet `P ∧ (Q ∧ R)`.
+:::
+
+```lean -show
+example (P Q R : Prop) (p : P) (q : Q) (r : R) : P ∧ Q ∧ R := ⟨p, q, r⟩
+```
+::::
+
+::::task (rules := "conjI, conjE") (unlocks := "obtain") (assumptions := "A ∧ B") (conclusions := "A")
 :::en
 Now take a conjunction apart. Add an *∧E* block with *＋*, feed `A ∧ B` into it and
 connect the right one of its outputs to the goal.

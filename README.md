@@ -6,13 +6,12 @@ redone to be played by tapping — on a phone as well as with a mouse.
 **Play:** https://pfaffelh.github.io/ipm/
 
 Assumptions are at the top, goals at the bottom; a proof connects them through rule blocks of
-natural deduction. The site has the first five sessions of the Incredible Proof Machine, here called *worlds*: conjunction (12 tasks),
-implication (14), disjunction (12), falsity and negation (15) and classical logic (9). Two more
-sessions take tasks from the logic exercises of the [Lean course](https://pfaffelh.github.io/leancourse/)
-that the Proof Machine does not have: session 6 with the rules so far (28 tasks), session 7 with
-equivalence `↔` and truth `⊤` and their rules ↔I, ↔E₁, ↔E₂, ⊤I (24 tasks). Sessions 8 and 9 are the Proof
-Machine's quantifier sessions: ∀I, ∀E, ∃I, ∃E (17 tasks), and two puzzles. Session 10 adds
-induction over the natural numbers (6 tasks), which the Proof Machine does not have.
+natural deduction, in 9 *worlds* of *levels*: the first five sessions of the Incredible Proof Machine
+(conjunction, implication, disjunction, falsity and negation, classical logic), each with the levels
+of the logic exercises of the [Lean course](https://pfaffelh.github.io/leancourse/) that need its
+rules; equivalence `↔` and truth `⊤`; the Proof Machine's quantifier session and its two puzzles; and
+induction. `docs/levels.md` lists all levels with what they need and give (lemmas, tactics, tips);
+`python3 docs/levels.py` writes it and checks that the dependencies fit.
 
 ## How it is played
 

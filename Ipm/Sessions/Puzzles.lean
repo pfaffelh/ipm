@@ -11,7 +11,7 @@ two puzzles of predicate logic.
 Each task carries a Lean proof, checked when the site is built.
 -/
 
-#doc (Manual) "World 9: Two Puzzles" =>
+#doc (Manual) "World 8: Two Puzzles" =>
 
 :::en
 Two puzzles of predicate logic, with all the rules so far. Both need TND, and both need some

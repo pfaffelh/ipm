@@ -10,7 +10,7 @@ Induction over the natural numbers, a rule that the Incredible Proof Machine doe
 Each task carries a Lean proof, checked when the site is built.
 -/
 
-#doc (Manual) "World 10: Induction" =>
+#doc (Manual) "World 9: Induction" =>
 
 :::en
 Statements about natural numbers `0, 1, 2, …`, where `n + 1` is the number after `n`. One new rule:
