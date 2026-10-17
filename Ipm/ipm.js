@@ -950,10 +950,12 @@
     const isHyp = key => key.startsWith('out') && top.includes(key)
     const slot = key => show(port(key), s).length * labelW + portGap + (isHyp(key) ? arrowW : 0)
     const width = keys => keys.reduce((w, k) => w + slot(k), 0)
-    const w = Math.max(56, width(top) + 12, width(bottom) + 12)
+    // Room on the left for the name of the rule (∧I, →E, …) in the bottom corner.
+    const tag = 22
+    const w = Math.max(56, width(top) + 12, width(bottom) + 12) + tag
     const centres = keys => {
       const o = {}, left = {}, right = {}
-      let x = (w - width(keys)) / 2
+      let x = (w + tag - width(keys)) / 2
       for (const k of keys) {
         o[k] = x + (slot(k) - (isHyp(k) ? arrowW : 0)) / 2
         left[k] = x; right[k] = x + slot(k)
@@ -1001,8 +1003,9 @@
     const g = svg('g', { class: `ipm-block ipm-${b.kind} ${extraClass}` })
     g.append(svg('rect', { x: q.x, y: q.y, width: q.w, height: q.h, rx: 8 }))
     if (b.kind === 'rule') {
-      // A lemma's block carries its name in the corner.
-      if (RULES[b.rule]?.lemma) g.append(svg('text', { x: q.x + 5, y: q.y + q.h - 5, class: 'ipm-lemma-tag' }, RULES[b.rule].label))
+      // The name of the rule (or lemma) in the corner, so that one sees which block it is, also once
+      // its statements are filled in. Not in the pictures of the menu, which have it below.
+      if (RULES[b.rule] && !b.picture) g.append(svg('text', { x: q.x + 5, y: q.y + q.h - 5, class: 'ipm-lemma-tag' }, RULES[b.rule].label))
       b.outputs.forEach((_, j) => {
         if (!isLocal(b, j) || !q.topLeft) return
         const c = compartment(q, b, j)
@@ -1029,7 +1032,7 @@
   // A rule as a small picture: exactly the block that gets added to the board.
   function rulePicture(name) {
     const r = RULES[name]
-    const b = { kind: 'rule', rule: name, ...ruleFormulas(name, 'rule') }
+    const b = { kind: 'rule', rule: name, picture: true, ...ruleFormulas(name, 'rule') }
     const size = blockSize(b, {})
     const q = { x: 18, y: 18, ...size }
     const pic = svg('svg', { viewBox: `0 0 ${size.w + 36} ${size.h + 36}`, class: 'ipm-rule-picture',

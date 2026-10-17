@@ -34,6 +34,8 @@ induction over the natural numbers (6 tasks), which the Proof Machine does not h
 * A line that does not fit gets a ☠, a local hypothesis used outside its box a ⚠; tap them for an
   explanation.
 * Red circles are inputs (still to be proved), blue dots outputs (what you have).
+* Each rule block carries the name of its rule (∧I, →E, …) small in its corner, so that one still sees
+  which rule it is once its statements are filled in.
 * →-introduction provides a local hypothesis (a blue dot with a purple ring, on top of the block); a dashed box shows the part of the proof
   that uses it, which must lead back into the block's own input.
 * Blocks can be dragged with mouse or
