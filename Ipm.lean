@@ -7,6 +7,8 @@ import Ipm.Sessions.Falsity
 import Ipm.Sessions.Classical
 import Ipm.Sessions.Course
 import Ipm.Sessions.Iff
+import Ipm.Sessions.Quantifiers
+import Ipm.Sessions.Puzzles
 
 open Verso.Genre Manual
 open Ipm
@@ -85,3 +87,7 @@ gespeichert.
 {include 1 Ipm.Sessions.Course}
 
 {include 1 Ipm.Sessions.Iff}
+
+{include 1 Ipm.Sessions.Quantifiers}
+
+{include 1 Ipm.Sessions.Puzzles}

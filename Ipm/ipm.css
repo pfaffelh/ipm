@@ -264,3 +264,7 @@
 /* The switch "Allow tactics" in the tools */
 .ipm-tactics { display: inline-flex; align-items: center; gap: 0.35em; font-size: 0.9em; color: #444; cursor: pointer; min-height: 36px; user-select: none; }
 .ipm-tactics input { width: 1.15em; height: 1.15em; accent-color: #3b6db3; cursor: pointer; }
+
+/* A connection that cannot be decided yet (quantifiers), and a ⚠ at a block whose eigenvariable escapes */
+.ipm-conn.ipm-pending path:not(.ipm-conn-hit):not(.ipm-conn-halo) { stroke: #999; stroke-dasharray: 3 4; }
+.ipm-svg text.ipm-eigen-warn { font-size: 20px !important; cursor: pointer; pointer-events: auto; }

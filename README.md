@@ -10,7 +10,8 @@ natural deduction. The site has the first five sessions of the Incredible Proof 
 implication (14), disjunction (12), falsity and negation (15) and classical logic (9). Two more
 sessions take tasks from the logic exercises of the [Lean course](https://pfaffelh.github.io/leancourse/)
 that the Proof Machine does not have: session 6 with the rules so far (28 tasks), session 7 with
-equivalence `↔` and truth `⊤` and their rules ↔I, ↔E₁, ↔E₂, ⊤I (24 tasks).
+equivalence `↔` and truth `⊤` and their rules ↔I, ↔E₁, ↔E₂, ⊤I (24 tasks). Sessions 8 and 9 are the Proof
+Machine's quantifier sessions: ∀I, ∀E, ∃I, ∃E (17 tasks), and two puzzles.
 
 ## How it is played
 
@@ -54,6 +55,14 @@ equivalence `↔` and truth `⊤` and their rules ↔I, ↔E₁, ↔E₂, ⊤I (
   site checks all these proofs, so every task is known to be provable.
 * Texts come in both languages: `:::en` and `:::de` blocks (`Ipm/Task.lean`); `ipm.js` shows the
   chosen one and translates its own texts and the headings.
+* Quantifiers: statements are written as in Lean (`∀ x, P x → Q (f x)`). The body of a quantifier
+  rule is a placeholder shown applied to a term (`∀ x, ?1 x` gives `?1 ?2` by ∀E). Unification is
+  first order, with delayed substitutions: a connection that cannot be decided yet is put back and
+  tried again once others have determined more (the Proof Machine uses higher-order pattern
+  unification instead). ∀I and ∃E have eigenvariables `c₁`, `c₂`, …; after unification it is
+  checked that they do not escape (not in the conclusion, nor in an assumption the proof uses),
+  otherwise the block gets a ⚠. In Lean, objects have a type `α`; an undetermined object is
+  `default` (with `[Inhabited α]`).
 * Formulas follow Lean's conventions: `∧`, `∨` and `→` group to the right. The Incredible Proof
   Machine groups `∧` to the left, so its `A∧B∧C` is written `(A ∧ B) ∧ C` here.
 

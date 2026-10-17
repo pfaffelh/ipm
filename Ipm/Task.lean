@@ -29,8 +29,12 @@ namespace Ipm
 def ipmJs : String := include_str "ipm.js"
 def ipmCss : String := include_str "ipm.css"
 
+/-- The statements of a task: separated by `;`, or else by `,` unless there is a quantifier (whose
+`,` is part of the statement), e.g. `"A, B"`, `"∀ x, P x"`, `"∀ x, P x → Q x; P a"`. -/
 def items (s : String) : Array String :=
-  (s.splitOn ",").toArray.map (·.trimAscii.copy) |>.filter (· ≠ "")
+  let parts := if s.contains ';' then s.splitOn ";"
+    else if s.contains '∀' || s.contains '∃' then [s] else s.splitOn ","
+  parts.toArray.map (·.trimAscii.copy) |>.filter (· ≠ "")
 
 -- A task: assumptions, conclusions and the rules available, for `ipm.js`.
 block_extension Block.task (assumptions conclusions rules : Array String) where

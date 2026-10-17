@@ -51,7 +51,13 @@
       'Was aus einer lokalen Annahme (eines →I- oder ∨E-Blocks) folgt, darf nur für den Eingang des Blocks verwendet werden, zu dem sie gehört. Diese Linie führt über {x} zu einem Ziel außerhalb.',
     '☠ {x} does not fit {y}': '☠ {x} passt nicht zu {y}',
     'Cancel': 'Abbrechen', 'more ▸': 'mehr ▸', 'less ▾': 'weniger ▾', '1 rule ▸': '1 Regel ▸', '{n} rules ▸': '{n} Regeln ▸',
-    '{name} block': '{name}-Block', 'Allow tactics': 'Taktiken erlauben',
+    '{name} block': '{name}-Block',
+    '∀-introduction': '∀-Einführung', '∀-elimination': '∀-Beseitigung', '∃-introduction': '∃-Einführung', '∃-elimination': '∃-Beseitigung',
+    '⚠ {c} escapes': '⚠ {c} entkommt',
+    'The {c} of this ∀I block stands for an arbitrary object. So it must not occur in the conclusion, nor in an assumption that the proof of its input uses.':
+      'Das {c} dieses ∀I-Blocks steht für ein beliebiges Objekt. Es darf daher weder in der Folgerung vorkommen noch in einer Annahme, die der Beweis seines Eingangs verwendet.',
+    'The {c} of this ∃E block stands for the object that exists, about which nothing else is known. So it must not occur in the conclusion, nor in the ∃ statement, nor in another assumption that the proof of its second input uses.':
+      'Das {c} dieses ∃E-Blocks steht für das Objekt, das existiert und über das sonst nichts bekannt ist. Es darf daher weder in der Folgerung noch in der ∃-Aussage vorkommen noch in einer anderen Annahme, die der Beweis seines zweiten Eingangs verwendet.', 'Allow tactics': 'Taktiken erlauben',
     'Show the Lean command that fits a tapped circle or dot': 'Zu einem angetippten Kreis oder Punkt den passenden Lean-Befehl zeigen', 'Task {i} of {n}': 'Aufgabe {i} von {n}',
   }
   // Headings of the site, which come from Verso.
@@ -59,7 +65,7 @@
     'The Incredible Proof Machine in Lean': 'Die Incredible Proof Machine in Lean',
     'Session 1: Conjunction': 'Sitzung 1: Konjunktion', 'Session 2: Implication': 'Sitzung 2: Implikation',
     'Session 3: Disjunction': 'Sitzung 3: Disjunktion', 'Session 4: Falsity and Negation': 'Sitzung 4: Falsum und Negation',
-    'Session 5: Classical Logic': 'Sitzung 5: Klassische Logik', 'Session 6: From the Lean Course': 'Sitzung 6: Aus dem Lean-Kurs', 'Session 7: Equivalence and Truth': 'Sitzung 7: Äquivalenz und Wahrheit', 'Table of Contents': 'Inhalt', 'Contents': 'Inhalt',
+    'Session 5: Classical Logic': 'Sitzung 5: Klassische Logik', 'Session 6: From the Lean Course': 'Sitzung 6: Aus dem Lean-Kurs', 'Session 7: Equivalence and Truth': 'Sitzung 7: Äquivalenz und Wahrheit', 'Session 8: Quantifiers': 'Sitzung 8: Quantoren', 'Session 9: Two Puzzles': 'Sitzung 9: Zwei Rätsel', 'Table of Contents': 'Inhalt', 'Contents': 'Inhalt',
   }
   function translatePage() {
     if (LANG !== 'de') return
@@ -98,50 +104,129 @@
 
   // ---------------------------------------------------------------- formulas
 
-  // Formulas: {t: 'atom', n} | {t: 'and'|'or'|'imp'|'iff', a, b} | {t: 'not', a} | {t: 'bot'} | {t: 'top'} | {t: 'meta', id}
+  // Formulas: {t: 'atom', n} (a proposition) | {t: 'pred', n, args} (a predicate applied to terms) |
+  // {t: 'and'|'or'|'imp'|'iff', a, b} | {t: 'not', a} | {t: 'bot'} | {t: 'top'} |
+  // {t: 'all'|'ex', v, a} (quantifiers; `v` is the name of the bound variable) | {t: 'meta', id} |
+  // {t: 'sub', a, v, by} (a delayed substitution: `a` with `by` for `v`, while `a` is undetermined).
+  // Terms: {t: 'bv', n} (a bound variable) | {t: 'con', n} (a constant) | {t: 'eig', n} (the
+  // eigenvariable of a ∀I or ∃E block) | {t: 'fn', n, args} | {t: 'meta', id, term: true}.
+  // Statements are written as in Lean: `∀ x, P x → Q (f x)`, `∃ y, R a y`.
   function parse(src) {
-    const tokens = src.match(/[A-Za-z][\w']*|∧|∨|↔|→|¬|⊥|⊤|\(|\)|<->|->|\/\\|\\\/|~/g) ?? []
+    const tokens = src.match(/[A-Za-z_][\w'₀-₉]*|\d+|∀|∃|,|∧|∨|↔|→|¬|⊥|⊤|\(|\)|<->|->|\/\\|\\\/|~/g) ?? []
     let i = 0
     const eat = t => { if (tokens[i] === t) { i++; return true } return false }
     const norm = { '/\\': '∧', '\\/': '∨', '->': '→', '<->': '↔', '~': '¬' }
     tokens.forEach((t, k) => { tokens[k] = norm[t] ?? t })
+    const bound = []
+    const fail = () => { throw new Error(`Cannot parse ${src}`) }
+    const lower = t => /^[a-z_\d]/.test(t ?? '')
     // As in Lean, →, ∨ and ∧ are right-associative (the Incredible Proof Machine reads ∧ and ∨
     // to the left), and ∧ binds more strongly than ∨, which binds more strongly than →, then ↔.
+    // A quantifier reaches as far to the right as possible.
     const iff = () => { const a = imp(); return eat('↔') ? { t: 'iff', a, b: imp() } : a }
     const imp = () => { const a = or(); return eat('→') ? { t: 'imp', a, b: imp() } : a }
     const or = () => { const a = and(); return eat('∨') ? { t: 'or', a, b: or() } : a }
     const and = () => { const a = un(); return eat('∧') ? { t: 'and', a, b: and() } : a }
+    // A term in an argument position: a variable or constant, or a term in brackets.
+    const atomicTerm = () => {
+      if (eat('(')) { const t = term(); if (!eat(')')) fail(); return t }
+      const n = tokens[i++]
+      if (!lower(n)) fail()
+      return bound.includes(n) ? { t: 'bv', n } : { t: 'con', n }
+    }
+    const term = () => {
+      if (tokens[i] === '(') return atomicTerm()
+      const n = tokens[i++]
+      if (!lower(n)) fail()
+      const args = []
+      while (lower(tokens[i]) || tokens[i] === '(') args.push(atomicTerm())
+      if (args.length) return { t: 'fn', n, args }
+      return bound.includes(n) ? { t: 'bv', n } : { t: 'con', n }
+    }
     const un = () => {
       if (eat('¬')) return { t: 'not', a: un() }
       if (eat('⊥')) return { t: 'bot' }
       if (eat('⊤')) return { t: 'top' }
-      if (eat('(')) { const a = iff(); eat(')'); return a }
+      for (const q of ['∀', '∃']) if (eat(q)) {
+        const vs = []
+        while (lower(tokens[i])) vs.push(tokens[i++])
+        if (!vs.length || !eat(',')) fail()
+        bound.push(...vs)
+        let a = iff()
+        bound.splice(bound.length - vs.length)
+        for (const v of vs.reverse()) a = { t: q === '∀' ? 'all' : 'ex', v, a }
+        return a
+      }
+      if (eat('(')) { const a = iff(); if (!eat(')')) fail(); return a }
       const n = tokens[i++]
-      if (!n) throw new Error(`Cannot parse ${src}`)
+      if (!n || lower(n)) fail()
       if (n === 'True') return { t: 'top' }
       if (n === 'False') return { t: 'bot' }
-      return { t: 'atom', n }
+      const args = []
+      while (lower(tokens[i]) || tokens[i] === '(') args.push(atomicTerm())
+      return args.length ? { t: 'pred', n, args } : { t: 'atom', n }
     }
     const f = iff()
-    if (i < tokens.length) throw new Error(`Cannot parse ${src}`)
+    if (i < tokens.length) fail()
     return f
   }
 
+  // Names of bound variables of rule blocks carry the block (`x#b3`), so that they never clash; they
+  // are shown without it.
+  const baseName = n => n.split('#')[0]
+  // The names of the quantified variables inside `f`.
+  const quantified = (f, s) => {
+    f = norm(f, s)
+    const inner = parts(f).flatMap(g => quantified(g, s))
+    return f.t === 'all' || f.t === 'ex' ? [baseName(f.v), ...inner] : inner
+  }
+
   const prec = { iff: 0, imp: 1, or: 2, and: 3, not: 4 }
-  function show(f, s = {}, ctx = 0) {
-    f = resolve(f, s)
+  // With `lean`, as Lean code: False, True, and quantifiers with the type α, `_` if unused.
+  // `names` gives the shown name of a bound variable.
+  function show(f, s = {}, ctx = 0, lean = false, names = {}) {
+    f = norm(f, s)
+    const show_ = (g, s, c, n = names) => show(g, s, c, lean, n)
+    const term = (t, atomic) => showTerm(t, s, atomic, names)
     const wrap = (p, txt) => (p < ctx ? `(${txt})` : txt)
     switch (f.t) {
       case 'atom': return f.n
-      case 'bot': return '⊥'
-      case 'top': return '⊤'
+      case 'pred': return wrap(5, [f.n, ...f.args.map(t => term(t, true))].join(' '))
+      case 'bot': return lean ? 'False' : '⊥'
+      case 'top': return lean ? 'True' : '⊤'
       case 'meta': return '?' + metaNumber(f.id.split('.').pop())
-      case 'not': return wrap(4, '¬' + show(f.a, s, 4))
-      case 'and': return wrap(3, `${show(f.a, s, 4)} ∧ ${show(f.b, s, 3)}`)
-      case 'or': return wrap(2, `${show(f.a, s, 3)} ∨ ${show(f.b, s, 2)}`)
-      case 'imp': return wrap(1, `${show(f.a, s, 2)} → ${show(f.b, s, 1)}`)
+      // An undetermined body applied to a term, as in the Proof Machine: ?1 c
+      case 'sub': return wrap(5, `${show_(f.a, s)} ${term(f.by, true)}`)
+      case 'not': return wrap(4, '¬' + show_(f.a, s, 4))
+      case 'and': return wrap(3, `${show_(f.a, s, 4)} ∧ ${show_(f.b, s, 3)}`)
+      case 'or': return wrap(2, `${show_(f.a, s, 3)} ∨ ${show_(f.b, s, 2)}`)
+      case 'imp': return wrap(1, `${show_(f.a, s, 2)} → ${show_(f.b, s, 1)}`)
       // Implications beside ↔ get brackets, though Lean does not need them: easier to read.
-      case 'iff': return wrap(1, `${show(f.a, s, 2)} ↔ ${show(f.b, s, 2)}`)
+      case 'iff': return wrap(1, `${show_(f.a, s, 2)} ↔ ${show_(f.b, s, 2)}`)
+      case 'all': case 'ex': {
+        const q = f.t === 'all' ? '∀' : '∃', body = norm(f.a, s)
+        // The variable's name, unless a quantifier inside or outside already uses it: then another one.
+        const taken = new Set([...quantified(body, s), ...Object.values(names)])
+        const name = [baseName(f.v), 'x', 'y', 'z', 'u', 'v', 'w'].find(n => !taken.has(n)) ?? baseName(f.v)
+        const inner = { ...names, [f.v]: name }
+        const v = lean ? `${hasBound(body, s, f.v) ? name : '_'} : α` : name
+        // An undetermined body is shown applied to the variable: ∀ x, ?1 x
+        const txt = body.t === 'meta' ? `${show_(body, s, 0, inner)} ${name}` : show_(body, s, 0, inner)
+        return ctx > 0 ? `(${q} ${v}, ${txt})` : `${q} ${v}, ${txt}`
+      }
+    }
+  }
+
+  function showTerm(t, s, atomic = false, names = {}) {
+    t = resolve(t, s)
+    switch (t.t) {
+      case 'bv': return names[t.n] ?? baseName(t.n)
+      case 'con': case 'eig': return t.n
+      case 'meta': return '?' + metaNumber(t.id.split('.').pop())
+      case 'fn': {
+        const txt = [t.n, ...t.args.map(a => showTerm(a, s, true, names))].join(' ')
+        return atomic ? `(${txt})` : txt
+      }
     }
   }
 
@@ -153,24 +238,116 @@
     return f
   }
 
+  // Resolves metavariables at the top, and carries out a delayed substitution once its formula is known.
+  function norm(f, s) {
+    f = resolve(f, s)
+    if (f.t !== 'sub') return f
+    const a = norm(f.a, s)
+    return a.t === 'meta' || a.t === 'sub' ? { ...f, a } : norm(substF(a, f.v, f.by, s), s)
+  }
+
+  // `f` with the term `by` for the bound variable `v`.
+  function substF(f, v, by, s) {
+    f = resolve(f, s)
+    switch (f.t) {
+      case 'meta': return { t: 'sub', a: f, v, by }
+      case 'sub': { const g = norm(f, s); return g.t === 'sub' ? { t: 'sub', a: g, v, by } : substF(g, v, by, s) }
+      case 'atom': case 'bot': case 'top': return f
+      case 'pred': return { ...f, args: f.args.map(t => substT(t, v, by, s)) }
+      case 'all': case 'ex': return f.v === v ? f : { ...f, a: substF(f.a, v, by, s) }
+      case 'not': return { ...f, a: substF(f.a, v, by, s) }
+      default: return { ...f, a: substF(f.a, v, by, s), b: substF(f.b, v, by, s) }
+    }
+  }
+
+  function substT(t, v, by, s) {
+    t = resolve(t, s)
+    if (t.t === 'bv' && t.n === v) return by
+    if (t.t === 'fn') return { ...t, args: t.args.map(a => substT(a, v, by, s)) }
+    return t  // a term metavariable never stands for a bound variable
+  }
+
+  // The children of a formula or term.
+  const parts = f => [f.a, f.b, f.by, ...(f.args ?? [])].filter(x => x)
+
   const occurs = (id, f, s) => {
     f = resolve(f, s)
     if (f.t === 'meta') return f.id === id
-    return ['a', 'b'].some(k => f[k] && occurs(id, f[k], s))
+    return parts(f).some(g => occurs(id, g, s))
   }
 
-  // Unifies `x` and `y` under substitution `s`; returns the extended substitution or null.
+  // Whether `f` still contains an undetermined part (with `formulas`: other than an object ?2).
+  const undetermined = (f, s, formulas = false) => {
+    f = norm(f, s)
+    if (f.t === 'meta') return !(formulas && f.term)
+    return f.t === 'sub' || parts(f).some(g => undetermined(g, s, formulas))
+  }
+
+  // Whether `f` contains the bound variable `v` (not bound inside `f`), or any bound variable.
+  const hasBound = (f, s, v) => {
+    f = resolve(f, s)
+    if (f.t === 'bv') return v === undefined || f.n === v
+    if ((f.t === 'all' || f.t === 'ex') && f.v === v) return false
+    return parts(f).some(g => hasBound(g, s, v))
+  }
+
+  // `f` (determined) with the bound variable `v` for every occurrence of the term `by`.
+  function abstract(f, by, v, s) {
+    f = norm(f, s)
+    if (sameTerm(f, by)) return { t: 'bv', n: v }
+    const g = { ...f }
+    for (const k of ['a', 'b']) if (f[k]) g[k] = abstract(f[k], by, v, s)
+    if (f.args) g.args = f.args.map(t => abstract(t, by, v, s))
+    return g
+  }
+  const sameTerm = (x, y) => (x.t === 'eig' || x.t === 'bv') && x.t === y.t && x.n === y.n
+
+  // Unifies `x` and `y` under substitution `s`. Returns the extended substitution, null if they do
+  // not fit, or DEFER if that cannot be decided yet (a delayed substitution into an undetermined
+  // formula); such a connection is tried again once more is known.
+  const DEFER = 'defer'
+  let fresh = 0
   function unify(x, y, s) {
-    x = resolve(x, s); y = resolve(y, s)
+    x = norm(x, s); y = norm(y, s)
     if (x.t === 'meta' && y.t === 'meta' && x.id === y.id) return s
-    if (x.t === 'meta') return occurs(x.id, y, s) ? null : { ...s, [x.id]: y }
+    if (x.t === 'meta') {
+      if (x.term && hasBound(y, s)) return null
+      return occurs(x.id, y, s) ? null : { ...s, [x.id]: y }
+    }
     if (y.t === 'meta') return unify(y, x, s)
+    if (x.t === 'sub' || y.t === 'sub') {
+      if (x.t !== 'sub') [x, y] = [y, x]
+      // ?1 c against a known formula: for an eigenvariable or a bound variable, the formula with `v`
+      // for every `c` is the only choice (it must not occur in ?1 itself). An undetermined object ?2
+      // never becomes a bound variable; it might become the eigenvariable, so then this waits.
+      const by = resolve(x.by, s)
+      const known = by.t === 'bv' ? !undetermined(y, s, true) : !undetermined(y, s)
+      if (y.t !== 'sub' && (by.t === 'eig' || by.t === 'bv') && known && x.a.t === 'meta')
+        return unify(x.a, abstract(y, by, x.v, s), s)
+      return DEFER
+    }
     if (x.t !== y.t) return null
-    if (x.t === 'atom') return x.n === y.n ? s : null
-    if (x.t === 'bot' || x.t === 'top') return s
-    if (x.t === 'not') return unify(x.a, y.a, s)
-    const s1 = unify(x.a, y.a, s)
-    return s1 && unify(x.b, y.b, s1)
+    switch (x.t) {
+      case 'atom': case 'con': case 'eig': case 'bv': return x.n === y.n ? s : null
+      case 'bot': case 'top': return s
+      case 'pred': case 'fn': {
+        if (x.n !== y.n || x.args.length !== y.args.length) return null
+        let s1 = s
+        for (let k = 0; k < x.args.length && s1; k++) { s1 = unify(x.args[k], y.args[k], s1); if (s1 === DEFER) return DEFER }
+        return s1
+      }
+      case 'all': case 'ex': {
+        if (x.v === y.v) return unify(x.a, y.a, s)
+        const v = `v#${fresh++}`
+        return unify(substF(x.a, x.v, { t: 'bv', n: v }, s), substF(y.a, y.v, { t: 'bv', n: v }, s), s)
+      }
+      case 'not': return unify(x.a, y.a, s)
+      default: {
+        const s1 = unify(x.a, y.a, s)
+        if (s1 === DEFER) return DEFER
+        return s1 && unify(x.b, y.b, s1)
+      }
+    }
   }
 
   // Replaces the rule's variables by metavariables private to one block.
@@ -202,6 +379,32 @@
     iffE1: { label: '↔E₁', name: '↔-elimination (forwards)', vars: ['A', 'B'], inputs: ['A↔B', 'A'], outputs: ['B'] },
     iffE2: { label: '↔E₂', name: '↔-elimination (backwards)', vars: ['A', 'B'], inputs: ['A↔B', 'B'], outputs: ['A'] },
     trueI: { label: '⊤I', name: '⊤-introduction', vars: [], inputs: [], outputs: ['⊤'] },
+    // Quantifiers. `?1` is the body, shown applied to a term: `∀ x, ?1 x` gives `?1 ?2` for any term
+    // ?2 (∀E). ∀I and ∃E have an eigenvariable `c` of their own, which must not escape (see `eigenCheck`).
+    allI: { label: '∀I', name: '∀-introduction', eigen: true,
+            build: (id, c) => ({ inputs: [delayed(body(id), id, eig(c))], outputs: [all(id)] }) },
+    allE: { label: '∀E', name: '∀-elimination',
+            build: id => ({ inputs: [all(id)], outputs: [delayed(body(id), id, termMeta(id))] }) },
+    exI: { label: '∃I', name: '∃-introduction',
+           build: id => ({ inputs: [delayed(body(id), id, termMeta(id))], outputs: [ex(id)] }) },
+    exE: { label: '∃E', name: '∃-elimination', eigen: true, local: { 1: 1 },
+           build: (id, c) => ({ inputs: [ex(id), meta(id, 'B')], outputs: [meta(id, 'B'), delayed(body(id), id, eig(c))] }) },
+  }
+
+  function meta(id, n) { return { t: 'meta', id: `${id}.${n}` } }
+  function body(id) { return meta(id, 'A') }
+  function termMeta(id) { return { t: 'meta', id: `${id}.B`, term: true } }
+  function eig(c) { return { t: 'eig', n: c } }
+  function delayed(a, id, by) { return { t: 'sub', a, v: `x#${id}`, by } }
+  function all(id) { return { t: 'all', v: `x#${id}`, a: body(id) } }
+  function ex(id) { return { t: 'ex', v: `x#${id}`, a: body(id) } }
+
+  // The statements at the ports of a new block of rule `name`; `c` is its eigenvariable, if any.
+  function ruleFormulas(name, id, c = 'c') {
+    const r = RULES[name]
+    if (r.build) return r.build(id, c)
+    return { inputs: r.inputs.map(p => instantiate(parse(p), r.vars, id)),
+             outputs: r.outputs.map(p => instantiate(parse(p), r.vars, id)) }
   }
 
   // Whether output `j` of block `b` is a local hypothesis.
@@ -226,12 +429,14 @@
     }
 
     addRule(name) {
-      const r = RULES[name], id = `b${this.next}`
-      return this.addBlock({
-        kind: 'rule', rule: name,
-        inputs: r.inputs.map(p => instantiate(parse(p), r.vars, id)),
-        outputs: r.outputs.map(p => instantiate(parse(p), r.vars, id)),
-      })
+      const id = `b${this.next}`
+      // Eigenvariables are named c₁, c₂, … in the order of their blocks.
+      let c
+      if (RULES[name].eigen) {
+        const used = this.blocks.filter(b => b.eig).map(b => Number(b.eig.slice(1).replace(/[₀-₉]/g, d => '₀₁₂₃₄₅₆₇₈₉'.indexOf(d))))
+        c = 'c' + sub(1 + Math.max(0, ...used))
+      }
+      return this.addBlock({ kind: 'rule', rule: name, ...ruleFormulas(name, id, c), ...(c && { eig: c }) })
     }
 
     connect(from, to) {
@@ -277,18 +482,30 @@
 
     // Checks all connections in the order they were made.
     analyze() {
+      // A connection that cannot be decided yet (a quantifier rule whose body is still unknown) is
+      // put back and tried again, as long as the others teach something new. What stays undecided is
+      // `pending`: connected, but not (yet) part of a complete proof.
       let s = {}
       const status = {}
-      for (const c of this.connections) {
-        const out = this.block(c.from.block).outputs[c.from.port]
-        const inp = this.block(c.to.block).inputs[c.to.port]
-        const s1 = unify(out, inp, s)
-        if (s1) { s = s1; status[c.id] = 'ok' } else status[c.id] = 'fail'
+      let todo = [...this.connections], progress = true
+      while (progress) {
+        progress = false
+        const later = []
+        for (const c of todo) {
+          const out = this.block(c.from.block).outputs[c.from.port]
+          const inp = this.block(c.to.block).inputs[c.to.port]
+          const s1 = unify(out, inp, s)
+          if (s1 === DEFER) { later.push(c); continue }
+          progress = true
+          if (s1) { s = s1; status[c.id] = 'ok' } else status[c.id] = 'fail'
+        }
+        todo = later
       }
+      for (const c of todo) status[c.id] = 'pending'
       const openInputs = []
       for (const b of this.blocks)
         b.inputs.forEach((_, i) => {
-          if (!this.connections.some(c => c.to.block === b.id && c.to.port === i && status[c.id] === 'ok'))
+          if (!this.connections.some(c => c.to.block === b.id && c.to.port === i && ['ok', 'pending'].includes(status[c.id])))
             openInputs.push({ block: b.id, port: i })
         })
       // Local hypotheses: follow every path from the hypothesis. It must end in the input of its own
@@ -317,10 +534,46 @@
           scopes.push({ block: x.id, port: h, consumer: k, members: [...members], used })
         })
       }
-      const failed = this.connections.some(c => status[c.id] !== 'ok')
+      const eigen = this.eigenCheck(s, status)
+      const failed = this.connections.some(c => status[c.id] !== 'ok') || Object.keys(eigen).length > 0
       const goalsDone = this.blocks.filter(b => b.kind === 'conclusion')
         .every(b => !openInputs.some(o => o.block === b.id))
-      return { s, status, openInputs, scopes, qed: !failed && openInputs.length === 0 && goalsDone }
+      return { s, status, openInputs, scopes, eigen, qed: !failed && openInputs.length === 0 && goalsDone }
+    }
+
+    // The eigenvariable `c` of a ∀I block stands for an arbitrary object: it must not occur in the
+    // block's conclusion `∀ x, …`, nor in any assumption that the proof of its input still depends
+    // on. For ∃E likewise in `∃ x, …`, in the conclusion, and in the assumptions of the second input
+    // other than its own hypothesis. Returns the blocks where this is violated.
+    eigenCheck(s, status) {
+      const bad = {}
+      const has = (f, c) => { f = norm(f, s); return (f.t === 'eig' && f.n === c) || parts(f).some(g => has(g, c)) }
+      // The assumptions that the proof of input `i` of block `b` depends on, as [block, port].
+      const openHyps = (b, i) => {
+        const inside = new Set(), hyps = []
+        const visit = (x, k) => {
+          for (const c of this.connections) {
+            if (c.to.block !== x.id || c.to.port !== k || status[c.id] === 'fail') continue
+            const src = this.block(c.from.block)
+            if (src.kind === 'assumption' || isLocal(src, c.from.port)) hyps.push([src, c.from.port])
+            else if (!inside.has(src.id)) { inside.add(src.id); src.inputs.forEach((_, j) => visit(src, j)) }
+          }
+        }
+        visit(b, i)
+        // A local hypothesis whose block is part of this proof is discharged within it.
+        return hyps.filter(([x]) => x.kind === 'assumption' || !inside.has(x.id))
+      }
+      for (const b of this.blocks) {
+        if (!b.eig) continue
+        const c = b.eig
+        if (b.rule === 'allI') {
+          if (has(b.outputs[0], c) || openHyps(b, 0).some(([x, j]) => has(x.outputs[j], c))) bad[b.id] = true
+        } else if (b.rule === 'exE') {
+          if (has(b.outputs[0], c) || has(b.inputs[0], c) ||
+              openHyps(b, 1).some(([x, j]) => !(x.id === b.id && j === 1) && has(x.outputs[j], c))) bad[b.id] = true
+        }
+      }
+      return bad
     }
   }
 
@@ -337,7 +590,28 @@
     const p = proof, s = analysis.s, uses = new Set()
     const assumptions = p.blocks.filter(b => b.kind === 'assumption')
     const names = {}, locals = {}
-    const lean = f => show(f, s).replace(/⊥/g, 'False').replace(/⊤/g, 'True')
+    // The signature: propositions, and for predicate logic a type α of objects with predicates,
+    // functions and constants on it.
+    const atoms = new Set(), preds = {}, fns = {}, cons = new Set()
+    let quantifiers = false, needDefault = false
+    const collect = f => {
+      if (f.t === 'atom') atoms.add(f.n)
+      if (f.t === 'pred') preds[f.n] = f.args.length
+      if (f.t === 'fn') fns[f.n] = f.args.length
+      if (f.t === 'con') cons.add(f.n)
+      if (f.t === 'all' || f.t === 'ex') quantifiers = true
+      parts(f).forEach(collect)
+    }
+    for (const b of p.blocks) if (b.kind !== 'rule') [...b.inputs, ...b.outputs].forEach(collect)
+    const domain = quantifiers || Object.keys(preds).length > 0 || cons.size > 0
+    const lean = f => show(f, s, 0, true)
+    // A term in the proof: an object of α; an undetermined one is `default`.
+    const leanTerm = (t, atomic) => {
+      t = resolve(t, s)
+      if (t.t === 'meta') { needDefault = true; return 'default' }
+      if (t.t === 'fn') { const txt = [t.n, ...t.args.map(a => leanTerm(a, true))].join(' '); return atomic ? `(${txt})` : txt }
+      return baseName(t.n)
+    }
     const hyp = (b, j) => (locals[`${b.id}.${j}`] ??= localName(Object.keys(locals).length))
     const app = (f, ...args) => args.reduce((t, a) => ({ k: 'app', f: t, a }), { k: 'var', n: f })
     assumptions.forEach((b, k) => { names[b.id] = 'h' + sub(k + 1) })
@@ -367,6 +641,10 @@
         case 'iffE1': return app('Iff.mp', arg(0), arg(1))
         case 'iffE2': return app('Iff.mpr', arg(0), arg(1))
         case 'trueI': return { k: 'var', n: 'trivial' }
+        case 'allI': return { k: 'fun', x: b.eig, body: arg(0) }
+        case 'allE': return { k: 'app', f: arg(0), a: { k: 'term', t: termMeta(b.id) } }
+        case 'exI': return { k: 'pair', a: { k: 'term', t: termMeta(b.id) }, b: arg(0) }
+        case 'exE': return app('Exists.elim', arg(0), { k: 'fun', x: b.eig, body: { k: 'fun', x: hyp(b, 1), body: arg(1) } })
       }
       const L = RULES[b.rule]?.lemma
       if (L) {
@@ -376,14 +654,20 @@
       return { k: 'sorry' }
     }
     // Printing, with as few parentheses as Lean needs.
-    const atomic = t => ['var', 'sorry', 'pair', 'proj'].includes(t.k)
+    const atomic = t => ['var', 'sorry', 'pair', 'proj'].includes(t.k) || (t.k === 'term' && resolve(t.t, s).t !== 'fn')
     // In a complete proof, unused names are written `_`, as Lean asks for.
     const used = new Set()
-    const use = t => { if (t.k === 'var') used.add(t.n); for (const k of ['f', 'a', 'b', 'body']) if (t[k]) use(t[k]) }
+    const useTerm = t => { t = resolve(t, s); if (t.t === 'eig') used.add(t.n); parts(t).forEach(useTerm) }
+    const use = t => {
+      if (t.k === 'var') used.add(t.n)
+      if (t.k === 'term') { useTerm(t.t); return }
+      for (const k of ['f', 'a', 'b', 'body']) if (t[k]) use(t[k])
+    }
     const named = n => !analysis.qed || used.has(n)
     const pr = t => {
       switch (t.k) {
         case 'var': return t.n
+        case 'term': return leanTerm(t.t, false)
         case 'sorry': return 'sorry'
         case 'pair': return `⟨${pr(t.a)}, ${pr(t.b)}⟩`
         case 'proj': return `${atomic(t.a) ? pr(t.a) : `(${pr(t.a)})`}.${t.i}`
@@ -395,30 +679,44 @@
         }
       }
     }
-    const atoms = new Set()
-    const collect = f => { if (f.t === 'atom') atoms.add(f.n); if (f.a) collect(f.a); if (f.b) collect(f.b) }
-    for (const b of p.blocks) if (b.kind !== 'rule') [...b.inputs, ...b.outputs].forEach(collect)
     const goals = p.blocks.filter(b => b.kind === 'conclusion').map(g => ({ g, term: input(g, 0, 0) }))
     return {
       uses: [...uses],
       goals: goals.map(({ g, term }) => {
         used.clear()
         use(term)
+        needDefault = false
+        const txt = pr(term)
+        // The variables of the statement, as groups [names, type]; `[Inhabited α]` if `default` is used.
+        const arrow = (n, res) => [...Array(n).fill('α'), res].join(' → ')
+        const groups = []
+        const group = (names, type) => { if (names.length) groups.push([names.sort(), type]) }
+        if (domain) groups.push([['α'], 'Type'])
+        if (needDefault) groups.push([[], 'Inhabited α'])
+        for (const n of new Set(Object.values(preds))) group(Object.keys(preds).filter(k => preds[k] === n), arrow(n, 'Prop'))
+        for (const n of new Set(Object.values(fns))) group(Object.keys(fns).filter(k => fns[k] === n), arrow(n, 'α'))
+        group([...cons], 'α')
+        group([...atoms], 'Prop')
         return {
           atoms: [...atoms].sort(),
+          groups,
           hyps: assumptions.map(b => `(${named(names[b.id]) ? names[b.id] : '_'} : ${lean(b.outputs[0])})`),
           goal: lean(g.inputs[0]),
-          term: pr(term),
+          term: txt,
         }
       }),
     }
   }
 
+  // The variables of a statement as Lean binders: (A B : Prop), or {A B : Prop} for a theorem.
+  const binders = (groups, implicit) => groups.map(([names, type]) =>
+    !names.length ? `[${type}]` : implicit ? `{${names.join(' ')} : ${type}}` : `(${names.join(' ')} : ${type})`)
+
   // The proof as Lean code: the lemmas it uses (and the ones they use), then one `example` per goal.
   function leanProof(proof, analysis) {
     const { uses, goals } = leanParts(proof, analysis)
     const examples = goals.map(g =>
-      ['example', g.atoms.length ? `(${g.atoms.join(' ')} : Prop)` : '', ...g.hyps, `: ${g.goal} :=\n  ${g.term}`].filter(x => x).join(' '))
+      ['example', ...binders(g.groups, false), ...g.hyps, `: ${g.goal} :=\n  ${g.term}`].join(' '))
     return [...lemmaTheorems(uses), ...examples].join('\n\n')
   }
 
@@ -590,9 +888,7 @@
   // A rule as a small picture: exactly the block that gets added to the board.
   function rulePicture(name) {
     const r = RULES[name]
-    const b = { kind: 'rule', rule: name,
-      inputs: r.inputs.map(x => instantiate(parse(x), r.vars, 'rule')),
-      outputs: r.outputs.map(x => instantiate(parse(x), r.vars, 'rule')) }
+    const b = { kind: 'rule', rule: name, ...ruleFormulas(name, 'rule') }
     const size = blockSize(b, {})
     const q = { x: 18, y: 18, ...size }
     const pic = svg('svg', { viewBox: `0 0 ${size.w + 36} ${size.h + 36}`, class: 'ipm-rule-picture',
@@ -1026,6 +1322,13 @@
             (sel?.kind === 'in' && this.fits(at, sel) ? 'ipm-candidate' : '')
         }
         const g = drawBlock(b, pos[b.id], s, proved ? 'ipm-proved' : '', portClass)
+        // An eigenvariable that escapes: a ⚠ at the block, which explains itself when tapped.
+        if (this.analysis.eigen[b.id]) {
+          const q = pos[b.id]
+          const warn = svg('text', { x: q.x + q.w - 4, y: q.y + q.h + 4, class: 'ipm-skull ipm-eigen-warn', 'text-anchor': 'middle' }, '⚠')
+          warn.addEventListener('click', ev => { ev.stopPropagation(); this.explainEigen(b) })
+          g.append(warn)
+        }
         for (const port of g.querySelectorAll('.ipm-port')) {
           const i = Number(port.dataset.i)
           port.addEventListener('click', () => port.dataset.kind === 'in' ? this.tapInput(b, i) : this.tapOutput(b, i))
@@ -1081,7 +1384,7 @@
         statement: [this.assumptions.map(norm).join(', '), '⊢', this.conclusions.map(norm).join(', ')].filter(x => x).join(' '),
         atoms: goals[0]?.atoms ?? [], assumptions: this.assumptions, conclusions: this.conclusions, leanNames, uses,
         theorems: goals.map((g, j) =>
-          ['theorem', leanNames[j], g.atoms.length ? `{${g.atoms.join(' ')} : Prop}` : '', ...g.hyps, `: ${g.goal} :=\n  ${g.term}`].filter(x => x).join(' ')),
+          ['theorem', leanNames[j], ...binders(g.groups, true), ...g.hyps, `: ${g.goal} :=\n  ${g.term}`].join(' ')),
       }
       const all = loadLemmas()
       const old = all[this.key]
@@ -1135,10 +1438,12 @@
       const assumptions = this.proof.blocks.filter(x => x.kind === 'assumption')
       const h = b.kind === 'assumption' ? 'h' + sub(assumptions.indexOf(b) + 1) : 'h'
       const goal = { imp: [['impI', 'intro h']], and: [['conjI', 'constructor']], iff: [['iffI', 'constructor']],
-        or: [['disjI1', 'left'], ['disjI2', 'right']], top: [['trueI', 'trivial']] }
+        or: [['disjI1', 'left'], ['disjI2', 'right']], top: [['trueI', 'trivial']],
+        all: [['allI', 'intro c']], ex: [['exI', 'use _']] }
       const have = { and: [['conjE', `obtain ⟨ha, hb⟩ := ${h}`]], or: [['disjE', `obtain (ha | hb) := ${h}`]],
         imp: [['impE', `apply ${h}`]], bot: [['falseE', `exact ${h}.elim`]],
-        iff: [['iffE1', `apply ${h}.mp`], ['iffE2', `apply ${h}.mpr`]] }
+        iff: [['iffE1', `apply ${h}.mp`], ['iffE2', `apply ${h}.mpr`]],
+        all: [['allE', `specialize ${h} _`]], ex: [['exE', `obtain ⟨c, hc⟩ := ${h}`]] }
       if (sel.kind === 'in' && !this.analysis.openInputs.some(o => o.block === sel.block && o.port === sel.port)) return []
       return ((sel.kind === 'in' ? goal : have)[f.t] ?? []).filter(([rule]) => this.rules.includes(rule))
     }
@@ -1274,10 +1579,10 @@
     ruleOptions() {
       return this.rules.map(name => {
         const r = RULES[name]
-        const generic = x => show(instantiate(parse(x), r.vars, 'rule'))
+        const f = ruleFormulas(name, 'rule')
         return {
           picture: rulePicture(name),
-          label: `${r.label}  ${r.inputs.map(generic).join(', ')} ⟹ ${r.outputs.map(generic).join(', ')}`,
+          label: `${r.label}  ${f.inputs.map(x => show(x)).join(', ')} ⟹ ${f.outputs.map(x => show(x)).join(', ')}`,
           detail: tr('{name} block', { name: tr(r.name) }),
           act: () => {
             this.undoStack.push(this.proof.snapshot())
@@ -1310,6 +1615,15 @@
       this.openSheet(tr(RULES[b.rule].name), [
         { label: tr('Remove this block'), act: () => this.change(() => this.proof.removeBlock(b.id)) },
       ])
+    }
+
+    explainEigen(b) {
+      const what = b.rule === 'allI'
+        ? 'The {c} of this ∀I block stands for an arbitrary object. So it must not occur in the conclusion, nor in an assumption that the proof of its input uses.'
+        : 'The {c} of this ∃E block stands for the object that exists, about which nothing else is known. So it must not occur in the conclusion, nor in the ∃ statement, nor in another assumption that the proof of its second input uses.'
+      this.openSheet(tr('⚠ {c} escapes', { c: b.eig }), [
+        { label: tr('Remove this block'), act: () => this.change(() => this.proof.removeBlock(b.id)) },
+      ], tr(what, { c: b.eig }))
     }
 
     explainEscape(c) {
