@@ -11,7 +11,8 @@ implication (14), disjunction (12), falsity and negation (15) and classical logi
 sessions take tasks from the logic exercises of the [Lean course](https://pfaffelh.github.io/leancourse/)
 that the Proof Machine does not have: session 6 with the rules so far (28 tasks), session 7 with
 equivalence `↔` and truth `⊤` and their rules ↔I, ↔E₁, ↔E₂, ⊤I (24 tasks). Sessions 8 and 9 are the Proof
-Machine's quantifier sessions: ∀I, ∀E, ∃I, ∃E (17 tasks), and two puzzles.
+Machine's quantifier sessions: ∀I, ∀E, ∃I, ∃E (17 tasks), and two puzzles. Session 10 adds
+induction over the natural numbers (6 tasks), which the Proof Machine does not have.
 
 ## How it is played
 
@@ -61,7 +62,11 @@ Machine's quantifier sessions: ∀I, ∀E, ∃I, ∃E (17 tasks), and two puzzle
   tried again once others have determined more (the Proof Machine uses higher-order pattern
   unification instead). ∀I and ∃E have eigenvariables `c₁`, `c₂`, …; after unification it is
   checked that they do not escape (not in the conclusion, nor in an assumption the proof uses),
-  otherwise the block gets a ⚠. In Lean, objects have a type `α`; an undetermined object is
+  otherwise the block gets a ⚠. When nothing else can be decided, an undetermined object of a
+  block in the scope of an eigenvariable is taken to be it (this makes e.g. the drinker paradox
+  work without higher-order unification).
+* Induction is a block like ∀I with a local hypothesis: `?1 0` and `?1 c₁ ⇒ ?1 (c₁ + 1)` give
+  `∀ n, ?1 n`; in Lean `Nat.rec (motive := fun n => …)`. In Lean, objects have a type `α`; an undetermined object is
   `default` (with `[Inhabited α]`).
 * Formulas follow Lean's conventions: `∧`, `∨` and `→` group to the right. The Incredible Proof
   Machine groups `∧` to the left, so its `A∧B∧C` is written `(A ∧ B) ∧ C` here.
@@ -86,6 +91,7 @@ Tests: `cd tests && npm install && BASE=http://localhost:8002/ node session1.mjs
 `session2.mjs`, `locked.mjs`, …); they need a Chrome or Chromium (`CHROME=…`).
 `LEANOUT=proofs.lean node lean-proofs.mjs` writes the Lean proofs of some solved tasks;
 `lake env lean proofs.lean` checks them.
+`node checker.mjs` tests the proof checker without a browser (wrong proofs, the drinker paradox).
 
 Pushing to `main` builds the site and publishes it on GitHub Pages
 (`.github/workflows/deploy.yml`).

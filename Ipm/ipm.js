@@ -52,8 +52,10 @@
     '☠ {x} does not fit {y}': '☠ {x} passt nicht zu {y}',
     'Cancel': 'Abbrechen', 'more ▸': 'mehr ▸', 'less ▾': 'weniger ▾', '1 rule ▸': '1 Regel ▸', '{n} rules ▸': '{n} Regeln ▸',
     '{name} block': '{name}-Block',
-    '∀-introduction': '∀-Einführung', '∀-elimination': '∀-Beseitigung', '∃-introduction': '∃-Einführung', '∃-elimination': '∃-Beseitigung',
+    'induction': 'Induktion', '∀-introduction': '∀-Einführung', '∀-elimination': '∀-Beseitigung', '∃-introduction': '∃-Einführung', '∃-elimination': '∃-Beseitigung',
     '⚠ {c} escapes': '⚠ {c} entkommt',
+    'The {c} of this induction block stands for an arbitrary number. So it must not occur in the conclusion, nor in an assumption other than its hypothesis that the proof of the step uses.':
+      'Das {c} dieses Induktionsblocks steht für eine beliebige Zahl. Es darf daher weder in der Folgerung vorkommen noch in einer anderen Annahme als seiner eigenen, die der Beweis des Schritts verwendet.',
     'The {c} of this ∀I block stands for an arbitrary object. So it must not occur in the conclusion, nor in an assumption that the proof of its input uses.':
       'Das {c} dieses ∀I-Blocks steht für ein beliebiges Objekt. Es darf daher weder in der Folgerung vorkommen noch in einer Annahme, die der Beweis seines Eingangs verwendet.',
     'The {c} of this ∃E block stands for the object that exists, about which nothing else is known. So it must not occur in the conclusion, nor in the ∃ statement, nor in another assumption that the proof of its second input uses.':
@@ -65,7 +67,7 @@
     'The Incredible Proof Machine in Lean': 'Die Incredible Proof Machine in Lean',
     'Session 1: Conjunction': 'Sitzung 1: Konjunktion', 'Session 2: Implication': 'Sitzung 2: Implikation',
     'Session 3: Disjunction': 'Sitzung 3: Disjunktion', 'Session 4: Falsity and Negation': 'Sitzung 4: Falsum und Negation',
-    'Session 5: Classical Logic': 'Sitzung 5: Klassische Logik', 'Session 6: From the Lean Course': 'Sitzung 6: Aus dem Lean-Kurs', 'Session 7: Equivalence and Truth': 'Sitzung 7: Äquivalenz und Wahrheit', 'Session 8: Quantifiers': 'Sitzung 8: Quantoren', 'Session 9: Two Puzzles': 'Sitzung 9: Zwei Rätsel', 'Table of Contents': 'Inhalt', 'Contents': 'Inhalt',
+    'Session 5: Classical Logic': 'Sitzung 5: Klassische Logik', 'Session 6: From the Lean Course': 'Sitzung 6: Aus dem Lean-Kurs', 'Session 7: Equivalence and Truth': 'Sitzung 7: Äquivalenz und Wahrheit', 'Session 8: Quantifiers': 'Sitzung 8: Quantoren', 'Session 9: Two Puzzles': 'Sitzung 9: Zwei Rätsel', 'Session 10: Induction': 'Sitzung 10: Induktion', 'Table of Contents': 'Inhalt', 'Contents': 'Inhalt',
   }
   function translatePage() {
     if (LANG !== 'de') return
@@ -112,7 +114,7 @@
   // eigenvariable of a ∀I or ∃E block) | {t: 'fn', n, args} | {t: 'meta', id, term: true}.
   // Statements are written as in Lean: `∀ x, P x → Q (f x)`, `∃ y, R a y`.
   function parse(src) {
-    const tokens = src.match(/[A-Za-z_][\w'₀-₉]*|\d+|∀|∃|,|∧|∨|↔|→|¬|⊥|⊤|\(|\)|<->|->|\/\\|\\\/|~/g) ?? []
+    const tokens = src.match(/[A-Za-z_][\w'₀-₉]*|\d+|∀|∃|,|\+|∧|∨|↔|→|¬|⊥|⊤|\(|\)|<->|->|\/\\|\\\/|~/g) ?? []
     let i = 0
     const eat = t => { if (tokens[i] === t) { i++; return true } return false }
     const norm = { '/\\': '∧', '\\/': '∨', '->': '→', '<->': '↔', '~': '¬' }
@@ -134,14 +136,19 @@
       if (!lower(n)) fail()
       return bound.includes(n) ? { t: 'bv', n } : { t: 'con', n }
     }
+    // Natural numbers: 0, and t + 1 (the successor of t).
     const term = () => {
-      if (tokens[i] === '(') return atomicTerm()
-      const n = tokens[i++]
-      if (!lower(n)) fail()
-      const args = []
-      while (lower(tokens[i]) || tokens[i] === '(') args.push(atomicTerm())
-      if (args.length) return { t: 'fn', n, args }
-      return bound.includes(n) ? { t: 'bv', n } : { t: 'con', n }
+      let t
+      if (tokens[i] === '(') t = atomicTerm()
+      else {
+        const n = tokens[i++]
+        if (!lower(n)) fail()
+        const args = []
+        while (lower(tokens[i]) || tokens[i] === '(') args.push(atomicTerm())
+        t = args.length ? { t: 'fn', n, args } : bound.includes(n) ? { t: 'bv', n } : { t: 'con', n }
+      }
+      while (eat('+')) { if (!eat('1')) fail(); t = { t: 'fn', n: 'succ', args: [t] } }
+      return t
     }
     const un = () => {
       if (eat('¬')) return { t: 'not', a: un() }
@@ -170,6 +177,9 @@
     if (i < tokens.length) fail()
     return f
   }
+
+  // The type of objects in Lean: α, or Nat for statements about natural numbers.
+  let leanDomain = 'α'
 
   // Names of bound variables of rule blocks carry the block (`x#b3`), so that they never clash; they
   // are shown without it.
@@ -209,7 +219,7 @@
         const taken = new Set([...quantified(body, s), ...Object.values(names)])
         const name = [baseName(f.v), 'x', 'y', 'z', 'u', 'v', 'w'].find(n => !taken.has(n)) ?? baseName(f.v)
         const inner = { ...names, [f.v]: name }
-        const v = lean ? `${hasBound(body, s, f.v) ? name : '_'} : α` : name
+        const v = lean ? `${hasBound(body, s, f.v) ? name : '_'} : ${leanDomain}` : name
         // An undetermined body is shown applied to the variable: ∀ x, ?1 x
         const txt = body.t === 'meta' ? `${show_(body, s, 0, inner)} ${name}` : show_(body, s, 0, inner)
         return ctx > 0 ? `(${q} ${v}, ${txt})` : `${q} ${v}, ${txt}`
@@ -224,7 +234,8 @@
       case 'con': case 'eig': return t.n
       case 'meta': return '?' + metaNumber(t.id.split('.').pop())
       case 'fn': {
-        const txt = [t.n, ...t.args.map(a => showTerm(a, s, true, names))].join(' ')
+        const txt = t.n === 'succ' ? `${showTerm(t.args[0], s, false, names)} + 1`
+          : [t.n, ...t.args.map(a => showTerm(a, s, true, names))].join(' ')
         return atomic ? `(${txt})` : txt
       }
     }
@@ -307,6 +318,14 @@
   // formula); such a connection is tried again once more is known.
   const DEFER = 'defer'
   let fresh = 0
+  // The blocks in the scope of each eigenvariable, during the last rounds of `analyze`.
+  let eigScope = null
+  // The undetermined objects ?2 in `f`.
+  const termMetas = (f, s) => {
+    f = resolve(f, s)
+    if (f.t === 'meta') return f.term ? [f] : []
+    return parts(f).flatMap(g => termMetas(g, s))
+  }
   function unify(x, y, s) {
     x = norm(x, s); y = norm(y, s)
     if (x.t === 'meta' && y.t === 'meta' && x.id === y.id) return s
@@ -324,6 +343,17 @@
       const known = by.t === 'bv' ? !undetermined(y, s, true) : !undetermined(y, s)
       if (y.t !== 'sub' && (by.t === 'eig' || by.t === 'bv') && known && x.a.t === 'meta')
         return unify(x.a, abstract(y, by, x.v, s), s)
+      // When nothing else can be decided (`eigScope` is set): undetermined objects ?2 of blocks in
+      // the scope of the eigenvariable are taken to be it. Any object may be chosen for them, and
+      // inside the scope the eigenvariable is one; the eigenvariable check still follows.
+      if (eigScope && by.t === 'eig' && y.t !== 'sub' && x.a.t === 'meta' && !undetermined(y, s, true)) {
+        const metas = termMetas(y, s)
+        if (metas.every(m => eigScope[by.n]?.has(m.id.split('.')[0]))) {
+          let s1 = s
+          for (const m of metas) s1 = { ...s1, [m.id]: by }
+          return unify(x.a, abstract(y, by, x.v, s1), s1)
+        }
+      }
       return DEFER
     }
     if (x.t !== y.t) return null
@@ -387,6 +417,10 @@
             build: id => ({ inputs: [all(id)], outputs: [delayed(body(id), id, termMeta(id))] }) },
     exI: { label: '∃I', name: '∃-introduction',
            build: id => ({ inputs: [delayed(body(id), id, termMeta(id))], outputs: [ex(id)] }) },
+    // Induction: ?1 0, and ?1 (c + 1) from the hypothesis ?1 c, give ∀ n, ?1 n.
+    ind: { label: 'Ind', name: 'induction', eigen: true, local: { 1: 1 },
+           build: (id, c) => ({ inputs: [delayed(body(id), id, { t: 'con', n: '0' }, 'n'), delayed(body(id), id, { t: 'fn', n: 'succ', args: [eig(c)] }, 'n')],
+                                outputs: [{ t: 'all', v: `n#${id}`, a: body(id) }, delayed(body(id), id, eig(c), 'n')] }) },
     exE: { label: '∃E', name: '∃-elimination', eigen: true, local: { 1: 1 },
            build: (id, c) => ({ inputs: [ex(id), meta(id, 'B')], outputs: [meta(id, 'B'), delayed(body(id), id, eig(c))] }) },
   }
@@ -395,7 +429,7 @@
   function body(id) { return meta(id, 'A') }
   function termMeta(id) { return { t: 'meta', id: `${id}.B`, term: true } }
   function eig(c) { return { t: 'eig', n: c } }
-  function delayed(a, id, by) { return { t: 'sub', a, v: `x#${id}`, by } }
+  function delayed(a, id, by, v = 'x') { return { t: 'sub', a, v: `${v}#${id}`, by } }
   function all(id) { return { t: 'all', v: `x#${id}`, a: body(id) } }
   function ex(id) { return { t: 'ex', v: `x#${id}`, a: body(id) } }
 
@@ -488,7 +522,8 @@
       let s = {}
       const status = {}
       let todo = [...this.connections], progress = true
-      while (progress) {
+      eigScope = null
+      for (;;) {
         progress = false
         const later = []
         for (const c of todo) {
@@ -500,7 +535,12 @@
           if (s1) { s = s1; status[c.id] = 'ok' } else status[c.id] = 'fail'
         }
         todo = later
+        if (progress) { eigScope = null; continue }
+        // Stuck: try once more with objects in the scope of an eigenvariable taken to be it.
+        if (eigScope || !todo.length) break
+        eigScope = this.eigenScopes()
       }
+      eigScope = null
       for (const c of todo) status[c.id] = 'pending'
       const openInputs = []
       for (const b of this.blocks)
@@ -541,6 +581,28 @@
       return { s, status, openInputs, scopes, eigen, qed: !failed && openInputs.length === 0 && goalsDone }
     }
 
+    // For each eigenvariable, the blocks whose proofs lead into the input where it is in scope: the
+    // input of ∀I, the second input of ∃E and of induction.
+    eigenScopes() {
+      const scopes = {}
+      for (const b of this.blocks) {
+        if (!b.eig) continue
+        const inside = new Set()
+        const visit = (x, k) => {
+          for (const c of this.connections) {
+            if (c.to.block !== x.id || c.to.port !== k) continue
+            const src = this.block(c.from.block)
+            if (src.kind !== 'rule' || isLocal(src, c.from.port) || inside.has(src.id)) continue
+            inside.add(src.id)
+            src.inputs.forEach((_, j) => visit(src, j))
+          }
+        }
+        visit(b, b.rule === 'allI' ? 0 : 1)
+        scopes[b.eig] = inside
+      }
+      return scopes
+    }
+
     // The eigenvariable `c` of a ∀I block stands for an arbitrary object: it must not occur in the
     // block's conclusion `∀ x, …`, nor in any assumption that the proof of its input still depends
     // on. For ∃E likewise in `∃ x, …`, in the conclusion, and in the assumptions of the second input
@@ -568,6 +630,8 @@
         const c = b.eig
         if (b.rule === 'allI') {
           if (has(b.outputs[0], c) || openHyps(b, 0).some(([x, j]) => has(x.outputs[j], c))) bad[b.id] = true
+        } else if (b.rule === 'ind') {
+          if (has(b.outputs[0], c) || openHyps(b, 1).some(([x, j]) => !(x.id === b.id && j === 1) && has(x.outputs[j], c))) bad[b.id] = true
         } else if (b.rule === 'exE') {
           if (has(b.outputs[0], c) || has(b.inputs[0], c) ||
               openHyps(b, 1).some(([x, j]) => !(x.id === b.id && j === 1) && has(x.outputs[j], c))) bad[b.id] = true
@@ -593,23 +657,29 @@
     // The signature: propositions, and for predicate logic a type α of objects with predicates,
     // functions and constants on it.
     const atoms = new Set(), preds = {}, fns = {}, cons = new Set()
-    let quantifiers = false, needDefault = false
+    let quantifiers = false, needDefault = false, nat = false
     const collect = f => {
       if (f.t === 'atom') atoms.add(f.n)
       if (f.t === 'pred') preds[f.n] = f.args.length
-      if (f.t === 'fn') fns[f.n] = f.args.length
-      if (f.t === 'con') cons.add(f.n)
+      if (f.t === 'fn' && f.n !== 'succ') fns[f.n] = f.args.length
+      if (f.t === 'con' && f.n !== '0') cons.add(f.n)
+      if ((f.t === 'fn' && f.n === 'succ') || (f.t === 'con' && f.n === '0')) nat = true
       if (f.t === 'all' || f.t === 'ex') quantifiers = true
       parts(f).forEach(collect)
     }
     for (const b of p.blocks) if (b.kind !== 'rule') [...b.inputs, ...b.outputs].forEach(collect)
     const domain = quantifiers || Object.keys(preds).length > 0 || cons.size > 0
+    leanDomain = nat ? 'Nat' : 'α'
+    const D = leanDomain
     const lean = f => show(f, s, 0, true)
     // A term in the proof: an object of α; an undetermined one is `default`.
     const leanTerm = (t, atomic) => {
       t = resolve(t, s)
       if (t.t === 'meta') { needDefault = true; return 'default' }
-      if (t.t === 'fn') { const txt = [t.n, ...t.args.map(a => leanTerm(a, true))].join(' '); return atomic ? `(${txt})` : txt }
+      if (t.t === 'fn') {
+        const txt = t.n === 'succ' ? `${leanTerm(t.args[0], false)} + 1` : [t.n, ...t.args.map(a => leanTerm(a, true))].join(' ')
+        return atomic ? `(${txt})` : txt
+      }
       return baseName(t.n)
     }
     const hyp = (b, j) => (locals[`${b.id}.${j}`] ??= localName(Object.keys(locals).length))
@@ -645,6 +715,16 @@
         case 'allE': return { k: 'app', f: arg(0), a: { k: 'term', t: termMeta(b.id) } }
         case 'exI': return { k: 'pair', a: { k: 'term', t: termMeta(b.id) }, b: arg(0) }
         case 'exE': return app('Exists.elim', arg(0), { k: 'fun', x: b.eig, body: { k: 'fun', x: hyp(b, 1), body: arg(1) } })
+        case 'ind': {
+          // Nat.rec needs the motive: the body of ∀ n, … as a function.
+          const all = norm(b.outputs[0], s)
+          let motive = '_'
+          if (all.t === 'all' && !undetermined(all.a, s)) {
+            const n = ['n', 'm', 'k', 'i'].find(x => !quantified(all.a, s).includes(x))
+            motive = `fun ${hasBound(all.a, s, all.v) ? n : '_'} => ${show(all.a, s, 0, true, { [all.v]: n })}`
+          }
+          return { k: 'nat', motive, z: arg(0), st: { k: 'fun', x: b.eig, body: { k: 'fun', x: hyp(b, 1), body: arg(1) } } }
+        }
       }
       const L = RULES[b.rule]?.lemma
       if (L) {
@@ -661,13 +741,14 @@
     const use = t => {
       if (t.k === 'var') used.add(t.n)
       if (t.k === 'term') { useTerm(t.t); return }
-      for (const k of ['f', 'a', 'b', 'body']) if (t[k]) use(t[k])
+      for (const k of ['f', 'a', 'b', 'body', 'z', 'st']) if (t[k]) use(t[k])
     }
     const named = n => !analysis.qed || used.has(n)
     const pr = t => {
       switch (t.k) {
         case 'var': return t.n
         case 'term': return leanTerm(t.t, false)
+        case 'nat': return `Nat.rec (motive := ${t.motive}) ${atomic(t.z) ? pr(t.z) : `(${pr(t.z)})`} (${pr(t.st)})`
         case 'sorry': return 'sorry'
         case 'pair': return `⟨${pr(t.a)}, ${pr(t.b)}⟩`
         case 'proj': return `${atomic(t.a) ? pr(t.a) : `(${pr(t.a)})`}.${t.i}`
@@ -688,14 +769,14 @@
         needDefault = false
         const txt = pr(term)
         // The variables of the statement, as groups [names, type]; `[Inhabited α]` if `default` is used.
-        const arrow = (n, res) => [...Array(n).fill('α'), res].join(' → ')
+        const arrow = (n, res) => [...Array(n).fill(D), res].join(' → ')
         const groups = []
         const group = (names, type) => { if (names.length) groups.push([names.sort(), type]) }
-        if (domain) groups.push([['α'], 'Type'])
-        if (needDefault) groups.push([[], 'Inhabited α'])
+        if (domain && !nat) groups.push([['α'], 'Type'])
+        if (needDefault && !nat) groups.push([[], 'Inhabited α'])
         for (const n of new Set(Object.values(preds))) group(Object.keys(preds).filter(k => preds[k] === n), arrow(n, 'Prop'))
-        for (const n of new Set(Object.values(fns))) group(Object.keys(fns).filter(k => fns[k] === n), arrow(n, 'α'))
-        group([...cons], 'α')
+        for (const n of new Set(Object.values(fns))) group(Object.keys(fns).filter(k => fns[k] === n), arrow(n, D))
+        group([...cons], D)
         group([...atoms], 'Prop')
         return {
           atoms: [...atoms].sort(),
@@ -1439,7 +1520,7 @@
       const h = b.kind === 'assumption' ? 'h' + sub(assumptions.indexOf(b) + 1) : 'h'
       const goal = { imp: [['impI', 'intro h']], and: [['conjI', 'constructor']], iff: [['iffI', 'constructor']],
         or: [['disjI1', 'left'], ['disjI2', 'right']], top: [['trueI', 'trivial']],
-        all: [['allI', 'intro c']], ex: [['exI', 'use _']] }
+        all: [['allI', 'intro c'], ['ind', 'intro n; induction n']], ex: [['exI', 'use _']] }
       const have = { and: [['conjE', `obtain ⟨ha, hb⟩ := ${h}`]], or: [['disjE', `obtain (ha | hb) := ${h}`]],
         imp: [['impE', `apply ${h}`]], bot: [['falseE', `exact ${h}.elim`]],
         iff: [['iffE1', `apply ${h}.mp`], ['iffE2', `apply ${h}.mpr`]],
@@ -1620,6 +1701,8 @@
     explainEigen(b) {
       const what = b.rule === 'allI'
         ? 'The {c} of this ∀I block stands for an arbitrary object. So it must not occur in the conclusion, nor in an assumption that the proof of its input uses.'
+        : b.rule === 'ind'
+        ? 'The {c} of this induction block stands for an arbitrary number. So it must not occur in the conclusion, nor in an assumption other than its hypothesis that the proof of the step uses.'
         : 'The {c} of this ∃E block stands for the object that exists, about which nothing else is known. So it must not occur in the conclusion, nor in the ∃ statement, nor in another assumption that the proof of its second input uses.'
       this.openSheet(tr('⚠ {c} escapes', { c: b.eig }), [
         { label: tr('Remove this block'), act: () => this.change(() => this.proof.removeBlock(b.id)) },
