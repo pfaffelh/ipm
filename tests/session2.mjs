@@ -31,7 +31,7 @@ console.log('T1:', await state(t))
 t = page.locator('.ipm-task').nth(3)
 await tap(goal(t)); await addRule(t, '→I'); await tap(local(rule(t, 0)))
 console.log('T4 hypothesis to the goal:', await state(t))
-await tap(t.locator('.ipm-skull').first()); console.log('   says:', (await t.locator('.ipm-sheet').innerText()).split('\n').slice(0, 2).join(' | '))
+await tap(t.locator('.ipm-skull').first()); console.log('   says:', (await t.locator('.ipm-bubble text').allTextContents()).join(' '))
 
 // Task 5: A → B, B → C ⊢ A → C
 t = page.locator('.ipm-task').nth(4)

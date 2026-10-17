@@ -268,3 +268,8 @@
 /* A connection that cannot be decided yet (quantifiers), and a ⚠ at a block whose eigenvariable escapes */
 .ipm-conn.ipm-pending path:not(.ipm-conn-hit):not(.ipm-conn-halo) { stroke: #999; stroke-dasharray: 3 4; }
 .ipm-svg text.ipm-eigen-warn { font-size: 20px !important; cursor: pointer; pointer-events: auto; }
+
+/* The box beside a line with ☠ or ⚠ */
+.ipm-bubble rect { fill: #fff8f6; stroke: #c0392b; stroke-width: 1.5; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)); }
+.ipm-svg .ipm-bubble text { font-family: inherit; font-size: 13px !important; fill: #333; }
+.ipm-svg .ipm-bubble .ipm-conn-remove text { fill: white; font-size: 14px !important; }

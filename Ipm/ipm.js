@@ -46,10 +46,8 @@
     'That would go round in a circle.': 'Das wäre ein Kreisschluss.',
     'Prove {x}': 'Beweise {x}', 'Disconnect': 'Verbindung lösen', 'This input is connected already.': 'Dieser Eingang ist schon verbunden.',
     'Remove this block': 'Diesen Block entfernen', 'Remove this connection': 'Diese Verbindung entfernen',
-    '⚠ A local hypothesis escapes its box': '⚠ Eine lokale Annahme verlässt ihren Kasten',
-    'What is derived from a local hypothesis (of an →I or ∨E block) may only be used to prove the input of that block it belongs to. This line leads, via {x}, to a goal outside.':
-      'Was aus einer lokalen Annahme (eines →I- oder ∨E-Blocks) folgt, darf nur für den Eingang des Blocks verwendet werden, zu dem sie gehört. Diese Linie führt über {x} zu einem Ziel außerhalb.',
-    '☠ {x} does not fit {y}': '☠ {x} passt nicht zu {y}',
+    '{x} does not fit {y}': '{x} passt nicht zu {y}',
+    'A local hypothesis may only be used inside its box.': 'Eine lokale Annahme darf nur innerhalb ihres Kastens verwendet werden.',
     'Cancel': 'Abbrechen', 'more ▸': 'mehr ▸', 'less ▾': 'weniger ▾', '1 rule ▸': '1 Regel ▸', '{n} rules ▸': '{n} Regeln ▸',
     '{name} block': '{name}-Block',
     'induction': 'Induktion', '∀-introduction': '∀-Einführung', '∀-elimination': '∀-Beseitigung', '∃-introduction': '∃-Einführung', '∃-elimination': '∃-Beseitigung',
@@ -1322,6 +1320,7 @@
       this.canvas.style.overflow = this.zoom > 1 ? 'auto' : 'visible'
       this.svgRoot = root
       const paths = []  // connection paths, to follow a dragged block
+      let bubble = null
       this.arrowId ??= `ipm-arrow-${Math.random().toString(36).slice(2)}`
       const marker = svg('marker', { id: this.arrowId, viewBox: '0 0 10 10', refX: 19, refY: 5,
         markerWidth: 9, markerHeight: 9, markerUnits: 'userSpaceOnUse', orient: 'auto' })
@@ -1362,7 +1361,14 @@
           this.hideSheet()
           this.render()
         })
-        if (this.selectedConn === c.id) {
+        if (this.selectedConn === c.id && (st === 'fail' || st === 'escape')) {
+          // A line with ☠ or ⚠: the explanation and ✕ in a box right beside it (drawn over the blocks).
+          g.classList.add('ipm-conn-selected')
+          const out = p.block(c.from.block).outputs[c.from.port], inp = p.block(c.to.block).inputs[c.to.port]
+          bubble = { c, m: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, text: st === 'fail'
+            ? tr('{x} does not fit {y}', { x: show(out, s), y: show(inp, s) })
+            : tr('A local hypothesis may only be used inside its box.') }
+        } else if (this.selectedConn === c.id) {
           g.classList.add('ipm-conn-selected')
           const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
           const x = svg('g', { class: 'ipm-conn-remove' })
@@ -1376,13 +1382,13 @@
         if (st === 'fail') {
           const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
           const skull = svg('text', { x: m.x, y: m.y + 7, class: 'ipm-skull', 'text-anchor': 'middle' }, '☠')
-          skull.addEventListener('click', () => this.explain(c))
+          skull.addEventListener('click', ev => { ev.stopPropagation(); this.selectConn(c) })
           g.append(skull)
         }
         if (st === 'escape') {
           const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
           const warn = svg('text', { x: m.x, y: m.y + 7, class: 'ipm-skull', 'text-anchor': 'middle' }, '⚠')
-          warn.addEventListener('click', () => this.explainEscape(c))
+          warn.addEventListener('click', ev => { ev.stopPropagation(); this.selectConn(c) })
           g.append(warn)
         }
         root.append(g)
@@ -1428,6 +1434,7 @@
         })
         root.append(g)
       }
+      if (bubble) this.drawBubble(root, bubble, view)
       this.drawSteps(root, pos, view)
       root.addEventListener('click', ev => {
         if (ev.target === root && (this.selected || this.selectedConn)) {
@@ -1506,6 +1513,37 @@
     }
 
     // Draws a line from output `o` to input `i`; one that does not fit gets a ☠.
+    selectConn(c) {
+      this.selectedConn = this.selectedConn === c.id ? null : c.id
+      this.selected = null
+      this.hideSheet()
+      this.render()
+    }
+
+    // The box beside a line with ☠ or ⚠: what is wrong, and ✕ to remove the line.
+    drawBubble(root, { c, m, text }, view) {
+      const words = text.split(' '), lines = ['']
+      for (const w of words) {
+        if ((lines.at(-1) + ' ' + w).trim().length > 30) lines.push(w)
+        else lines[lines.length - 1] = (lines.at(-1) + ' ' + w).trim()
+      }
+      const w = Math.max(...lines.map(l => l.length)) * 7.4 + 62, h = lines.length * 18 + 16
+      const x = Math.max(view[0] + 4, Math.min(m.x - w / 2, view[0] + view[2] - w - 4)), y = m.y + 18
+      const g = svg('g', { class: 'ipm-bubble' })
+      g.append(svg('rect', { x, y, width: w, height: h, rx: 8 }))
+      lines.forEach((l, k) => g.append(svg('text', { x: x + 10, y: y + 22 + k * 18 }, l)))
+      const del = svg('g', { class: 'ipm-conn-remove' })
+      del.append(svg('circle', { cx: x + w - 22, cy: y + h / 2, r: 14 }), svg('text', { x: x + w - 22, y: y + h / 2 + 5, 'text-anchor': 'middle' }, '✕'))
+      del.addEventListener('click', ev => {
+        ev.stopPropagation()
+        this.selectedConn = null
+        this.change(() => { this.proof.connections = this.proof.connections.filter(e => e !== c) })
+      })
+      g.addEventListener('click', ev => ev.stopPropagation())
+      g.append(del)
+      root.append(g)
+    }
+
     // ------------------------------------------------------------ steps
 
     // The steps for the selected port, by the shape of its statement, as in Lean: for a goal `A → B`
@@ -1707,22 +1745,6 @@
       this.openSheet(tr('⚠ {c} escapes', { c: b.eig }), [
         { label: tr('Remove this block'), act: () => this.change(() => this.proof.removeBlock(b.id)) },
       ], tr(what, { c: b.eig }))
-    }
-
-    explainEscape(c) {
-      const p = this.proof, s = this.analysis.s
-      this.openSheet(tr('⚠ A local hypothesis escapes its box'), [
-        { label: tr('Remove this connection'), act: () => this.change(() => { p.connections = p.connections.filter(x => x !== c) }) },
-      ], tr('What is derived from a local hypothesis (of an →I or ∨E block) may only be used to prove the input of ' +
-        'that block it belongs to. This line leads, via {x}, to a goal outside.', { x: show(p.block(c.from.block).outputs[c.from.port], s) }))
-    }
-
-    explain(c) {
-      const p = this.proof, s = this.analysis.s
-      const out = p.block(c.from.block).outputs[c.from.port], inp = p.block(c.to.block).inputs[c.to.port]
-      this.openSheet(tr('☠ {x} does not fit {y}', { x: show(out, s), y: show(inp, s) }), [
-        { label: tr('Remove this connection'), act: () => this.change(() => { p.connections = p.connections.filter(x => x !== c) }) },
-      ])
     }
   }
 
