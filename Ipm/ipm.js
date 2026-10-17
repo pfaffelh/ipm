@@ -1885,9 +1885,9 @@
   }
 
   // A session page shows one task at a time, on a stage as high as the screen: the task's text,
-  // its board (which takes the room that is left), ＋ and the tools. At its foot: a dot for each
-  // task (to go there; ← → also do) and the rules of the session, folded away. Nothing scrolls
-  // while one plays; the task is in the address (#task-3).
+  // its board (which takes the room that is left), ＋ and the tools. Above, on the right: a dot for
+  // each task (to go there; ← → also do). At its foot: the rules of the session, folded away.
+  // Nothing scrolls while one plays; the task is in the address (#task-3).
   function init() {
     translatePage()
     languageSwitch()
@@ -1897,9 +1897,9 @@
     if (!tasks.length) { startButton(); return }
     const stage = el('div', 'ipm-stage')
     tasks[0].root.before(stage)
-    const foot = el('div', 'ipm-foot'), dots = el('div', 'ipm-dots')
-    foot.append(dots)
-    stage.append(...tasks.map(t => t.root), foot)
+    const top = el('div', 'ipm-top'), dots = el('div', 'ipm-dots'), foot = el('div', 'ipm-foot')
+    top.append(dots)
+    stage.append(top, ...tasks.map(t => t.root), foot)
     // The text before the tasks (the rules of the session) folds away above them; open at first.
     const intro = el('details', 'ipm-intro')
     const before = []

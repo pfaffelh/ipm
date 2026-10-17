@@ -1,5 +1,5 @@
 // The stage of a session page: one task at a time, as high as the screen. Navigates with the dots
-// at its foot and with ← →, keeps the task in the address (also after reloading), shows "Next ›" once a task is
+// above on the right and with ← →, keeps the task in the address (also after reloading), shows "Next ›" once a task is
 // solved, and the page does not scroll while one plays. On a phone and on a desktop.
 // Usage: BASE=http://localhost:8002/ node stage.mjs   (SHOTDIR=dir for screenshots)
 import { chromium } from 'playwright-core'
@@ -31,8 +31,8 @@ for (const [opts, name] of [[{ viewport: { width: 390, height: 844 }, hasTouch: 
   console.log(`  dot 1, then ←: ${await where()}`)
   await page.keyboard.press('ArrowRight'); await page.keyboard.press('ArrowRight'); await page.waitForTimeout(150)
   console.log(`  → twice: ${await where()} | locked: ${await cur().evaluate(t => t.classList.contains('ipm-locked'))}`)
-  const foot = await page.locator('.ipm-foot').boundingBox()
-  console.log(`  foot (dots, "About this session") at the bottom of the screen: ${foot.y + foot.height <= (opts.viewport.height) + 1 && foot.y > opts.viewport.height * 0.6}`)
+  const foot = await page.locator('.ipm-foot').boundingBox(), dots = await page.locator('.ipm-dots').boundingBox(), stageBox = await page.locator('.ipm-stage').boundingBox()
+  console.log(`  dots above on the right: ${dots.y < stageBox.y + 40 && dots.x + dots.width > stageBox.x + stageBox.width - 4} | "About this session" at the bottom of the screen: ${foot.y + foot.height <= (opts.viewport.height) + 1 && foot.y > opts.viewport.height * 0.6}`)
   if (process.env.SHOTDIR) await page.screenshot({ path: `${process.env.SHOTDIR}/stage-${name}.png` })
 }
 await browser.close()

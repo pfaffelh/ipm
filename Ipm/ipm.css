@@ -358,3 +358,6 @@
 /* The foot of the stage: the dots of the tasks, and "About this session". */
 .ipm-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3em 0.8em; padding-top: 0.5em; border-top: 1px solid #e0e5ec; margin-top: 0.5em; }
 .ipm-intro[open] summary { text-align: right; }
+/* Above the task, on the right: the dots of the tasks. */
+.ipm-top { display: flex; justify-content: flex-end; padding-bottom: 0.4em; }
+.ipm-foot:empty { display: none; }
