@@ -307,7 +307,8 @@
           for (const c of this.connections)
             if (c.from.block === x.id && c.from.port === h) visit(c, [c])
           members.delete(x.id)
-          scopes.push({ block: x.id, port: h, consumer: k, members: [...members] })
+          const used = this.connections.some(c => c.from.block === x.id && c.from.port === h)
+          scopes.push({ block: x.id, port: h, consumer: k, members: [...members], used })
         })
       }
       const failed = this.connections.some(c => status[c.id] !== 'ok')
@@ -498,16 +499,25 @@
     const port = key => (key.startsWith('in') ? b.inputs : b.outputs)[Number(key.slice(key.startsWith('in') ? 2 : 3))]
     const top = topRow(b)
     const bottom = b.outputs.map((_, j) => j).filter(j => !isLocal(b, j)).map(j => `out${j}`)
-    const slot = key => show(port(key), s).length * labelW + portGap
+    // A local hypothesis shares a compartment with the input it leads back into: `?1 ⇒ ?3`. Its slot
+    // has room for the arrow on its right.
+    const arrowW = 18
+    const isHyp = key => key.startsWith('out') && top.includes(key)
+    const slot = key => show(port(key), s).length * labelW + portGap + (isHyp(key) ? arrowW : 0)
     const width = keys => keys.reduce((w, k) => w + slot(k), 0)
     const w = Math.max(56, width(top) + 12, width(bottom) + 12)
     const centres = keys => {
-      const o = {}
+      const o = {}, left = {}, right = {}
       let x = (w - width(keys)) / 2
-      for (const k of keys) { o[k] = x + slot(k) / 2; x += slot(k) }
-      return o
+      for (const k of keys) {
+        o[k] = x + (slot(k) - (isHyp(k) ? arrowW : 0)) / 2
+        left[k] = x; right[k] = x + slot(k)
+        x += slot(k)
+      }
+      return { o, left, right }
     }
-    return { w, h: 52, topX: centres(top), bottomX: centres(bottom) }
+    const t = centres(top)
+    return { w, h: 52, topX: t.o, topLeft: t.left, topRight: t.right, bottomX: centres(bottom).o }
   }
 
   // The ports in the top row: each input, preceded by the local hypotheses that lead back into it.
@@ -518,6 +528,12 @@
       row.push(`in${i}`)
     })
     return row
+  }
+
+  // The compartment of local hypothesis `j` of block `b` at `q`: from the hypothesis to its input.
+  function compartment(q, b, j) {
+    const h = `out${j}`, i = `in${consumer(b, j)}`
+    return { x0: q.x + q.topLeft[h] + 3, x1: q.x + q.topRight[i] - 3, arrow: q.x + q.topRight[h] - 9 }
   }
 
   // Where port `i` (kind 'in' or 'out') of block `b` at position `q` sits.
@@ -542,6 +558,12 @@
     if (b.kind === 'rule') {
       // A lemma's block carries its name in the corner.
       if (RULES[b.rule]?.lemma) g.append(svg('text', { x: q.x + 5, y: q.y + q.h - 5, class: 'ipm-lemma-tag' }, RULES[b.rule].label))
+      b.outputs.forEach((_, j) => {
+        if (!isLocal(b, j) || !q.topLeft) return
+        const c = compartment(q, b, j)
+        g.append(svg('rect', { x: c.x0, y: q.y + 4, width: c.x1 - c.x0, height: 26, rx: 6, class: 'ipm-compartment' }),
+          svg('text', { x: c.arrow, y: q.y + 22, 'text-anchor': 'middle', class: 'ipm-implies' }, '⇒'))
+      })
       b.inputs.forEach((f, i) => g.append(svg('text', { x: portAt(q, b, 'in', i).x, y: q.y + 22, 'text-anchor': 'middle', class: 'ipm-port-label' }, show(f, s))))
       b.outputs.forEach((f, i) => g.append(svg('text', { x: portAt(q, b, 'out', i).x, y: isLocal(b, i) ? q.y + 22 : q.y + q.h - 10, 'text-anchor': 'middle', class: 'ipm-port-label' + (isLocal(b, i) ? ' ipm-local-label' : '') }, show(f, s))))
     } else {
@@ -913,10 +935,10 @@
       root.append(defs)
       // The box of each local hypothesis: around the blocks that use it, and the top of its block.
       for (const sc of this.analysis.scopes) {
-        // The box starts at the hypothesis and the input it leads back into.
-        const x = pos[sc.block], xb = p.block(sc.block)
-        const a = portAt(x, xb, 'out', sc.port).x, c = portAt(x, xb, 'in', sc.consumer).x
-        const qs = [...sc.members.map(id => pos[id]), { x: Math.min(a, c) - 22, y: x.y, w: Math.abs(a - c) + 44, h: 26 }]
+        // Only once the hypothesis is used: the box starts at its compartment.
+        if (!sc.used) continue
+        const x = pos[sc.block], cm = compartment(x, p.block(sc.block), sc.port)
+        const qs = [...sc.members.map(id => pos[id]), { x: cm.x0 + 9, y: x.y, w: cm.x1 - cm.x0 - 18, h: 26 }]
         const x0 = Math.min(...qs.map(q => q.x)) - 12, y0 = Math.min(...qs.map(q => q.y)) - 28
         const x1 = Math.max(...qs.map(q => q.x + q.w)) + 12, y1 = Math.max(...qs.map(q => q.y + q.h)) + 6
         root.append(svg('rect', { x: x0, y: y0, width: x1 - x0, height: y1 - y0, rx: 12, class: 'ipm-box' }))
