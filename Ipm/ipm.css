@@ -439,3 +439,46 @@ html.ipm-playing main, html.ipm-playing .content-wrapper, html.ipm-playing secti
 
 /* The start page lists the worlds only in the table of contents (☰), not again in the text. */
 main section:has(> ol.section-toc) { display: none; }
+
+/* The map of the worlds, instead of the list in the table of contents */
+#toc.ipm-has-map .split-tocs, #toc.ipm-has-map .toc-title { display: none; }
+.ipm-worlds { padding: 0.4em 0.2em 1em; font-family: var(--verso-structure-font-family, sans-serif); }
+.ipm-worlds-title { font-weight: bold; margin: 0 0 0.3em 0.4em; }
+.ipm-map { width: 100%; max-width: 250px; height: auto; display: block; }
+.ipm-map-edge { stroke: #b8c4d4; stroke-width: 3; }
+.ipm-map-disc { fill: white; stroke: #8a9bb3; stroke-width: 2; }
+.ipm-map-ring { fill: none; stroke: #3c9a5f; stroke-width: 5; stroke-linecap: round; }
+.ipm-map-done .ipm-map-disc { fill: #3c9a5f; stroke: #3c9a5f; }
+.ipm-map-done .ipm-map-n { fill: white; }
+.ipm-map-here .ipm-map-disc { stroke: #3b6db3; stroke-width: 4; }
+.ipm-map-n { font-size: 17px; font-weight: bold; fill: #333; }
+.ipm-map-name { font-size: 12.5px; fill: #333; font-weight: 600; }
+.ipm-map-count { font-size: 10.5px; fill: #777; }
+.ipm-map-edge { fill: none; }
+.ipm-map-world:hover .ipm-map-disc { stroke: #3b6db3; }
+
+/* The tool bar: words on large screens, a symbol over a short word on phones (one row, at the bottom). */
+.ipm-bar .ipm-ico, .ipm-bar .ipm-short { display: none; }
+.ipm-bar .ipm-add .ipm-ico { display: inline; }
+.ipm-bar { z-index: 5; }
+@media (max-width: 600px) {
+  .ipm-stage .ipm-bar { flex-wrap: nowrap; gap: 3px; padding-bottom: env(safe-area-inset-bottom); }
+  .ipm-stage .ipm-bar .ipm-button, .ipm-stage .ipm-bar .ipm-add {
+    flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 0.25em 0.1em; font-size: 0.72rem; line-height: 1.1; border-radius: 8px; min-height: 48px;
+  }
+  .ipm-stage .ipm-bar .ipm-ico { display: block; font-size: 1.35rem; line-height: 1.1; }
+  .ipm-stage .ipm-bar .ipm-short { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .ipm-stage .ipm-bar .ipm-lbl, .ipm-stage .ipm-bar .ipm-add-text { display: none; }
+  .ipm-stage .ipm-bar .ipm-about-button { margin-left: 0; }
+  .ipm-stage .ipm-bar .ipm-undo { font-size: 0.72rem; }
+  .ipm-stage .ipm-bar .ipm-undo::before { content: none; }
+  /* About and Lean: sheets over the board, which scroll */
+  .ipm-stage .ipm-about, .ipm-stage .ipm-current .ipm-lean[open] {
+    position: fixed; left: 8px; right: 8px; bottom: calc(68px + env(safe-area-inset-bottom)); z-index: 30;
+    max-height: 55vh; overflow: auto; background: white; box-shadow: 0 6px 28px rgba(0, 0, 0, 0.3); border-radius: 12px; margin: 0;
+  }
+  .ipm-stage .ipm-about .ipm-intro-body { max-height: none; overflow: visible; }
+  .ipm-stage .ipm-current .ipm-lean[open] .ipm-lean-code { max-height: none; }
+}
+.ipm-settings { max-height: calc(100vh - var(--verso-header-height, 3rem) - 24px); overflow: auto; }

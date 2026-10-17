@@ -49,7 +49,7 @@
     '{x} does not fit {y}': '{x} passt nicht zu {y}',
     'A local hypothesis may only be used inside its box.': 'Eine lokale Annahme darf nur innerhalb ihres Kastens verwendet werden.',
     'Cancel': 'Abbrechen', 'more ▸': 'mehr ▸', 'less ▾': 'weniger ▾', '1 rule ▸': '1 Regel ▸', '{n} rules ▸': '{n} Regeln ▸',
-    '{name} block': '{name}-Block', 'Next ›': 'Weiter ›', '▶ Start': '▶ Start', '▶ Continue': '▶ Weiterspielen', 'or start from the beginning': 'oder von vorn beginnen', 'About this level': 'Über dieses Level', 'This world': 'Diese Welt', 'Tip': 'Tipp', 'Got it': 'Verstanden', 'Drag to make the blocks or the board wider': 'Ziehen, um die Bausteine oder das Spielfeld breiter zu machen', 'Settings': 'Einstellungen', 'Off': 'Aus', 'All': 'Alle',
+    '{name} block': '{name}-Block', 'Next ›': 'Weiter ›', '▶ Start': '▶ Start', '▶ Continue': '▶ Weiterspielen', 'or start from the beginning': 'oder von vorn beginnen', 'About this level': 'Über dieses Level', 'This world': 'Diese Welt', 'Tip': 'Tipp', 'Got it': 'Verstanden', 'Undo': 'Zurück', 'Restart': 'Neu', 'Tidy': 'Ordnen', 'About': 'Info', 'Next': 'Weiter', 'Block': 'Baustein', 'Worlds': 'Welten', 'Drag to make the blocks or the board wider': 'Ziehen, um die Bausteine oder das Spielfeld breiter zu machen', 'Settings': 'Einstellungen', 'Off': 'Aus', 'All': 'Alle',
     'Tactics: buttons with the Lean command that fits a tapped circle or dot': 'Taktiken: Knöpfe mit dem passenden Lean-Befehl zu einem angetippten Kreis oder Punkt',
     'Earned by solving levels': 'Durch Lösen von Levels freigespielt', 'Order': 'Reihenfolge', 'Levels in order': 'Levels der Reihe nach',
     'A level can be played once the one before it is solved.': 'Ein Level ist spielbar, sobald das vorherige gelöst ist.',
@@ -1046,6 +1046,16 @@
     return pic
   }
 
+  // A button of the tool bar: on phones a symbol over a short word (like the tab bar of an app),
+  // otherwise its words.
+  function barButton(cls, icon, label, short = label) {
+    const b = el('button', `ipm-button ${cls}`.trim())
+    b.type = 'button'
+    b.title = label
+    b.append(el('span', 'ipm-ico', icon), el('span', 'ipm-lbl', label), el('span', 'ipm-short', short))
+    return b
+  }
+
   class Task {
     constructor(root, index) {
       this.root = root
@@ -1068,15 +1078,12 @@
       this.status = el('div', 'ipm-status')
       // The tool bar below the board: ＋, Undo, Start over, Tidy up, Lean (and Next, from the stage).
       const tools = el('div', 'ipm-tools ipm-bar')
-      const undo = el('button', 'ipm-button ipm-undo', tr('↶ Undo'))
-      undo.title = tr('↶ Undo')
+      const undo = barButton('ipm-undo', '↶', tr('Undo'))
       undo.type = 'button'
       undo.addEventListener('click', () => this.undo())
-      const reset = el('button', 'ipm-button', tr('Start over'))
-      reset.type = 'button'
+      const reset = barButton('', '⟲', tr('Start over'), tr('Restart'))
       reset.addEventListener('click', () => { this.change(() => { this.proof = new Proof(this.assumptions, this.conclusions) }) })
-      const tidy = el('button', 'ipm-button', tr('Tidy up'))
-      tidy.type = 'button'
+      const tidy = barButton('', '⇅', tr('Tidy up'), tr('Tidy'))
       tidy.title = tr('Arrange the blocks automatically again')
       tidy.addEventListener('click', () => { this.change(() => { this.proof.moved = {} }) })
       window.addEventListener('ipm-settings', () => this.render())
@@ -1094,7 +1101,7 @@
       // and the lemmas. Taking one (a tap, or dragging it onto the board) closes the popover again.
       this.menu = el('div', 'ipm-menu')
       this.addButton = el('button', 'ipm-add')
-      this.addButton.append('＋', el('span', 'ipm-add-text', tr('Add a block')))
+      this.addButton.append(el('span', 'ipm-ico', '＋'), el('span', 'ipm-add-text', tr('Add a block')), el('span', 'ipm-short', tr('Block')))
       this.addButton.title = tr('Add a block')
       this.addButton.type = 'button'
       this.addButton.setAttribute('aria-expanded', 'false')
@@ -1138,8 +1145,7 @@
       this.leanLink.target = '_blank'
       this.leanLink.rel = 'noopener'
       this.lean.append(el('summary', '', tr('The proof in Lean')), this.leanCode, this.leanLink)
-      const leanButton = el('button', 'ipm-button ipm-lean-toggle', 'Lean')
-      leanButton.type = 'button'
+      const leanButton = barButton('ipm-lean-toggle', 'λ', 'Lean')
       leanButton.title = tr('The proof in Lean')
       leanButton.addEventListener('click', () => { this.lean.open = !this.lean.open })
       const pressed = () => leanButton.setAttribute('aria-pressed', String(this.lean.open))
@@ -1909,6 +1915,70 @@
   }
 
   // Tasks on a page are revealed one at a time, like the steps of a lesson.
+  // The worlds as a map (instead of the list in the table of contents): a circle per world, with a
+  // ring for the levels solved, and lines from the worlds it builds on. The number of levels of each
+  // world is here (docs/levels.py checks it); `at` is the place on the map.
+  const WORLDS = [
+    { n: 1, levels: 13, at: [0, 0], after: [] }, { n: 2, levels: 23, at: [0, 1], after: [1] },
+    { n: 3, levels: 20, at: [0, 2], after: [2] }, { n: 4, levels: 21, at: [0, 3], after: [3] },
+    { n: 5, levels: 13, at: [0, 4], after: [4] }, { n: 6, levels: 24, at: [0, 5], after: [5] },
+    { n: 7, levels: 17, at: [0, 6], after: [5] }, { n: 8, levels: 2, at: [1, 7], after: [7] },
+    { n: 9, levels: 6, at: [1, 8], after: [7] },
+  ]
+  function worldMap() {
+    const toc = document.querySelector('#toc')
+    const links = {}
+    for (const a of document.querySelectorAll('#toc a[href*="World-"]')) {
+      const m = /World-(\d+)___/.exec(a.getAttribute('href'))
+      if (m && !links[m[1]]) links[m[1]] = a
+    }
+    if (!toc || !links[1]) return
+    const here = Number(/World-(\d+)___/.exec(location.pathname)?.[1] ?? 0)
+    const solved = w => {
+      const path = new URL(links[w.n].href, location.href).pathname
+      let k = 0
+      for (let i = 0; i < w.levels; i++) {
+        try { if (JSON.parse(localStorage.getItem(`ipm-verso:${path}:${i}`))?.solved) k++ } catch {}
+      }
+      return k
+    }
+    // The worlds go down; a world's name stands right of its circle. A line that skips a row (5 → 7,
+    // 7 → 9) bends to the left around the circle in between.
+    const W = 250, dx = 46, dy = 56, x0 = 34, y0 = 26
+    const pos = w => [x0 + w.at[0] * dx, y0 + w.at[1] * dy]
+    const H = y0 + 8 * dy + 30
+    const map = svg('svg', { viewBox: `0 0 ${W} ${H}`, class: 'ipm-map' })
+    for (const w of WORLDS) for (const a of w.after) {
+      const [x1, y1] = pos(WORLDS[a - 1]), [x2, y2] = pos(w)
+      const d = w.at[1] - WORLDS[a - 1].at[1] > 1 && x1 === x2
+        ? `M${x1},${y1} C${x1 - 34},${y1 + dy * 0.4} ${x2 - 34},${y2 - dy * 0.4} ${x2},${y2}`
+        : w.at[1] - WORLDS[a - 1].at[1] > 1
+          ? `M${x1},${y1} C${x1 - 30},${(y1 + y2) / 2} ${x2 - 40},${y2 - 10} ${x2},${y2}`
+          : `M${x1},${y1} L${x2},${y2}`
+      map.append(svg('path', { d, class: 'ipm-map-edge' }))
+    }
+    for (const w of WORLDS) {
+      const [x, y] = pos(w), r = 18, k = solved(w), frac = k / w.levels
+      const name = (links[w.n].textContent ?? '').replace(/^\s*\d+\.\s*/, '').replace(/(World|Welt) \d+: /, '').trim()
+      const g = svg('a', { href: links[w.n].getAttribute('href'), class: 'ipm-map-world' + (w.n === here ? ' ipm-map-here' : '') + (k === w.levels ? ' ipm-map-done' : '') })
+      g.append(svg('title', {}, `${name}: ${k}/${w.levels}`))
+      g.append(svg('circle', { cx: x, cy: y, r, class: 'ipm-map-disc' }))
+      // the ring: the share of levels solved
+      if (frac > 0 && frac < 1) {
+        const a = 2 * Math.PI * frac, ex = x + r * Math.sin(a), ey = y - r * Math.cos(a)
+        g.append(svg('path', { d: `M${x},${y - r} A${r},${r} 0 ${frac > 0.5 ? 1 : 0} 1 ${ex},${ey}`, class: 'ipm-map-ring' }))
+      }
+      g.append(svg('text', { x, y: y + 6, 'text-anchor': 'middle', class: 'ipm-map-n' }, String(w.n)))
+      g.append(svg('text', { x: x + r + 8, y: y - 1, class: 'ipm-map-name' }, name))
+      g.append(svg('text', { x: x + r + 8, y: y + 13, class: 'ipm-map-count' }, `${k}/${w.levels}`))
+      map.append(g)
+    }
+    const box = el('div', 'ipm-worlds')
+    box.append(el('div', 'ipm-worlds-title', tr('Worlds')), map)
+    toc.querySelector('.first')?.prepend(box) ?? toc.prepend(box)
+    toc.classList.add('ipm-has-map')
+  }
+
   // The start page: a big button to start (the first session), or to go on where one left off.
   function startButton() {
     const first = document.querySelector('#toc a[href*="World-1___"], main a[href*="World-1___"]')
@@ -1967,6 +2037,7 @@
 
   function init() {
     moveProgress()
+    setTimeout(worldMap)  // after translatePage, so that the names are in the language chosen
     try { const w = localStorage.getItem('ipm-verso:palette-width'); if (w) document.documentElement.style.setProperty('--ipm-palette-width', w) } catch {}
     translatePage()
     languageSwitch()
@@ -2018,6 +2089,13 @@
     about.append(aboutBody)
     about.hidden = true
     const aboutButtons = []
+    // On a phone, About and Lean lie over the board (they scroll); a tap elsewhere closes them.
+    document.addEventListener('pointerdown', ev => {
+      if (!window.matchMedia('(max-width: 600px)').matches) return
+      if (ev.target.closest('.ipm-about, .ipm-lean, .ipm-about-button, .ipm-lean-toggle')) return
+      if (!about.hidden) toggleAbout(false)
+      for (const t of tasks) if (t.lean.open) t.lean.open = false
+    })
     const toggleAbout = open => {
       about.hidden = !open
       aboutButtons.forEach(b => b.setAttribute('aria-pressed', String(open)))
@@ -2089,13 +2167,11 @@
     // On the right of each tool bar: "About this level" and "Next ›" (which glows once the level is solved).
     tasks.forEach((t, k) => {
       const bar = t.root.querySelector('.ipm-tools')
-      const a = el('button', 'ipm-button ipm-about-button', tr('About this level'))
-      a.type = 'button'
+      const a = barButton('ipm-about-button', 'ⓘ', tr('About this level'), tr('About'))
       a.setAttribute('aria-pressed', 'false')
       a.addEventListener('click', () => toggleAbout(about.hidden))
       aboutButtons.push(a)
-      const b = el('button', 'ipm-button ipm-next', tr('Next ›'))
-      b.type = 'button'
+      const b = barButton('ipm-next', '›', tr('Next ›'), tr('Next'))
       b.disabled = k === tasks.length - 1
       b.addEventListener('click', () => show(k + 1))
       bar?.append(a, b)

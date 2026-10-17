@@ -1,0 +1,27 @@
+// The map of the worlds in the table of contents: a circle per world (9), lines between them, the
+// current world marked, a ring for the levels solved; a tap on a world goes there.
+// Usage: BASE=http://localhost:8002/ node map.mjs   (SHOTDIR=dir for screenshots)
+import { chromium } from 'playwright-core'
+const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })
+const base = process.env.BASE ?? 'http://127.0.0.1:8002/'
+const page = await (await browser.newContext({ viewport: { width: 1300, height: 900 } })).newPage()
+page.on('pageerror', e => console.log('PAGEERROR', e.message))
+await page.goto(base + 'World-2___-Implication/'); await page.evaluate(() => { localStorage.clear(); localStorage.setItem('ipm-verso:lang', 'de') })
+// level 1 of world 1 solved, all levels of world 8 (two)
+await page.evaluate(p => { for (const k of [`ipm-verso:${p}World-1___-Conjunction/:0`, `ipm-verso:${p}World-8___-Two-Puzzles/:0`, `ipm-verso:${p}World-8___-Two-Puzzles/:1`]) localStorage.setItem(k, JSON.stringify({ proof: '{"b":[],"c":[],"n":0,"m":{}}', solved: true })) }, new URL(base).pathname)
+await page.reload(); await page.waitForTimeout(400)
+if (await page.locator('.ipm-tip-ok').count()) await page.locator('.ipm-tip-ok').click()
+const worlds = page.locator('#toc .ipm-map-world')
+console.log('worlds:', await worlds.count(), '| lines:', await page.locator('#toc .ipm-map-edge').count(), '| list hidden:', !(await page.locator('#toc .split-tocs').isVisible()))
+console.log('titles:', JSON.stringify(await page.locator('#toc .ipm-map-world title').allTextContents()))
+console.log('here:', await page.locator('.ipm-map-here title').textContent(), '| done:', await page.locator('.ipm-map-done title').textContent(), '| rings:', await page.locator('.ipm-map-ring').count())
+if (process.env.SHOTDIR) await page.locator('#toc').screenshot({ path: process.env.SHOTDIR + '/map.png' })
+await worlds.nth(6).click(); await page.waitForLoadState('load'); await page.waitForTimeout(300)
+console.log('after a click on world 7:', new URL(page.url()).pathname)
+const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 })).newPage()
+await phone.goto(base + 'World-3___-Disjunction/'); await phone.waitForTimeout(300)
+if (await phone.locator('.ipm-tip-ok').count()) await phone.locator('.ipm-tip-ok').click()
+await phone.locator('#toggle-toc-click').click(); await phone.waitForTimeout(500)
+console.log('phone, ☰: map visible:', await phone.locator('#toc .ipm-map').isVisible())
+if (process.env.SHOTDIR) await phone.screenshot({ path: process.env.SHOTDIR + '/map-phone.png' })
+await browser.close()

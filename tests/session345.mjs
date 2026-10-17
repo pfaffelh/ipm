@@ -57,7 +57,7 @@ await link(inp(rule(t, 0), 1), out(rule(t, 1))); await link(inp(rule(t, 1)), loc
 await link(inp(rule(t, 0), 2), local(rule(t, 0), 1))
 await done('S4 T4', t)
 // ⊢ (A ∨ (A → ⊥) → ⊥) → ⊥
-t = page.locator('.ipm-task').nth(14)
+t = page.locator('.ipm-task').nth(20)
 await add(t, 'impI', 'impE', 'disjI2', 'impI', 'impE', 'disjI1')
 await link(goal(t), out(rule(t, 0)))
 await link(inp(rule(t, 0)), out(rule(t, 1)))

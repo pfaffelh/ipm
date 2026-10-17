@@ -51,6 +51,10 @@ induction. `docs/levels.md` lists all levels with what they need and give (lemma
   the world. The tip of a level (`:::tip (lang := "en")` in the task; for the first level of a world
   its rules) also appears once, when the level is played for the first time. Nothing scrolls while one plays; the
   task is in the address (`#task-3`). The start page has a big Start (or Continue) button.
+* The worlds are a map (instead of the list in the table of contents; ☰ on phones): a circle per
+  world with its levels solved, lines from the worlds it builds on.
+* On phones the tool bar is one row at the bottom (a symbol over a short word), and About this level
+  and Lean are sheets over the board, which scroll.
 * Tasks come one after another; the ones not yet playable are shown greyed out.
 * Solved tasks marked `(lemma := true)` become lemmas, offered only in the tasks after them (no circles): in the menu of ＋, “Lemmas from solved tasks” offers each solved task as a
   block of its own (assumptions as inputs, goals as outputs, `?1`, `?2` for the statements). In the

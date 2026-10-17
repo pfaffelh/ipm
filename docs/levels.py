@@ -69,6 +69,12 @@ for w, k, st, _, body in levels:
     for m in re.finditer(r'Level (\d+), with three parts', body):
         target = next((l for l in levels if (l[0], l[1]) == (w, int(m.group(1)))), None)
         if not target or target[2] != 'A ∧ B → ⊥ ⊢ (A → ⊥) ∨ (B → ⊥)': problems.append(f'{w}.{k}: "Level {m.group(1)}" is {target and target[2]}')
+# the number of levels of each world in the map of ipm.js
+js = open('Ipm/ipm.js').read()
+for w, name in enumerate(ORDER, 1):
+    n = sum(1 for l in levels if l[0] == w)
+    m = re.search(rf'n: {w}, levels: (\d+)', js)
+    if not m or int(m.group(1)) != n: problems.append(f'world {w} has {n} levels, the map in ipm.js says {m and m.group(1)}')
 out += ['', '## Checks', ''] + ([f'* ✗ {p}' for p in problems] or ['* ✓ all dependencies fit'])
 open('docs/levels.md', 'w').write('\n'.join(out) + '\n')
 print('\n'.join(problems) or 'all dependencies fit', f'({len(levels)} levels)')
