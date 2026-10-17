@@ -359,3 +359,5 @@
 .ipm-start-again { font-size: 0.85em; color: #3b6db3; }
 /* The table of contents is narrower: the titles are short ("1. Conjunction"). */
 :root:root { --verso-toc-width: 16.5rem; }
+/* No ← previous / next → links: the table of contents (☰ on phones) and the Start button do that. */
+.prev-next-buttons { display: none !important; }
