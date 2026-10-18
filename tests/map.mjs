@@ -1,4 +1,4 @@
-// The map of the worlds in the table of contents: a circle per world (9), lines between them, the
+// The map of the worlds in the table of contents: a circle per world (10), lines between them, the
 // current world marked, a ring for the levels solved; a tap on a world goes there.
 // Usage: BASE=http://localhost:8002/ node map.mjs   (SHOTDIR=dir for screenshots)
 import { chromium } from 'playwright-core'
@@ -7,7 +7,7 @@ const base = process.env.BASE ?? 'http://127.0.0.1:8002/'
 const page = await (await browser.newContext({ viewport: { width: 1300, height: 900 } })).newPage()
 page.on('pageerror', e => console.log('PAGEERROR', e.message))
 await page.goto(base + 'World-2___-Implication/'); await page.evaluate(() => { localStorage.clear(); localStorage.setItem('ipm-verso:lang', 'de') })
-// level 1 of world 1 solved, all levels of world 8 (two)
+// level 1 of world 1 solved, all levels of world 9 (three)
 await page.evaluate(p => { for (const k of [`ipm-verso:${p}World-1___-Conjunction/:0`, `ipm-verso:${p}World-9___-Puzzles/:0`, `ipm-verso:${p}World-9___-Puzzles/:1`, `ipm-verso:${p}World-9___-Puzzles/:2`]) localStorage.setItem(k, JSON.stringify({ proof: '{"b":[],"c":[],"n":0,"m":{}}', solved: true })) }, new URL(base).pathname)
 await page.reload(); await page.waitForTimeout(400)
 if (await page.locator('.ipm-tip-ok').count()) await page.locator('.ipm-tip-ok').click()

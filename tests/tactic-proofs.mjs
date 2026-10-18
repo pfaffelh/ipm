@@ -24,7 +24,9 @@ for (const part of src.split(/^-- level /m).slice(1)) {
       const p = m[1].replace(/^\((.*)\)$/, '$1')
       steps.push([`by_cases ${m[2]} : ${p}`, `by_cases ${m[2]} : …`])
     } else if ((m = /^refine ⟨(.*), \?_⟩$/.exec(l))) steps.push([`use ${m[1]}`, 'use _'])
-    // `have h₄ := h₁ h₂` is a step forwards on h₁ (`have h₄ := h₁ ?_`) and h₂ for what it needs
+    // `have h₄ := h₁ c₁` with an object is one step (∀E); `have h₄ := h₁ h₂` is a step forwards on h₁
+    // (`have h₄ := h₁ ?_`) and h₂ for what it needs
+    else if ((m = /^have (\S+) := (\S+) ([^h\s]\S*)$/.exec(l))) steps.push([l])
     else if ((m = /^have (\S+) := (\S+) (\S+)$/.exec(l))) { steps.push([`have ${m[1]} := ${m[2]} ?_`]); steps.push([`exact ${m[3]}`]) }
     else steps.push([l])
   }

@@ -1,4 +1,4 @@
-// Plays tasks of session 10 (induction) on a simulated phone and prints their Lean proofs; with
+// Plays levels of world 10 (induction) on a simulated phone and prints their Lean proofs; with
 // LEANOUT=file they are written there, for `lake env lean file`.
 // Usage: BASE=http://localhost:8002/ node session10.mjs
 import { chromium } from 'playwright-core'

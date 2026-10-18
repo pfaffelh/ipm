@@ -37,11 +37,11 @@ to the same statement with `B` there. In Lean this is `rw`. Four new blocks:
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI, refl, symm, rw, rwr") (assumptions := "") (conclusions := "A ↔ A")
 :::en
-A statement is equivalent to itself: `rfl`. In world 6 this took `constructor` and two →I.
+A statement is equivalent to itself: `rfl`. In world 6 this took ↔I (in Lean `constructor`) and two →I.
 :::
 
 :::de
-Eine Aussage ist zu sich selbst äquivalent: `rfl`. In Welt 6 brauchte das noch `constructor` und zwei →I.
+Eine Aussage ist zu sich selbst äquivalent: `rfl`. In Welt 6 brauchte das noch ↔I (in Lean `constructor`) und zwei →I.
 :::
 
 :::tip (lang := "en") (rules := "refl")

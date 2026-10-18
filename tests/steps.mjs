@@ -1,4 +1,4 @@
-// Tactics: off by default; exact and apply from a goal; with "Allow tactics" on, steps appear beside a selected port, as in Lean: tapping the goal A → C offers "→I · intro", which puts
+// Tactics: exact and apply from a goal; in the Lean tactic mode, steps appear beside a selected port, as in Lean: tapping the goal A → C offers "→I · intro", which puts
 // the block in and connects it; an assumption B → C offers "→E · apply"; and so on.
 // Usage: BASE=http://localhost:8002/ node steps.mjs   (LEANOUT=file for the Lean proof, SHOT=file)
 import { chromium } from 'playwright-core'

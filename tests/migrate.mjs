@@ -1,5 +1,6 @@
 // The pages of the worlds moved from Session-N___-…/ to World-N___-…/, and the levels of the old world 6
-// into other worlds: progress kept under the old places moves to the new ones, and old addresses forward.
+// into other worlds (layout 2); then new levels came in (layout 3), then the world Rewriting as world 7
+// (layout 4): progress kept under the old places moves to the new ones, and old addresses forward.
 // Usage: BASE=http://localhost:8002/ node migrate.mjs
 import { chromium } from 'playwright-core'
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })
@@ -31,13 +32,26 @@ await page.evaluate(p => {
   localStorage.clear()
   localStorage.setItem('ipm-verso:layout', '2')
   const solved = JSON.stringify({ proof: JSON.stringify({ b: [], c: [], n: 0, m: {} }), solved: true })
-  for (const k of ['World-5___-Classical-Logic/:5', 'World-5___-Classical-Logic/:12', 'World-8___-Quantifiers/:16', 'World-8___-Two-Puzzles/:1'])
+  for (const k of ['World-5___-Classical-Logic/:5', 'World-5___-Classical-Logic/:12', 'World-7___-Quantifiers/:16', 'World-8___-Two-Puzzles/:1'])
     localStorage.setItem(`ipm-verso:${p}${k}`, solved)
   localStorage.setItem('ipm-verso:last', JSON.stringify({ href: `${p}World-8___-Two-Puzzles/#level-2`, title: '' }))
 }, path)
 await page.reload(); await page.waitForTimeout(300)
-console.log('layout 3, kept under:', JSON.stringify(await page.evaluate(() => Object.keys(localStorage).filter(k => /World-[578]/.test(k)).map(k => k.replace(/.*\/(World)/, '$1')).sort())),
+console.log('layout 3, kept under:', JSON.stringify(await page.evaluate(() => Object.keys(localStorage).filter(k => /World-([5789]|10)/.test(k)).map(k => k.replace(/.*\/(World)/, '$1')).sort())),
   '| Continue →', await page.locator('.ipm-start-button').first().getAttribute('href'))
+// Third move (layout 4): world 7 Quantifiers → 8, Puzzles 8 → 9, Induction 9 → 10.
+await page.goto(base)
+await page.evaluate(p => {
+  localStorage.clear()
+  localStorage.setItem('ipm-verso:layout', '3')
+  const solved = JSON.stringify({ proof: JSON.stringify({ b: [], c: [], n: 0, m: {} }), solved: true })
+  for (const k of ['World-7___-Quantifiers/:0', 'World-8___-Puzzles/:2', 'World-9___-Induction/:0'])
+    localStorage.setItem(`ipm-verso:${p}${k}`, solved)
+}, path)
+await page.reload(); await page.waitForTimeout(300)
+console.log('layout 4, kept under:', JSON.stringify(await page.evaluate(() => Object.keys(localStorage).filter(k => /World-([5789]|10)/.test(k)).map(k => k.replace(/.*\/(World)/, '$1')).sort())))
+await page.goto(base + 'World-7___-Quantifiers/#level-5'); await page.waitForTimeout(800)
+console.log('old world 7 forwards to:', new URL(page.url()).pathname + new URL(page.url()).hash)
 await page.goto(base + 'World-8___-Two-Puzzles/'); await page.waitForTimeout(800)
 console.log('old world 8 forwards to:', new URL(page.url()).pathname)
 await page.goto(base + 'Session-2___-Implication/#task-3'); await page.waitForTimeout(800)

@@ -1,4 +1,4 @@
-// Plays tasks of sessions 6 and 7 (↔ and ⊤) and checks that a lemma with the statements P, Q is
+// Plays tasks of worlds 2 and 6 (↔ and ⊤) and checks that a lemma with the statements P, Q is
 // shown with ?1, ?2. With LEANOUT=file the Lean proofs are written there, for `lake env lean file`.
 // Usage: BASE=http://localhost:8002/ node session67.mjs
 import { chromium } from 'playwright-core'

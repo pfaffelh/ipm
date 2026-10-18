@@ -1,5 +1,5 @@
-// The tactics added later: exfalso on a goal, intro with the name the Lean proof uses, by_cases and
-// by_contra on a goal (world 5), specialize h₁ a and use a with the object named (world 7).
+// The tactics added later, in the Lean tactic mode (each step a button): exfalso on a goal, intro with the name the Lean proof uses, by_cases and
+// by_contra on a goal (world 5), have h₂ := h₁ a and use a with the object named (world 8).
 // Usage: BASE=http://localhost:8002/ node tactics2.mjs   (LEANOUT=file for the Lean proofs)
 import { chromium } from 'playwright-core'
 import { allTasks } from './all-tasks.mjs'
@@ -24,7 +24,7 @@ const open = async (path, n) => {
 // 4.1 ⊥ ⊢ A with exfalso
 let t = await open('World-4___-Falsity-and-Negation/', 1)
 await tap(goal(t)); console.log('4.1 goal A:', await steps(t))
-await step(t, 'exfalso'); await tap(t.locator('.ipm-canvas .ipm-rule .ipm-port.ipm-in').first()); await tap(hyp(t, 0))
+await step(t, 'exfalso'); await tap(rule(t, 0).locator('.ipm-port.ipm-in')); await step(t, 'exact h₁')
 await done('4.1', t)
 // 2.5 A → B, B → C ⊢ A → C: intro with the name of the Lean proof
 t = await open('World-2___-Implication/', 5)
@@ -33,18 +33,18 @@ await tap(goal(t)); console.log('2.5 goal A → C:', await steps(t))
 t = await open('World-5___-Classical-Logic/', 5)
 await tap(goal(t)); console.log('5.5 goal:', await steps(t))
 await step(t, 'by_cases h₂ : A'); console.log('   after by_cases h₂ : A:', (await t.locator('.ipm-canvas .ipm-rule').allTextContents()).join(' / '))
-// 7.1 ∀ x, P x ⊢ P a: specialize h₁ a
+// 8.1 ∀ x, P x ⊢ P a: have h₂ := h₁ a
 t = await open('World-8___-Quantifiers/', 1)
-await tap(hyp(t, 0)); console.log('7.1 assumption ∀ x, P x:', await steps(t))
-await step(t, 'specialize h₁ a'); await tap(goal(t)); await tap(rule(t, 0).locator('.ipm-port.ipm-out'))
-await done('7.1', t)
-// 7.3 P a ⊢ ∃ x, P x: use a
+await tap(hyp(t, 0)); console.log('8.1 assumption ∀ x, P x:', await steps(t))
+await step(t, ':= h₁ a'); await tap(goal(t)); await step(t, 'exact h₂')
+await done('8.1', t)
+// 8.3 P a ⊢ ∃ x, P x: use a
 t = await open('World-8___-Quantifiers/', 3)
-await tap(goal(t)); console.log('7.3 goal ∃ x, P x:', await steps(t))
-await step(t, 'use a'); await tap(rule(t, 0).locator('.ipm-port.ipm-in')); await tap(hyp(t, 0))
-await done('7.3', t)
-// 7.4 ∀ x, P x ⊢ ∃ x, P x: no object named, so `default`
+await tap(goal(t)); console.log('8.3 goal ∃ x, P x:', await steps(t))
+await step(t, 'use a'); await tap(rule(t, 0).locator('.ipm-port.ipm-in')); await step(t, 'exact h₁')
+await done('8.3', t)
+// 8.4 ∀ x, P x ⊢ ∃ x, P x: no object named, so `default`
 t = await open('World-8___-Quantifiers/', 4)
-await tap(goal(t)); console.log('7.4 goal ∃ x, P x:', await steps(t))
+await tap(goal(t)); console.log('8.4 goal ∃ x, P x:', await steps(t))
 if (process.env.LEANOUT) (await import('node:fs')).writeFileSync(process.env.LEANOUT, proofs.join('\n\n') + '\n')
 await browser.close()

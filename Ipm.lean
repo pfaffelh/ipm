@@ -42,7 +42,7 @@ proof is a set of lines that lead from the assumptions to the goals, through *ru
   appears at the corner of the board while you drag. The board always shows the whole proof.
 * Below the board: *Undo*, *Start over*, *Tidy up*, *Lean* (the same proof in Lean, updated with
   every step), *Tips* (the level's text and tips) and *Next*.
-* The worlds are in the table of contents (☰ on a phone); the levels of a world are the dots above
+* The worlds are a map, ten of them (☰ on a phone); the levels of a world are the dots above
   the board. A level that brings something new explains it in a tip, the first time.
 * Two modes, switched above each level: in the *puzzle mode* you build the proof from blocks and
   lines, as described here; in the *Lean tactic mode* you only tap tactic buttons, as in Lean (for
@@ -50,6 +50,8 @@ proof is a set of lines that lead from the assumptions to the goals, through *ru
   Both build the same proof; below the board it is the Lean proof, a term or a tactic script.
 * Some solved levels become *lemmas*: in later levels they appear with the blocks, under “Lemmas
   from solved levels”.
+* After the worlds: the *Tactic trainer*, ten short lessons on one tactic each, and two lexica, of
+  the tactics and of the blocks.
 
 You are done when no red circle is left. Your progress is kept in your browser.
 :::
@@ -74,7 +76,7 @@ aus Linien, die über *Regelblöcke* von den Annahmen zu den Zielen führen.
   beim Ziehen an der Ecke des Spielfelds erscheint. Das Spielfeld zeigt immer den ganzen Beweis.
 * Unter dem Spielfeld: *Zurück*, *Neu anfangen*, *Aufräumen*, *Lean* (derselbe Beweis in Lean, bei
   jedem Schritt aktualisiert), *Tipps* (der Text des Levels und seine Tipps) und *Weiter*.
-* Die Welten stehen im Inhaltsverzeichnis (☰ auf dem Handy); die Levels einer Welt sind die Kreise
+* Die zehn Welten stehen auf einer Karte (☰ auf dem Handy); die Levels einer Welt sind die Punkte
   über dem Spielfeld. Ein Level, das etwas Neues bringt, erklärt es beim ersten Mal in einem Tipp.
 * Zwei Modi, umschaltbar über jedem Level: Im *Puzzle-Modus* baust du den Beweis aus Bausteinen und
   Linien, wie hier beschrieben; im *Lean-Taktik-Modus* tippst du nur Taktik-Knöpfe an, wie in Lean
@@ -83,6 +85,8 @@ aus Linien, die über *Regelblöcke* von den Annahmen zu den Zielen führen.
   Taktik-Skript.
 * Manche gelösten Levels werden zu *Hilfssätzen*: In späteren Levels stehen sie bei den Bausteinen,
   unter „Hilfssätze aus gelösten Levels“.
+* Nach den Welten: der *Taktik-Trainer*, zehn kurze Lektionen zu je einer Taktik, und zwei Lexika,
+  der Taktiken und der Bausteine.
 
 Du bist fertig, wenn kein roter Kreis mehr übrig ist. Dein Fortschritt wird in deinem Browser
 gespeichert.

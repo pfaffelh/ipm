@@ -1,4 +1,4 @@
-// Plays tasks of sessions 3–5 (disjunction, falsity, classical logic) on a simulated phone and
+// Plays levels of worlds 3–5 (disjunction, falsity, classical logic) on a simulated phone and
 // prints their Lean proofs; with LEANOUT=file they are written there, for `lake env lean file`.
 // Usage: BASE=http://localhost:8002/ node session345.mjs
 import { chromium } from 'playwright-core'

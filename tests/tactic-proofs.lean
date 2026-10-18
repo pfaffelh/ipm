@@ -686,12 +686,12 @@ example (α : Type) (A : Prop) (P : α → Prop) (h₁ : ∀ x, P x ∨ A) : (�
     exact h₂
   · left
     intro c₁
-    specialize h₁ c₁
-    obtain (h₄ | h₅) := h₁
-    · exact h₄
+    have h₄ := h₁ c₁
+    obtain (h₅ | h₆) := h₄
+    · exact h₅
     · exfalso
       apply h₃
-      exact h₅
+      exact h₆
 
 -- level 8.22
 example (α : Type) [Inhabited α] (A : Prop) (P : α → Prop) (h₁ : A → ∃ x, P x) : ∃ x, A → P x := by

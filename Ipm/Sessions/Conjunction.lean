@@ -127,11 +127,11 @@ example (A : Prop) (a : A) : A ∧ A := ⟨a, a⟩
 
 ::::task (rules := "conjI, conjE") (assumptions := "P, Q, R") (conclusions := "P ∧ Q ∧ R")
 :::en
-Sheet 01-b. `P ∧ Q ∧ R` means `P ∧ (Q ∧ R)`.
+From the Lean course, sheet 01-b. `P ∧ Q ∧ R` means `P ∧ (Q ∧ R)`.
 :::
 
 :::de
-Blatt 01-b. `P ∧ Q ∧ R` bedeutet `P ∧ (Q ∧ R)`.
+Aus dem Lean-Kurs, Blatt 01-b. `P ∧ Q ∧ R` bedeutet `P ∧ (Q ∧ R)`.
 :::
 
 ```lean -show
@@ -238,11 +238,11 @@ example (A B C : Prop) (h : (A ∧ B) ∧ C) : A ∧ C := ⟨h.1.1, h.2⟩
 
 ::::task (rules := "conjI, conjE") (assumptions := "(A ∧ B) ∧ C") (conclusions := "A ∧ B ∧ C")
 :::en
-Regroup. In Lean, `A ∧ B ∧ C` means `A ∧ (B ∧ C)`.
+The final level of the world: regroup. In Lean, `A ∧ B ∧ C` means `A ∧ (B ∧ C)`.
 :::
 
 :::de
-Umgruppieren. In Lean bedeutet `A ∧ B ∧ C` dasselbe wie `A ∧ (B ∧ C)`.
+Das letzte Level der Welt: Umgruppieren. In Lean bedeutet `A ∧ B ∧ C` dasselbe wie `A ∧ (B ∧ C)`.
 :::
 
 ```lean -show

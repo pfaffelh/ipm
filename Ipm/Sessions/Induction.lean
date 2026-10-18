@@ -85,7 +85,7 @@ example (P : Nat → Prop) (h1 : P (0 + 1)) (hs : ∀ n, P n → P (n + 1)) : �
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE, ind") (assumptions := "Even 0; ∀ n, Even n → Odd (n + 1); ∀ n, Odd n → Even (n + 1)") (conclusions := "∀ n, Even n ∨ Odd n")
 :::en
-Every number is even or odd. In the step, distinguish the two cases of the hypothesis.
+Every number is even (`Even`) or odd (`Odd`). In the step, distinguish the two cases of the hypothesis.
 :::
 
 :::de

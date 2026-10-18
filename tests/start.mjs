@@ -1,4 +1,5 @@
-// The start page: a big "Start" button to session 1; after playing, "Continue" to the last task.
+// The start page: two big "Start" buttons alike (puzzle mode, Lean tactic mode) to world 1; after
+// playing, "Continue" to the last level.
 // Usage: BASE=http://localhost:8002/ node start.mjs   (SHOTDIR=dir for screenshots)
 import { chromium } from 'playwright-core'
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })

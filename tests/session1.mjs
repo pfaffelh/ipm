@@ -1,4 +1,4 @@
-// Plays tasks of session 1 (conjunction) on a simulated phone, by tapping. Usage: BASE=http://localhost:8002/ node session1.mjs
+// Plays levels of world 1 (conjunction) on a simulated phone, by tapping. Usage: BASE=http://localhost:8002/ node session1.mjs
 import { chromium } from 'playwright-core'
 import { allTasks } from './all-tasks.mjs'
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })

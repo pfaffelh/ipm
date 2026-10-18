@@ -20,5 +20,20 @@ Die Taktiken des Lean-Taktik-Modus, in der Reihenfolge, in der sie im Spiel komm
 Baustein ein, der daneben steht; in einem Level werden die Taktiken seiner Bausteine angeboten.
 :::
 
+:::en
+*Tactics and blocks.* Every block has exactly one tactic that puts it in, so a level offers the
+tactics of its blocks. The other way round it is almost one to one; the exceptions are in the last
+column.
+:::
+
+:::de
+*Taktiken und Bausteine.* Jeder Baustein hat genau eine Taktik, die ihn einsetzt; deshalb bietet ein
+Level die Taktiken seiner Bausteine an. Umgekehrt ist es fast eins zu eins; die Ausnahmen stehen in
+der letzten Spalte.
+:::
+
+:::lexicon (kind := "map")
+:::
+
 :::lexicon (kind := "tactics")
 :::

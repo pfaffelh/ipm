@@ -1,6 +1,6 @@
 // Tips: the first time a level is played, a box explains what is new in it (for the first level of a
-// world: also the rules of the world); "Got it" closes it, and it does not come again. "About this
-// level" at the foot always shows the tip and the rules of the world.
+// world: also the rules of the world); "Got it" closes it, and it does not come again. "Tips"
+// always shows the tip and what the level offers.
 // Usage: BASE=http://localhost:8002/ node tips.mjs   (SHOTDIR=dir for screenshots)
 import { chromium } from 'playwright-core'
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })

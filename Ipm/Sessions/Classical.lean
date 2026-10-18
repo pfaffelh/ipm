@@ -22,6 +22,9 @@ One more rule, which is different from all the others: it has no input.
 With the rules so far, this cannot be proved. Logic without it is called *intuitionistic*, logic
 with it *classical*. In Lean, TND is `Classical.em`; Lean's proofs then use classical logic.
 Usually you use TND together with ∨E: “Either `A` holds, or it does not. In the first case …”
+
+Later in this world comes a second rule, the proof by contradiction (RAA, in Lean `by_contra`): to
+prove `A`, assume `A → ⊥` and derive `⊥`.
 :::
 
 :::de
@@ -34,6 +37,9 @@ Mit den bisherigen Regeln lässt sich das nicht beweisen. Logik ohne diese Regel
 *intuitionistisch*, Logik mit ihr *klassisch*. In Lean heißt TND `Classical.em`; Leans Beweise
 verwenden dann klassische Logik. Meist verwendest du TND zusammen mit ∨E: „Entweder gilt `A`, oder
 nicht. Im ersten Fall …“
+
+Später in dieser Welt kommt eine zweite Regel dazu, der Widerspruchsbeweis (RAA, in Lean
+`by_contra`): Um `A` zu beweisen, nimm `A → ⊥` an und leite `⊥` her.
 :::
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (conclusions := "A ∨ (A → ⊥)") (assumptions := "")

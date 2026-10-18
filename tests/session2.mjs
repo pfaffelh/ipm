@@ -1,4 +1,4 @@
-// Plays tasks of session 2 (implication) on a simulated phone, by tapping.
+// Plays levels of world 2 (implication) on a simulated phone, by tapping.
 // Usage: BASE=http://localhost:8002/ CHROME=/usr/bin/google-chrome node session2.mjs
 import { chromium } from 'playwright-core'
 import { allTasks } from './all-tasks.mjs'

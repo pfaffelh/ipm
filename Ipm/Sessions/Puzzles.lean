@@ -14,13 +14,13 @@ Each task carries a Lean proof, checked when the site is built.
 #doc (Manual) "World 9: Puzzles" =>
 
 :::en
-Three puzzles, with all the rules so far. All need classical logic, and all need some planning:
-think about the proof first, then build it.
+Three puzzles. All need classical logic, and all need some planning: think about the proof first,
+then build it.
 :::
 
 :::de
-Drei Rätsel, mit allen bisherigen Regeln. Alle brauchen klassische Logik, und alle brauchen etwas
-Planung: Überlege dir den Beweis zuerst, dann baue ihn.
+Drei Rätsel. Alle brauchen klassische Logik, und alle brauchen etwas Planung: Überlege dir den
+Beweis zuerst, dann baue ihn.
 :::
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "") (conclusions := "∃ x, P x → ∀ y, P y")

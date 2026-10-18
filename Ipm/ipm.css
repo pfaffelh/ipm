@@ -16,8 +16,7 @@
 .ipm-task.ipm-locked .ipm-task-label { color: #888; }
 .ipm-task.ipm-locked .ipm-task-label::after { content: " 🔒 solve the previous level first"; font-weight: normal; }
 
-.ipm-canvas { overflow-x: auto; }
-.ipm-svg { width: 100%; max-width: 640px; height: auto; display: block; margin: 0 auto; touch-action: manipulation; }
+.ipm-svg { width: 100%; max-width: none; height: auto; display: block; margin: 0; overflow: visible; touch-action: manipulation; }
 .ipm-svg text { font-family: var(--verso-code-font-family, monospace); font-size: 14px; pointer-events: none; }
 .ipm-svg .ipm-skull { pointer-events: auto; }
 
@@ -26,7 +25,6 @@
 .ipm-conclusion rect { fill: #fdecec; stroke: #c0392b; }
 .ipm-conclusion.ipm-proved rect { fill: #e6f4ea; stroke: #2e7d4f; }
 .ipm-rule rect { cursor: pointer; }
-.ipm-rule-label { font-weight: bold; font-size: 16px !important; fill: #333; }
 .ipm-port-label { font-size: 15px !important; fill: #333; }
 .ipm-prop { font-weight: bold; }
 
@@ -103,7 +101,7 @@
 
 /* Dragging blocks: a block does not scroll the page when touched; empty space still does. */
 .ipm-svg .ipm-block { touch-action: none; cursor: grab; }
-.ipm-svg .ipm-block.ipm-dragging { cursor: grabbing; opacity: 0.85; }
+.ipm-svg .ipm-block.ipm-dragging { cursor: grabbing; }
 .ipm-svg .ipm-block.ipm-dragging rect { stroke-width: 2.5; }
 
 /* Local hypotheses (→I) and their boxes */
@@ -119,12 +117,11 @@
   position: fixed; z-index: 30;
   width: 64px; height: 64px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center; font-size: 30px;
-  background: #fdecec; border: 2px dashed #c0392b; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  background: rgba(253, 236, 236, 0.55); border: 2px dashed #c0392b; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   opacity: 0; transform: scale(0.6); pointer-events: none; transition: opacity 0.15s, transform 0.15s;
 }
 .ipm-trash.ipm-trash-shown { opacity: 1; transform: scale(1); }
-.ipm-trash.ipm-trash-hot { transform: scale(1.3); background: #f5b7b1; border-style: solid; }
-.ipm-svg .ipm-block.ipm-doomed { opacity: 0.4; }
+.ipm-trash.ipm-trash-hot { transform: scale(1.3); background: rgba(245, 183, 177, 0.6); border-style: solid; }
 
 /* Adding a block: the button ＋ below the picture (it sticks to the bottom of the task while
    scrolling) opens a popover with all blocks, the rules and the lemmas. */
@@ -177,11 +174,6 @@
 .ipm-conn-remove circle { fill: #c0392b; stroke: white; stroke-width: 2; }
 .ipm-conn-remove text { fill: white !important; font-size: 14px !important; font-weight: bold; pointer-events: none; }
 
-/* Zoom: a larger picture scrolls inside the board */
-.ipm-canvas { overflow: visible; }
-.ipm-svg { max-width: none; margin: 0 auto; }
-.ipm-button.ipm-zoom { min-width: 2.4em; font-weight: bold; }
-
 /* Lines: a white seam, and an arrowhead just before the input they lead into */
 .ipm-conn .ipm-conn-halo { fill: none; stroke: #f8fafc !important; stroke-width: 8; stroke-dasharray: none !important; pointer-events: none; }
 .ipm-arrow { fill: #555; }
@@ -190,10 +182,6 @@
 /* A block over the trash stays visible: red outline instead of fading; the trash lets it show through */
 .ipm-svg .ipm-block.ipm-doomed { opacity: 0.9; }
 .ipm-svg .ipm-block.ipm-doomed rect { stroke: #c0392b !important; stroke-width: 3; fill: #fdecec !important; }
-.ipm-trash { background: rgba(253, 236, 236, 0.55); }
-.ipm-trash.ipm-trash-hot { background: rgba(245, 183, 177, 0.6); }
-.ipm-svg .ipm-block.ipm-dragging { opacity: 1; }
-.ipm-svg { overflow: visible; }
 
 /* The board: a visible field, as large as there is room for */
 .ipm-canvas {
@@ -202,7 +190,6 @@
   background-image: radial-gradient(#dde3ec 1px, transparent 1px);
   background-size: 22px 22px;
 }
-.ipm-svg { margin: 0; }
 
 /* On large screens the stage (task and foot) may be wider than the text column (Verso caps that at 47rem): it grows
    to the right while the text column is left-aligned, and symmetrically once it is centred. */
@@ -260,9 +247,6 @@
 .ipm-step:hover rect { fill: #2f5a96; }
 .ipm-svg .ipm-step text { fill: white; font-size: 14px !important; font-weight: bold; }
 
-/* The switch "Allow tactics" in the tools */
-.ipm-tactics { display: inline-flex; align-items: center; gap: 0.35em; font-size: 0.9em; color: #444; cursor: pointer; min-height: 36px; user-select: none; }
-.ipm-tactics input { width: 1.15em; height: 1.15em; accent-color: #3b6db3; cursor: pointer; }
 
 /* A connection that cannot be decided yet (quantifiers), and a ⚠ at a block whose eigenvariable escapes */
 .ipm-conn.ipm-pending path:not(.ipm-conn-hit):not(.ipm-conn-halo) { stroke: #999; stroke-dasharray: 3 4; }
@@ -284,9 +268,6 @@
 .ipm-setting { display: flex; align-items: center; gap: 0.5em; min-height: 36px; cursor: pointer; }
 .ipm-setting input { width: 1.1em; height: 1.1em; accent-color: #3b6db3; }
 .ipm-setting-note { font-size: 0.8em; color: #777; margin-left: 1.6em; }
-/* The tactic a task unlocks */
-.ipm-unlock { flex-basis: 100%; font-size: 0.85em; color: #6b5b00; }
-.ipm-unlock[hidden] { display: none; }
 
 /* The board is about as high as the screen, and shows the whole picture: nothing to scroll in it. */
 .ipm-canvas { height: clamp(300px, calc(100svh - var(--verso-header-height, 3rem) - 7.5rem), 56rem); overflow: hidden; }
@@ -306,8 +287,7 @@
 .ipm-stage .ipm-current .ipm-canvas { flex: 1; min-height: 0; min-width: 0; height: auto; }
 .ipm-stage .ipm-current .ipm-lean[open] .ipm-lean-code { max-height: 22vh; overflow: auto; }
 .ipm-stage .ipm-task-label { display: none; }
-.ipm-stage .ipm-task.ipm-locked .ipm-task-label { display: block; }
-.ipm-stage .ipm-task.ipm-locked .ipm-task-label { font-size: 0; }
+.ipm-stage .ipm-task.ipm-locked .ipm-task-label { display: block; font-size: 0; }
 .ipm-stage .ipm-task.ipm-locked .ipm-task-label::after { font-size: 0.8rem; content: "🔒 solve the previous level first"; }
 :root.ipm-de .ipm-stage .ipm-task.ipm-locked .ipm-task-label::after { content: "🔒 löse erst das Level davor"; }
 .ipm-dots { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
@@ -320,7 +300,7 @@
 
 /* Below the board: the status, then the tool bar (＋ first). */
 .ipm-info { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2em 0.8em; margin-top: 0.3em; min-height: 1.3em; }
-.ipm-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em; margin-top: 0.3em; position: relative; z-index: 15; }
+.ipm-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em; margin-top: 0.3em; position: relative; z-index: 5; }
 /* The menu of ＋ opens above the whole bar, as wide as it. */
 .ipm-bar .ipm-menu { margin: 0; position: static; }
 .ipm-add-text { margin-left: 0.3em; }
@@ -330,9 +310,6 @@
 .ipm-stage .ipm-lean-code { margin: 0.2em 0; }
 
 /* The rules of the session, folded away above the tasks. */
-.ipm-intro { margin-left: auto; text-align: right; }
-.ipm-intro[open] { flex-basis: 100%; text-align: left; }
-.ipm-intro summary { cursor: pointer; color: #3b6db3; font-family: var(--verso-structure-font-family, sans-serif); padding: 0.2em 0; }
 .ipm-intro-body { max-height: 32vh; overflow: auto; }
 @media (max-width: 600px) {
   .ipm-add { padding: 0.4em 0.9em; font-size: 1.2em; }
@@ -340,7 +317,7 @@
   .ipm-undo { font-size: 0; } .ipm-undo::before { content: "↶"; font-size: 1.1rem; }
 }
 
-/* The start page: a big button */
+/* The start page: two buttons alike, one for each mode */
 .ipm-start { display: flex; flex-direction: column; align-items: center; gap: 0.4em; margin: 1.2em 0 1.6em; font-family: var(--verso-structure-font-family, sans-serif); }
 .ipm-start-button {
   display: inline-block; font-size: 1.6em; font-weight: bold; color: white !important; background: #3b6db3; text-decoration: none !important;
@@ -354,9 +331,8 @@
 /* No ← previous / next → links: the table of contents (☰ on phones) and the Start button do that. */
 .prev-next-buttons { display: none !important; }
 
-/* The foot of the stage: the dots of the tasks, and "About this session". */
+/* The foot of the stage (empty: hidden) */
 .ipm-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3em 0.8em; padding-top: 0.5em; border-top: 1px solid #e0e5ec; margin-top: 0.5em; }
-.ipm-intro[open] summary { text-align: right; }
 /* Above the task, on the right: the dots of the tasks. */
 .ipm-top { display: flex; justify-content: space-between; align-items: center; gap: 0.6em; padding-bottom: 0.4em; }
 .ipm-stage-title { font-family: var(--verso-structure-font-family, sans-serif); font-weight: bold; font-size: 1.15em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -365,7 +341,7 @@ html.ipm-playing, html.ipm-playing body { overflow: hidden; }
 html.ipm-playing main, html.ipm-playing .content-wrapper, html.ipm-playing section { padding-top: 0; padding-bottom: 0; margin-top: 0; }
 .ipm-foot:empty { display: none; }
 
-/* Tips: hidden in the level; shown once in a box, and under "About this level". */
+/* Tips: hidden in the level; shown once in a box, and under Tips. */
 .ipm-task .ipm-tip { display: none; }
 .ipm-tip-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(20, 30, 50, 0.35); display: flex; align-items: center; justify-content: center; padding: 16px; }
 .ipm-tip-card {
@@ -384,7 +360,7 @@ html.ipm-playing main, html.ipm-playing .content-wrapper, html.ipm-playing secti
 .ipm-tip-block { display: flex; flex-direction: column; align-items: center; border: 1px solid #c9d3e0; border-radius: 8px; padding: 0.3em 0.5em; background: #fafbfd; }
 .ipm-tip-block .ipm-rule-picture { height: 72px; width: auto; max-width: 100%; }
 
-/* No text above the board: one plays right away; the text is under "About this level". */
+/* No text above the board: one plays right away; the text is under Tips. */
 .ipm-stage .ipm-task > .ipm-lang { display: none; }
 /* On a large screen the blocks stand in a column left of the board, instead of behind ＋. */
 .ipm-palette { display: none; }
@@ -405,7 +381,7 @@ html.ipm-playing main, html.ipm-playing .content-wrapper, html.ipm-playing secti
 .ipm-palette-lemmas .ipm-menu-caption { white-space: normal; }
 
 /* The tool bar: all buttons alike, in blue; on the left ＋ (small screens), Undo, Start over, Tidy up,
-   Lean; on the right About this level and Next. Lean and About open a panel above the bar. */
+   Lean; on the right Tips and Next. Lean and Tips open a panel above the bar. */
 .ipm-bar .ipm-button, .ipm-bar .ipm-add {
   font: inherit; font-family: var(--verso-structure-font-family, sans-serif); font-size: 0.95em; font-weight: normal;
   color: white; background: #3b6db3; border: 1px solid #3b6db3; border-radius: 8px; padding: 0.45em 0.9em;
@@ -435,7 +411,6 @@ html.ipm-playing main, html.ipm-playing .content-wrapper, html.ipm-playing secti
   .ipm-stage .ipm-splitter:hover::after { background: #3b6db3; }
 }
 .ipm-palette-item .ipm-menu-caption { font-size: 1.05em; color: #333; }
-.ipm-palette { gap: 0.3em; padding: 0.3em; }
 
 /* The start page lists the worlds only in the table of contents (☰), not again in the text. */
 main section:has(> ol.section-toc) { display: none; }
@@ -445,7 +420,7 @@ main section:has(> ol.section-toc) { display: none; }
 .ipm-worlds { padding: 0.4em 0.2em 1em; font-family: var(--verso-structure-font-family, sans-serif); }
 .ipm-worlds-title { font-weight: bold; margin: 0 0 0.3em 0.4em; }
 .ipm-map { width: 100%; max-width: 250px; height: auto; display: block; }
-.ipm-map-edge { stroke: #b8c4d4; stroke-width: 3; }
+.ipm-map-edge { fill: none; stroke: #b8c4d4; stroke-width: 3; }
 .ipm-map-disc { fill: white; stroke: #8a9bb3; stroke-width: 2; }
 .ipm-map-ring { fill: none; stroke: #3c9a5f; stroke-width: 5; stroke-linecap: round; }
 .ipm-map-done .ipm-map-disc { fill: #3c9a5f; stroke: #3c9a5f; }
@@ -454,13 +429,11 @@ main section:has(> ol.section-toc) { display: none; }
 .ipm-map-n { font-size: 17px; font-weight: bold; fill: #333; }
 .ipm-map-name { font-size: 12.5px; fill: #333; font-weight: 600; }
 .ipm-map-count { font-size: 10.5px; fill: #777; }
-.ipm-map-edge { fill: none; }
 .ipm-map-world:hover .ipm-map-disc { stroke: #3b6db3; }
 
 /* The tool bar: words on large screens, a symbol over a short word on phones (one row, at the bottom). */
 .ipm-bar .ipm-ico, .ipm-bar .ipm-short { display: none; }
 .ipm-bar .ipm-add .ipm-ico { display: inline; }
-.ipm-bar { z-index: 5; }
 @media (max-width: 600px) {
   .ipm-stage .ipm-bar { flex-wrap: nowrap; gap: 3px; padding-bottom: env(safe-area-inset-bottom); }
   .ipm-stage .ipm-bar .ipm-button, .ipm-stage .ipm-bar .ipm-add {
@@ -518,13 +491,18 @@ main section:has(> ol.section-toc) { display: none; }
 .ipm-mode-switch button.ipm-mode-current { background: #3b6db3; color: white; }
 /* the two modes, as two buttons alike; the one played last stands out a little */
 .ipm-start-modes { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.8rem; }
-.ipm-start-modes .ipm-start-button { min-width: 15rem; text-align: center; }
+.ipm-start-modes .ipm-start-button { min-width: 15rem; text-align: center; font-size: 1.35em; padding: 0.6em 1.4em; }
 .ipm-start-modes .ipm-start-last { box-shadow: 0 0 0 3px #a9c3e8; }
 /* lexicon and tips of tactics */
 .ipm-lexicon-entry { border-top: 1px solid #d9e1ec; padding: 0.8rem 0; }
 .ipm-lexicon-cmd { font-family: var(--verso-code-font-family, monospace); font-weight: bold; font-size: 1.1em; color: #1d3f73; margin-bottom: 0.3rem; }
 .ipm-lexicon-text, .ipm-lexicon-tactic { margin: 0.3rem 0; }
+/* the table tactic ↔ blocks (scrolls sideways on a narrow phone) */
+.ipm-lexicon[data-kind="map"] { overflow-x: auto; }
+.ipm-lexicon-map { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1.5rem; font-size: 0.92em; }
+.ipm-lexicon-map th, .ipm-lexicon-map td { border-bottom: 1px solid #d9e1ec; padding: 0.35rem 0.5rem; text-align: left; vertical-align: top; }
+.ipm-lexicon-map td:first-child { white-space: nowrap; }
+.ipm-lexicon-map td:nth-child(2) { white-space: nowrap; color: #1d3f73; }
 .ipm-tip-sub { font-weight: bold; margin: 0.4rem 0; }
 /* a proof done (in the tactic mode: the goals of this board): the board turns green */
 .ipm-canvas.ipm-board-done { background-color: #e9f7ee; border-color: #8cc4a2; }
-.ipm-start-modes .ipm-start-button { font-size: 1.35em; padding: 0.6em 1.4em; }

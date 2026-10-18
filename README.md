@@ -6,10 +6,10 @@ redone to be played by tapping — on a phone as well as with a mouse.
 **Play:** https://pfaffelh.github.io/ipm/
 
 Assumptions are at the top, goals at the bottom; a proof connects them through rule blocks of
-natural deduction, in 9 *worlds* of *levels*: the first five sessions of the Incredible Proof Machine
+natural deduction, in 10 *worlds* of *levels*: the first five sessions of the Incredible Proof Machine
 (conjunction, implication, disjunction, falsity and negation, classical logic), each with the levels
 of the logic exercises of the [Lean course](https://pfaffelh.github.io/leancourse/) that need its
-rules; equivalence `↔` and truth `⊤`; the Proof Machine's quantifier session and its two puzzles,
+rules; equivalence `↔` and truth `⊤`; rewriting with `↔` (`rfl`, `symm`, `rw`); the Proof Machine's quantifier session and its two puzzles,
 with a puzzle by Smullyan; and induction. Beyond the Proof Machine there are some classical
 classics: tertium non datur from proof by contradiction, `→` over `∨`, the duals `¬∃ ↔ ∀¬` and
 `¬∃¬ → ∀`, `¬∀¬ → ∃`, and two about `↔`. `docs/levels.md` lists all levels with what they need and give (lemmas, tactics, tips);
@@ -29,7 +29,7 @@ classics: tertium non datur from proof by contradiction, `→` over `∨`, the d
   mode**, where one plays only with tactic buttons. A tapped circle or dot offers the tactics that
   fit, named as in Lean, with the names of the Lean proof (`intro h₃`, `constructor`,
   `obtain ⟨h₃, h₄⟩ := h₁`, `apply h₁`, `left`/`right`, `exfalso`, `by_contra h₃`, `by_cases h₃ : A`,
-  `apply h₁.mp`, `trivial`, `intro c₁`, `specialize h₁ a`, `use a`, `obtain ⟨c₁, h₂⟩ := h₁`,
+  `apply h₁.mp`, `trivial`, `rfl`, `symm`, `rw [h₁]`, `rw [← h₁]`, `intro c₁`, `have h₂ := h₁ a`, `use a`, `obtain ⟨c₁, h₂⟩ := h₁`,
   `intro n; induction n`, and `exact h₁` for what fits); one tap puts the block in, already
   connected. A level offers the tactics of its blocks, so they come one by one as the blocks do;
   a tactic's tip appears when its button is offered for the first time. Below the board, the
@@ -66,18 +66,19 @@ classics: tertium non datur from proof by contradiction, `→` over `∨`, the d
 * A world's page is a stage as high as the screen: one level (task) at a time, no text above the board
   (it is under “Tips”), on a large screen the blocks in a column left of the board (the line
   between them can be dragged), and a tool bar below (＋ on phones, Undo, Start over, Tidy up, Lean;
-  Tips, Next ›), a dot per task above on the right (← → also go to
-  the previous and next level), and at its foot “Tips”: the level's tip and the rules of
-  the world. The tip of a level (`:::tip (lang := "en")` in the task; for the first level of a world
+  Tips, Next ›), a dot per level above on the right (← → also go to
+  the previous and next level). “Tips” holds the level's text, its tip and what the level offers
+  (its blocks and tactics). The tip of a level (`:::tip (lang := "en")` in the task; for the first level of a world
   its rules) also appears once, when the level is played for the first time. Nothing scrolls while one plays; the
-  task is in the address (`#task-3`). The start page has a big Start (or Continue) button.
+  level is in the address (`#level-3`). The start page has two big Start (or Continue) buttons alike,
+  one for each mode.
 * The worlds are a map (instead of the list in the table of contents; ☰ on phones): a circle per
   world with its levels solved, lines from the worlds it builds on.
 * On phones the tool bar is one row at the bottom (a symbol over a short word), and Tips
   and Lean are sheets over the board, which scroll.
 * Tasks come one after another; the ones not yet playable are shown greyed out (⚙ in the header
   switches this off).
-* Solved tasks marked `(lemma := true)` become lemmas, offered only in the tasks after them (no circles): in the menu of ＋, “Lemmas from solved tasks” offers each solved task as a
+* Solved tasks marked `(lemma := true)` become lemmas, offered only in the tasks after them (no circles): in the menu of ＋, “Lemmas from solved levels” offers each solved task as a
   block of its own (assumptions as inputs, goals as outputs, `?1`, `?2` for the statements). In the
   Lean proof, a lemma is a `theorem` that the proof applies.
 * Tactic trainer: a page of its own (from the start page and below the world map), ten lessons
@@ -119,8 +120,13 @@ classics: tertium non datur from proof by contradiction, `→` over `∨`, the d
 Ipm.lean                 start page
 Ipm/Task.lean            the task directive
 Ipm/ipm.js, Ipm/ipm.css  the proof graph editor
-Ipm/Sessions/*.lean      the sessions
-tests/                   end-to-end tests on a simulated phone (Playwright)
+Ipm/Sessions/*.lean      the worlds
+Ipm/Trainer.lean         the tactic trainer
+Ipm/TacticLexicon.lean,
+Ipm/BlockLexicon.lean    the two lexica
+docs/                    levels.md (written by levels.py), fuzzing.md
+redirects.sh             pages at old addresses
+tests/                   end-to-end tests on a simulated phone (Playwright), fuzzers
 ```
 
 ## Building
@@ -139,7 +145,8 @@ and `start.mjs` test the stage and the start page): `cd tests && npm install && 
 `node checker.mjs` tests the proof checker without a browser (wrong proofs, the drinker paradox).
 
 Pushing to `main` builds the site and publishes it on GitHub Pages
-(`.github/workflows/deploy.yml`); `redirects.sh` adds pages at the old addresses `Session-N___-…/`, which forward to `World-N___-…/`.
+(`.github/workflows/deploy.yml`); `redirects.sh` adds pages at old addresses (`Session-N___-…/`, and `World-N___-…/` of earlier
+numberings), which forward to the current `World-N___-…/`.
 
 ## License
 
