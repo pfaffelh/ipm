@@ -73,7 +73,7 @@
     'World 1: Conjunction': 'Welt 1: Konjunktion', 'World 2: Implication': 'Welt 2: Implikation',
     'World 3: Disjunction': 'Welt 3: Disjunktion', 'World 4: Falsity and Negation': 'Welt 4: Falsum und Negation',
     'World 5: Classical Logic': 'Welt 5: Klassische Logik', 'World 6: Equivalence and Truth': 'Welt 6: Äquivalenz und Wahrheit',
-    'World 7: Quantifiers': 'Welt 7: Quantoren', 'World 8: Two Puzzles': 'Welt 8: Zwei Rätsel', 'World 9: Induction': 'Welt 9: Induktion',
+    'World 7: Quantifiers': 'Welt 7: Quantoren', 'World 8: Puzzles': 'Welt 8: Rätsel', 'World 9: Induction': 'Welt 9: Induktion',
     'Table of Contents': 'Inhalt', 'Contents': 'Inhalt',
   }
   function translatePage() {
@@ -859,9 +859,13 @@
     // In a complete proof, unused names are written `_`, as Lean asks for.
     const used = new Set()
     const useTerm = t => { t = resolve(t, s); if (t.t === 'eig') used.add(t.n); parts(t).forEach(useTerm) }
+    // (eigenvariables in the types that are written count as used, so that they keep their name)
+    const useFormula = f => { f = norm(f, s); if (f.t === 'eig') used.add(f.n); parts(f).forEach(useFormula) }
     const use = t => {
       if (t.k === 'var') used.add(t.n)
       if (t.k === 'term') { useTerm(t.t); return }
+      if (t.k === 'typed' || t.k === 'type') useFormula(t.f)
+      if (t.k === 'lemma') t.vars.forEach(([, f]) => useFormula(f))
       for (const k of ['f', 'a', 'b', 'body', 'z', 'st']) if (t[k]) use(t[k])
     }
     const named = n => !analysis.qed || used.has(n)
@@ -1801,9 +1805,10 @@
       const objects = new Set()
       const collect = g => { if (g.t === 'con' && g.n !== '0') objects.add(g.n); parts(g).forEach(collect) }
       for (const x of this.proof.blocks) if (x.kind !== 'rule') [...x.inputs, ...x.outputs].forEach(collect)
-      // (an eigenvariable only inside its block: the input of ∀I, the case of ∃E and induction)
+      // (at a goal, an eigenvariable only inside its block: the input of ∀I, the case of ∃E and
+      // induction; at a blue dot any, since where it is used decides, and the check says if wrongly)
       for (const x of this.proof.blocks)
-        if (x.eig && sel.kind === 'in' && this.within(sel, x.id, x.rule === 'allI' ? 0 : 1)) objects.add(x.eig)
+        if (x.eig && (sel.kind === 'out' || this.within(sel, x.id, x.rule === 'allI' ? 0 : 1))) objects.add(x.eig)
       const objs = [...objects].slice(0, 4)
       // [rule, Lean command, tactic (which must be allowed)]
       const goal = { imp: [['impI', `intro ${fresh()}`, 'intro']], and: [['conjI', 'constructor', 'constructor']],
@@ -1881,7 +1886,8 @@
         for (const x of this.proof.blocks) if (x.kind !== 'rule') [...x.inputs, ...x.outputs].forEach(atoms)
         for (const p of [...props].slice(0, 4))
           any.push({ rule: 'TND', text: `TND · by_cases ${fresh()} : ${p}`, act: () => this.takeCases(p) })
-        if (!props.size) any.push({ rule: 'TND', text: `TND · by_cases ${fresh()} : …`, act: () => this.takeCases() })
+        // any other statement: left open, determined by what the cases are used for
+        any.push({ rule: 'TND', text: `TND · by_cases ${fresh()} : …`, act: () => this.takeCases() })
       }
       return [...exact, ...steps, ...apply, ...any]
     }
@@ -1912,12 +1918,13 @@
 
     // Whether the input `at` lies in the box of block x's input k (where x's local hypothesis or
     // eigenvariable may be used): it leads into that input, and on no way to a goal past it (an
-    // output may be used more than once).
+    // output may be used more than once). An input of blocks that lead nowhere yet (a step forwards,
+    // `have h₄ := h₁ ?_`) may use it too: what they give then counts only inside the box.
     within(at, x, k) {
       const p = this.proof
       if (at.block === x && at.port === k) return true
       const seen = new Set(), stack = [at.block]
-      let into = false
+      let into = false, onward = false
       while (stack.length) {
         const b = stack.pop()
         if (seen.has(b)) continue
@@ -1925,11 +1932,12 @@
         if (p.block(b).kind === 'conclusion') return false
         for (const c of p.connections) {
           if (c.from.block !== b || isLocal(p.block(b), c.from.port)) continue
+          onward = true
           if (c.to.block === x && c.to.port === k) { into = true; continue }
           stack.push(c.to.block)
         }
       }
-      return into
+      return into || !onward
     }
 
     // Whether the lines that `connect` draws (on a copy of the proof) fit, and no local hypothesis escapes.
@@ -1975,7 +1983,8 @@
           if (RULES[rule].local) {
             this.analysis = this.proof.analyze()
             const key = `${sel.block}.${sel.port}`
-            const goal = this.analysis.openInputs.find(o => o.block !== nb.id && !this.proof.createsCycle(nb.id, o.block) && this.usableAt(o)[key])
+            const goal = this.analysis.openInputs.find(o => o.block !== nb.id && !this.proof.createsCycle(nb.id, o.block) && this.usableAt(o)[key] &&
+              this.tryOut(q => q.connect({ block: nb.id, port: 0 }, o)))
             if (goal) this.proof.connect({ block: nb.id, port: 0 }, goal)
           }
         }
@@ -2161,8 +2170,8 @@
   const WORLDS = [
     { n: 1, levels: 13, at: [0, 0], after: [] }, { n: 2, levels: 23, at: [0, 1], after: [1] },
     { n: 3, levels: 20, at: [0, 2], after: [2] }, { n: 4, levels: 21, at: [0, 3], after: [3] },
-    { n: 5, levels: 13, at: [0, 4], after: [4] }, { n: 6, levels: 24, at: [0, 5], after: [5] },
-    { n: 7, levels: 17, at: [0, 6], after: [5] }, { n: 8, levels: 2, at: [1, 7], after: [7] },
+    { n: 5, levels: 15, at: [0, 4], after: [4] }, { n: 6, levels: 26, at: [0, 5], after: [5] },
+    { n: 7, levels: 23, at: [0, 6], after: [5] }, { n: 8, levels: 3, at: [1, 7], after: [7] },
     { n: 9, levels: 6, at: [1, 8], after: [7] },
   ]
   function worldMap() {
@@ -2263,9 +2272,19 @@
   // shown again.
   const MOVED = {"Session-1___-Conjunction/:0":"World-1___-Conjunction/:0","Session-1___-Conjunction/:1":"World-1___-Conjunction/:1","Session-1___-Conjunction/:2":"World-1___-Conjunction/:2","Session-1___-Conjunction/:3":"World-1___-Conjunction/:3","Session-1___-Conjunction/:4":"World-1___-Conjunction/:4","World-6___-From-the-Lean-Course/:8":"World-1___-Conjunction/:5","Session-6___-From-the-Lean-Course/:8":"World-1___-Conjunction/:5","World-1___-Conjunction/:5":"World-1___-Conjunction/:6","Session-1___-Conjunction/:5":"World-1___-Conjunction/:6","World-1___-Conjunction/:6":"World-1___-Conjunction/:7","Session-1___-Conjunction/:6":"World-1___-Conjunction/:7","World-1___-Conjunction/:7":"World-1___-Conjunction/:8","Session-1___-Conjunction/:7":"World-1___-Conjunction/:8","World-1___-Conjunction/:8":"World-1___-Conjunction/:9","Session-1___-Conjunction/:8":"World-1___-Conjunction/:9","World-1___-Conjunction/:9":"World-1___-Conjunction/:10","Session-1___-Conjunction/:9":"World-1___-Conjunction/:10","World-1___-Conjunction/:10":"World-1___-Conjunction/:11","Session-1___-Conjunction/:10":"World-1___-Conjunction/:11","World-1___-Conjunction/:11":"World-1___-Conjunction/:12","Session-1___-Conjunction/:11":"World-1___-Conjunction/:12","Session-2___-Implication/:0":"World-2___-Implication/:0","Session-2___-Implication/:1":"World-2___-Implication/:1","Session-2___-Implication/:2":"World-2___-Implication/:2","Session-2___-Implication/:3":"World-2___-Implication/:3","Session-2___-Implication/:4":"World-2___-Implication/:4","Session-2___-Implication/:5":"World-2___-Implication/:5","Session-2___-Implication/:6":"World-2___-Implication/:6","Session-2___-Implication/:7":"World-2___-Implication/:7","Session-2___-Implication/:8":"World-2___-Implication/:8","Session-2___-Implication/:9":"World-2___-Implication/:9","Session-2___-Implication/:10":"World-2___-Implication/:10","Session-2___-Implication/:11":"World-2___-Implication/:11","Session-2___-Implication/:12":"World-2___-Implication/:12","World-6___-From-the-Lean-Course/:1":"World-2___-Implication/:13","Session-6___-From-the-Lean-Course/:1":"World-2___-Implication/:13","World-6___-From-the-Lean-Course/:2":"World-2___-Implication/:14","Session-6___-From-the-Lean-Course/:2":"World-2___-Implication/:14","World-6___-From-the-Lean-Course/:0":"World-2___-Implication/:15","Session-6___-From-the-Lean-Course/:0":"World-2___-Implication/:15","World-6___-From-the-Lean-Course/:3":"World-2___-Implication/:16","Session-6___-From-the-Lean-Course/:3":"World-2___-Implication/:16","World-6___-From-the-Lean-Course/:5":"World-2___-Implication/:17","Session-6___-From-the-Lean-Course/:5":"World-2___-Implication/:17","World-6___-From-the-Lean-Course/:4":"World-2___-Implication/:18","Session-6___-From-the-Lean-Course/:4":"World-2___-Implication/:18","World-6___-From-the-Lean-Course/:7":"World-2___-Implication/:19","Session-6___-From-the-Lean-Course/:7":"World-2___-Implication/:19","World-6___-From-the-Lean-Course/:6":"World-2___-Implication/:20","Session-6___-From-the-Lean-Course/:6":"World-2___-Implication/:20","World-6___-From-the-Lean-Course/:12":"World-2___-Implication/:21","Session-6___-From-the-Lean-Course/:12":"World-2___-Implication/:21","World-2___-Implication/:13":"World-2___-Implication/:22","Session-2___-Implication/:13":"World-2___-Implication/:22","Session-3___-Disjunction/:0":"World-3___-Disjunction/:0","Session-3___-Disjunction/:1":"World-3___-Disjunction/:1","Session-3___-Disjunction/:2":"World-3___-Disjunction/:2","Session-3___-Disjunction/:3":"World-3___-Disjunction/:3","Session-3___-Disjunction/:4":"World-3___-Disjunction/:4","Session-3___-Disjunction/:5":"World-3___-Disjunction/:5","Session-3___-Disjunction/:6":"World-3___-Disjunction/:6","World-6___-From-the-Lean-Course/:9":"World-3___-Disjunction/:7","Session-6___-From-the-Lean-Course/:9":"World-3___-Disjunction/:7","World-6___-From-the-Lean-Course/:10":"World-3___-Disjunction/:8","Session-6___-From-the-Lean-Course/:10":"World-3___-Disjunction/:8","World-6___-From-the-Lean-Course/:14":"World-3___-Disjunction/:9","Session-6___-From-the-Lean-Course/:14":"World-3___-Disjunction/:9","World-6___-From-the-Lean-Course/:11":"World-3___-Disjunction/:10","Session-6___-From-the-Lean-Course/:11":"World-3___-Disjunction/:10","World-3___-Disjunction/:7":"World-3___-Disjunction/:11","Session-3___-Disjunction/:7":"World-3___-Disjunction/:11","World-3___-Disjunction/:8":"World-3___-Disjunction/:12","Session-3___-Disjunction/:8":"World-3___-Disjunction/:12","World-6___-From-the-Lean-Course/:16":"World-3___-Disjunction/:13","Session-6___-From-the-Lean-Course/:16":"World-3___-Disjunction/:13","World-6___-From-the-Lean-Course/:17":"World-3___-Disjunction/:14","Session-6___-From-the-Lean-Course/:17":"World-3___-Disjunction/:14","World-3___-Disjunction/:9":"World-3___-Disjunction/:15","Session-3___-Disjunction/:9":"World-3___-Disjunction/:15","World-3___-Disjunction/:10":"World-3___-Disjunction/:16","Session-3___-Disjunction/:10":"World-3___-Disjunction/:16","World-6___-From-the-Lean-Course/:13":"World-3___-Disjunction/:17","Session-6___-From-the-Lean-Course/:13":"World-3___-Disjunction/:17","World-6___-From-the-Lean-Course/:15":"World-3___-Disjunction/:18","Session-6___-From-the-Lean-Course/:15":"World-3___-Disjunction/:18","World-3___-Disjunction/:11":"World-3___-Disjunction/:19","Session-3___-Disjunction/:11":"World-3___-Disjunction/:19","Session-4___-Falsity-and-Negation/:0":"World-4___-Falsity-and-Negation/:0","Session-4___-Falsity-and-Negation/:1":"World-4___-Falsity-and-Negation/:1","Session-4___-Falsity-and-Negation/:2":"World-4___-Falsity-and-Negation/:2","Session-4___-Falsity-and-Negation/:3":"World-4___-Falsity-and-Negation/:3","Session-4___-Falsity-and-Negation/:4":"World-4___-Falsity-and-Negation/:4","Session-4___-Falsity-and-Negation/:5":"World-4___-Falsity-and-Negation/:5","Session-4___-Falsity-and-Negation/:6":"World-4___-Falsity-and-Negation/:6","Session-4___-Falsity-and-Negation/:7":"World-4___-Falsity-and-Negation/:7","Session-4___-Falsity-and-Negation/:8":"World-4___-Falsity-and-Negation/:8","Session-4___-Falsity-and-Negation/:9":"World-4___-Falsity-and-Negation/:9","Session-4___-Falsity-and-Negation/:10":"World-4___-Falsity-and-Negation/:10","Session-4___-Falsity-and-Negation/:11":"World-4___-Falsity-and-Negation/:11","Session-4___-Falsity-and-Negation/:12":"World-4___-Falsity-and-Negation/:12","Session-4___-Falsity-and-Negation/:13":"World-4___-Falsity-and-Negation/:13","World-6___-From-the-Lean-Course/:20":"World-4___-Falsity-and-Negation/:14","Session-6___-From-the-Lean-Course/:20":"World-4___-Falsity-and-Negation/:14","World-6___-From-the-Lean-Course/:18":"World-4___-Falsity-and-Negation/:15","Session-6___-From-the-Lean-Course/:18":"World-4___-Falsity-and-Negation/:15","World-6___-From-the-Lean-Course/:19":"World-4___-Falsity-and-Negation/:16","Session-6___-From-the-Lean-Course/:19":"World-4___-Falsity-and-Negation/:16","World-6___-From-the-Lean-Course/:21":"World-4___-Falsity-and-Negation/:17","Session-6___-From-the-Lean-Course/:21":"World-4___-Falsity-and-Negation/:17","World-6___-From-the-Lean-Course/:22":"World-4___-Falsity-and-Negation/:18","Session-6___-From-the-Lean-Course/:22":"World-4___-Falsity-and-Negation/:18","World-6___-From-the-Lean-Course/:23":"World-4___-Falsity-and-Negation/:19","Session-6___-From-the-Lean-Course/:23":"World-4___-Falsity-and-Negation/:19","World-4___-Falsity-and-Negation/:14":"World-4___-Falsity-and-Negation/:20","Session-4___-Falsity-and-Negation/:14":"World-4___-Falsity-and-Negation/:20","Session-5___-Classical-Logic/:0":"World-5___-Classical-Logic/:0","Session-5___-Classical-Logic/:1":"World-5___-Classical-Logic/:1","Session-5___-Classical-Logic/:2":"World-5___-Classical-Logic/:2","Session-5___-Classical-Logic/:3":"World-5___-Classical-Logic/:3","Session-5___-Classical-Logic/:4":"World-5___-Classical-Logic/:4","Session-5___-Classical-Logic/:5":"World-5___-Classical-Logic/:5","Session-5___-Classical-Logic/:6":"World-5___-Classical-Logic/:6","Session-5___-Classical-Logic/:7":"World-5___-Classical-Logic/:7","World-6___-From-the-Lean-Course/:24":"World-5___-Classical-Logic/:8","Session-6___-From-the-Lean-Course/:24":"World-5___-Classical-Logic/:8","World-6___-From-the-Lean-Course/:25":"World-5___-Classical-Logic/:9","Session-6___-From-the-Lean-Course/:25":"World-5___-Classical-Logic/:9","World-6___-From-the-Lean-Course/:26":"World-5___-Classical-Logic/:10","Session-6___-From-the-Lean-Course/:26":"World-5___-Classical-Logic/:10","World-6___-From-the-Lean-Course/:27":"World-5___-Classical-Logic/:11","Session-6___-From-the-Lean-Course/:27":"World-5___-Classical-Logic/:11","World-5___-Classical-Logic/:8":"World-5___-Classical-Logic/:12","Session-5___-Classical-Logic/:8":"World-5___-Classical-Logic/:12","World-7___-Equivalence-and-Truth/:0":"World-6___-Equivalence-and-Truth/:0","Session-7___-Equivalence-and-Truth/:0":"World-6___-Equivalence-and-Truth/:0","World-7___-Equivalence-and-Truth/:1":"World-6___-Equivalence-and-Truth/:1","Session-7___-Equivalence-and-Truth/:1":"World-6___-Equivalence-and-Truth/:1","World-7___-Equivalence-and-Truth/:2":"World-6___-Equivalence-and-Truth/:2","Session-7___-Equivalence-and-Truth/:2":"World-6___-Equivalence-and-Truth/:2","World-7___-Equivalence-and-Truth/:3":"World-6___-Equivalence-and-Truth/:3","Session-7___-Equivalence-and-Truth/:3":"World-6___-Equivalence-and-Truth/:3","World-7___-Equivalence-and-Truth/:4":"World-6___-Equivalence-and-Truth/:4","Session-7___-Equivalence-and-Truth/:4":"World-6___-Equivalence-and-Truth/:4","World-7___-Equivalence-and-Truth/:5":"World-6___-Equivalence-and-Truth/:5","Session-7___-Equivalence-and-Truth/:5":"World-6___-Equivalence-and-Truth/:5","World-7___-Equivalence-and-Truth/:6":"World-6___-Equivalence-and-Truth/:6","Session-7___-Equivalence-and-Truth/:6":"World-6___-Equivalence-and-Truth/:6","World-7___-Equivalence-and-Truth/:7":"World-6___-Equivalence-and-Truth/:7","Session-7___-Equivalence-and-Truth/:7":"World-6___-Equivalence-and-Truth/:7","World-7___-Equivalence-and-Truth/:8":"World-6___-Equivalence-and-Truth/:8","Session-7___-Equivalence-and-Truth/:8":"World-6___-Equivalence-and-Truth/:8","World-7___-Equivalence-and-Truth/:9":"World-6___-Equivalence-and-Truth/:9","Session-7___-Equivalence-and-Truth/:9":"World-6___-Equivalence-and-Truth/:9","World-7___-Equivalence-and-Truth/:10":"World-6___-Equivalence-and-Truth/:10","Session-7___-Equivalence-and-Truth/:10":"World-6___-Equivalence-and-Truth/:10","World-7___-Equivalence-and-Truth/:11":"World-6___-Equivalence-and-Truth/:11","Session-7___-Equivalence-and-Truth/:11":"World-6___-Equivalence-and-Truth/:11","World-7___-Equivalence-and-Truth/:12":"World-6___-Equivalence-and-Truth/:12","Session-7___-Equivalence-and-Truth/:12":"World-6___-Equivalence-and-Truth/:12","World-7___-Equivalence-and-Truth/:13":"World-6___-Equivalence-and-Truth/:13","Session-7___-Equivalence-and-Truth/:13":"World-6___-Equivalence-and-Truth/:13","World-7___-Equivalence-and-Truth/:14":"World-6___-Equivalence-and-Truth/:14","Session-7___-Equivalence-and-Truth/:14":"World-6___-Equivalence-and-Truth/:14","World-7___-Equivalence-and-Truth/:15":"World-6___-Equivalence-and-Truth/:15","Session-7___-Equivalence-and-Truth/:15":"World-6___-Equivalence-and-Truth/:15","World-7___-Equivalence-and-Truth/:16":"World-6___-Equivalence-and-Truth/:16","Session-7___-Equivalence-and-Truth/:16":"World-6___-Equivalence-and-Truth/:16","World-7___-Equivalence-and-Truth/:17":"World-6___-Equivalence-and-Truth/:17","Session-7___-Equivalence-and-Truth/:17":"World-6___-Equivalence-and-Truth/:17","World-7___-Equivalence-and-Truth/:18":"World-6___-Equivalence-and-Truth/:18","Session-7___-Equivalence-and-Truth/:18":"World-6___-Equivalence-and-Truth/:18","World-7___-Equivalence-and-Truth/:19":"World-6___-Equivalence-and-Truth/:19","Session-7___-Equivalence-and-Truth/:19":"World-6___-Equivalence-and-Truth/:19","World-7___-Equivalence-and-Truth/:20":"World-6___-Equivalence-and-Truth/:20","Session-7___-Equivalence-and-Truth/:20":"World-6___-Equivalence-and-Truth/:20","World-7___-Equivalence-and-Truth/:21":"World-6___-Equivalence-and-Truth/:21","Session-7___-Equivalence-and-Truth/:21":"World-6___-Equivalence-and-Truth/:21","World-7___-Equivalence-and-Truth/:22":"World-6___-Equivalence-and-Truth/:22","Session-7___-Equivalence-and-Truth/:22":"World-6___-Equivalence-and-Truth/:22","World-7___-Equivalence-and-Truth/:23":"World-6___-Equivalence-and-Truth/:23","Session-7___-Equivalence-and-Truth/:23":"World-6___-Equivalence-and-Truth/:23","World-8___-Quantifiers/:0":"World-7___-Quantifiers/:0","Session-8___-Quantifiers/:0":"World-7___-Quantifiers/:0","World-8___-Quantifiers/:1":"World-7___-Quantifiers/:1","Session-8___-Quantifiers/:1":"World-7___-Quantifiers/:1","World-8___-Quantifiers/:2":"World-7___-Quantifiers/:2","Session-8___-Quantifiers/:2":"World-7___-Quantifiers/:2","World-8___-Quantifiers/:3":"World-7___-Quantifiers/:3","Session-8___-Quantifiers/:3":"World-7___-Quantifiers/:3","World-8___-Quantifiers/:4":"World-7___-Quantifiers/:4","Session-8___-Quantifiers/:4":"World-7___-Quantifiers/:4","World-8___-Quantifiers/:5":"World-7___-Quantifiers/:5","Session-8___-Quantifiers/:5":"World-7___-Quantifiers/:5","World-8___-Quantifiers/:6":"World-7___-Quantifiers/:6","Session-8___-Quantifiers/:6":"World-7___-Quantifiers/:6","World-8___-Quantifiers/:7":"World-7___-Quantifiers/:7","Session-8___-Quantifiers/:7":"World-7___-Quantifiers/:7","World-8___-Quantifiers/:8":"World-7___-Quantifiers/:8","Session-8___-Quantifiers/:8":"World-7___-Quantifiers/:8","World-8___-Quantifiers/:9":"World-7___-Quantifiers/:9","Session-8___-Quantifiers/:9":"World-7___-Quantifiers/:9","World-8___-Quantifiers/:10":"World-7___-Quantifiers/:10","Session-8___-Quantifiers/:10":"World-7___-Quantifiers/:10","World-8___-Quantifiers/:11":"World-7___-Quantifiers/:11","Session-8___-Quantifiers/:11":"World-7___-Quantifiers/:11","World-8___-Quantifiers/:12":"World-7___-Quantifiers/:12","Session-8___-Quantifiers/:12":"World-7___-Quantifiers/:12","World-8___-Quantifiers/:13":"World-7___-Quantifiers/:13","Session-8___-Quantifiers/:13":"World-7___-Quantifiers/:13","World-8___-Quantifiers/:14":"World-7___-Quantifiers/:14","Session-8___-Quantifiers/:14":"World-7___-Quantifiers/:14","World-8___-Quantifiers/:15":"World-7___-Quantifiers/:15","Session-8___-Quantifiers/:15":"World-7___-Quantifiers/:15","World-8___-Quantifiers/:16":"World-7___-Quantifiers/:16","Session-8___-Quantifiers/:16":"World-7___-Quantifiers/:16","World-9___-Two-Puzzles/:0":"World-8___-Two-Puzzles/:0","Session-9___-Two-Puzzles/:0":"World-8___-Two-Puzzles/:0","World-9___-Two-Puzzles/:1":"World-8___-Two-Puzzles/:1","Session-9___-Two-Puzzles/:1":"World-8___-Two-Puzzles/:1","World-10___-Induction/:0":"World-9___-Induction/:0","Session-10___-Induction/:0":"World-9___-Induction/:0","World-10___-Induction/:1":"World-9___-Induction/:1","Session-10___-Induction/:1":"World-9___-Induction/:1","World-10___-Induction/:2":"World-9___-Induction/:2","Session-10___-Induction/:2":"World-9___-Induction/:2","World-10___-Induction/:3":"World-9___-Induction/:3","Session-10___-Induction/:3":"World-9___-Induction/:3","World-10___-Induction/:4":"World-9___-Induction/:4","Session-10___-Induction/:4":"World-9___-Induction/:4","World-10___-Induction/:5":"World-9___-Induction/:5","Session-10___-Induction/:5":"World-9___-Induction/:5"}
   const MOVED_PAGES = {"Session-1___-Conjunction":"World-1___-Conjunction","Session-2___-Implication":"World-2___-Implication","Session-3___-Disjunction":"World-3___-Disjunction","Session-4___-Falsity-and-Negation":"World-4___-Falsity-and-Negation","Session-5___-Classical-Logic":"World-5___-Classical-Logic","World-6___-From-the-Lean-Course":"World-2___-Implication","Session-6___-From-the-Lean-Course":"World-2___-Implication","World-7___-Equivalence-and-Truth":"World-6___-Equivalence-and-Truth","Session-7___-Equivalence-and-Truth":"World-6___-Equivalence-and-Truth","World-8___-Quantifiers":"World-7___-Quantifiers","Session-8___-Quantifiers":"World-7___-Quantifiers","World-9___-Two-Puzzles":"World-8___-Two-Puzzles","Session-9___-Two-Puzzles":"World-8___-Two-Puzzles","World-10___-Induction":"World-9___-Induction","Session-10___-Induction":"World-9___-Induction"}
+  // Then (layout 3) new levels went into worlds 5 and 7 where they fit, and world 8 became "Puzzles".
+  const MOVED3 = {"World-5___-Classical-Logic/:5": "World-5___-Classical-Logic/:6", "World-5___-Classical-Logic/:6": "World-5___-Classical-Logic/:7", "World-5___-Classical-Logic/:7": "World-5___-Classical-Logic/:8", "World-5___-Classical-Logic/:8": "World-5___-Classical-Logic/:9", "World-5___-Classical-Logic/:9": "World-5___-Classical-Logic/:10", "World-5___-Classical-Logic/:10": "World-5___-Classical-Logic/:11", "World-5___-Classical-Logic/:11": "World-5___-Classical-Logic/:12", "World-5___-Classical-Logic/:12": "World-5___-Classical-Logic/:14", "World-7___-Quantifiers/:15": "World-7___-Quantifiers/:19", "World-7___-Quantifiers/:16": "World-7___-Quantifiers/:22", "World-8___-Two-Puzzles/:0": "World-8___-Puzzles/:0", "World-8___-Two-Puzzles/:1": "World-8___-Puzzles/:1"}
+  const MOVED_PAGES3 = {"World-8___-Two-Puzzles":"World-8___-Puzzles"}
   function moveProgress() {
+    let layout = null
+    try { layout = localStorage.getItem('ipm-verso:layout') } catch {}
+    if (layout !== '2' && layout !== '3') movePlaces(MOVED, MOVED_PAGES, '2')
+    if (layout !== '3') movePlaces(MOVED3, MOVED_PAGES3, '3')
+  }
+  // Moves what the browser keeps under the places of `moved` (world page/:level → new place) and the
+  // last page of `pages`. The lemmas and the current level of each world are made anew.
+  function movePlaces(MOVED, MOVED_PAGES, layout) {
     try {
-      if (localStorage.getItem('ipm-verso:layout') === '2') return
       const place = /((?:Session|World)-\d+___-[^/]+)\/:(\d+)/
       const moves = []
       for (const k of Object.keys(localStorage)) {
@@ -2284,7 +2303,7 @@
         const m = /((?:Session|World)-\d+___-[^/]+)\//.exec(last.href)
         if (m && MOVED_PAGES[m[1]]) localStorage.setItem('ipm-verso:last', JSON.stringify({ href: last.href.replace(m[0], MOVED_PAGES[m[1]] + '/').replace(/#.*$/, ''), title: '' }))
       }
-      localStorage.setItem('ipm-verso:layout', '2')
+      localStorage.setItem('ipm-verso:layout', layout)
     } catch {}
   }
 

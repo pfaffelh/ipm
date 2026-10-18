@@ -127,6 +127,25 @@ example (A B : Prop) (f : A → B) : (A → False) ∨ B :=
 ```
 ::::
 
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, raa") (assumptions := "") (conclusions := "A ∨ (A → ⊥)")
+:::en
+Tertium non datur, but without the TND block, only with proof by contradiction
+(RAA). Level 4 went the other way, from TND to `((A → ⊥) → ⊥) → A`: the two principles are equally
+strong.
+:::
+
+:::de
+Tertium non datur, aber ohne den TND-Baustein, nur mit dem Widerspruchsbeweis
+(RAA). Level 4 ging den umgekehrten Weg, von TND zu `((A → ⊥) → ⊥) → A`: Beide Prinzipien sind
+gleich stark.
+:::
+
+```lean -show
+example (A : Prop) : A ∨ (A → False) :=
+  Classical.byContradiction (fun h => h (Or.inr (fun a => h (Or.inl a))))
+```
+::::
+
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa") (assumptions := "A → B, B → C") (conclusions := "(A → ⊥) ∨ C")
 :::en
 Two implications.
@@ -219,16 +238,32 @@ example (P Q : Prop) (f : P → Q) : Q ∨ (P → False) := (Classical.em P).eli
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa") (assumptions := "") (conclusions := "(P → Q) ∨ (Q → P)")
 :::en
-The final level: one of the two implications always holds. Distinguish the cases for `Q`.
+One of the two implications always holds. Distinguish the cases for `Q`.
 :::
 
 :::de
-Das letzte Level: Eine der beiden Implikationen gilt immer. Unterscheide die Fälle für `Q`.
+Eine der beiden Implikationen gilt immer. Unterscheide die Fälle für `Q`.
 :::
 
 ```lean -show
 example (P Q : Prop) : (P → Q) ∨ (Q → P) :=
   (Classical.em Q).elim (fun q => Or.inl (fun _ => q)) (fun nq => Or.inr (fun q => (nq q).elim))
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa") (assumptions := "A → B ∨ C") (conclusions := "(A → B) ∨ (A → C)")
+:::en
+The implication distributes over `∨`, but only classically. Distinguish the cases for `A`.
+:::
+
+:::de
+Die Implikation verteilt sich über `∨`, aber nur klassisch. Unterscheide die Fälle für `A`.
+:::
+
+```lean -show
+example (A B C : Prop) (h : A → B ∨ C) : (A → B) ∨ (A → C) :=
+  (Classical.em A).elim (fun a => (h a).elim (fun b => Or.inl (fun _ => b)) (fun c => Or.inr (fun _ => c)))
+    (fun na => Or.inl (fun a => (na a).elim))
 ```
 ::::
 

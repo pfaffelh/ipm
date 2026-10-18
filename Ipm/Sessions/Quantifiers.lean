@@ -296,6 +296,81 @@ example (α : Type) (P : α → Prop) (h : ∀ x, P x) : (∃ x, P x → False) 
 ```
 ::::
 
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "(∃ x, P x) → ⊥") (conclusions := "∀ x, P x → ⊥")
+:::en
+If no object has `P`, then every object lacks it. This direction needs no TND.
+:::
+
+:::de
+Wenn kein Objekt `P` hat, dann fehlt es jedem. Diese Richtung braucht kein TND.
+:::
+
+```lean -show
+example (α : Type) (P : α → Prop) (h : (∃ x, P x) → False) : ∀ x, P x → False :=
+  fun x p => h ⟨x, p⟩
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "∀ x, P x → ⊥") (conclusions := "(∃ x, P x) → ⊥")
+:::en
+And back, also without TND: “there is none” and “every one is not” are the same.
+:::
+
+:::de
+Und zurück, ebenfalls ohne TND: „es gibt keines“ und „jedes nicht“ sind dasselbe.
+:::
+
+```lean -show
+example (α : Type) (P : α → Prop) (h : ∀ x, P x → False) : (∃ x, P x) → False :=
+  fun ⟨x, p⟩ => h x p
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "(∃ x, P x → ⊥) → ⊥") (conclusions := "∀ x, P x")
+:::en
+The other pair needs classical logic: if no object lacks `P`, every object has it. For `P c₁`,
+assume the opposite (RAA).
+:::
+
+:::de
+Das andere Paar braucht klassische Logik: Wenn keinem Objekt `P` fehlt, hat jedes Objekt `P`. Für
+`P c₁` nimm das Gegenteil an (RAA).
+:::
+
+:::tip (lang := "en") (rules := "raa")
+The levels before went without TND or RAA: `(∃ x, P x) → ⊥` and `∀ x, P x → ⊥` say the same.
+With the opposite put the other way round, `(∃ x, P x → ⊥) → ⊥` and `∀ x, P x`, one direction needs
+classical logic: from “no object lacks `P`” one only gets `P c₁` by contradiction.
+:::
+
+:::tip (lang := "de") (rules := "raa")
+Die Levels davor gingen ohne TND oder RAA: `(∃ x, P x) → ⊥` und `∀ x, P x → ⊥` sagen dasselbe. Mit
+der Verneinung andersherum, `(∃ x, P x → ⊥) → ⊥` und `∀ x, P x`, braucht eine Richtung klassische
+Logik: Aus „keinem Objekt fehlt `P`“ bekommt man `P c₁` nur durch einen Widerspruch.
+:::
+
+```lean -show
+example (α : Type) (P : α → Prop) (h : (∃ x, P x → False) → False) : ∀ x, P x :=
+  fun x => Classical.byContradiction (fun np => h ⟨x, np⟩)
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "(∀ x, P x → ⊥) → ⊥") (conclusions := "∃ x, P x")
+:::en
+Classical too: if not every object lacks `P`, then one has it, though no one says which.
+:::
+
+:::de
+Ebenfalls klassisch: Wenn nicht jedem Objekt `P` fehlt, dann hat es eines, auch wenn keiner sagt,
+welches.
+:::
+
+```lean -show
+example (α : Type) (P : α → Prop) (h : (∀ x, P x → False) → False) : ∃ x, P x :=
+  Classical.byContradiction (fun ne => h (fun x p => ne ⟨x, p⟩))
+```
+::::
+
 ::::task (lemma := true) (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "(∀ x, P x) → ⊥") (conclusions := "∃ x, P x → ⊥")
 :::en
 Classical: if not all `x` have `P`, then one does not. Use TND twice.
@@ -309,6 +384,36 @@ Klassisch: Wenn nicht alle `x` die Eigenschaft `P` haben, dann eines nicht. Verw
 example (α : Type) (P : α → Prop) (h : (∀ x, P x) → False) : ∃ x, P x → False :=
   (Classical.em (∃ x, P x → False)).elim id
     (fun hne => (h (fun x => (Classical.em (P x)).elim id (fun np => (hne ⟨x, np⟩).elim))).elim)
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "∀ x, P x ∨ A") (conclusions := "(∀ x, P x) ∨ A")
+:::en
+`A` does not depend on `x`, so it can be taken out of the `∀`. Distinguish the cases for `A`.
+:::
+
+:::de
+`A` hängt nicht von `x` ab, also kann man es aus dem `∀` herausziehen. Unterscheide die Fälle für `A`.
+:::
+
+```lean -show
+example (α : Type) (P : α → Prop) (A : Prop) (h : ∀ x, P x ∨ A) : (∀ x, P x) ∨ A :=
+  (Classical.em A).elim Or.inr (fun na => Or.inl (fun x => (h x).elim id (fun a => (na a).elim)))
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "A → ∃ x, P x") (conclusions := "∃ x, A → P x")
+:::en
+If `A` holds, take the object that `A` gives; if not, any object will do.
+:::
+
+:::de
+Wenn `A` gilt, nimm das Objekt, das `A` liefert; wenn nicht, tut es jedes Objekt.
+:::
+
+```lean -show
+example (α : Type) [Inhabited α] (P : α → Prop) (A : Prop) (h : A → ∃ x, P x) : ∃ x, A → P x :=
+  (Classical.em A).elim (fun a => (h a).elim (fun x p => ⟨x, fun _ => p⟩)) (fun na => ⟨default, fun a => (na a).elim⟩)
 ```
 ::::
 

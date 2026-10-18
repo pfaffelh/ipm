@@ -13,7 +13,7 @@ const page = await (await browser.newContext({ viewport: { width: 1300, height: 
 const errors = []
 page.on('pageerror', e => errors.push(e.message))
 const worlds = ['World-1___-Conjunction/', 'World-2___-Implication/', 'World-3___-Disjunction/', 'World-4___-Falsity-and-Negation/',
-  'World-5___-Classical-Logic/', 'World-6___-Equivalence-and-Truth/', 'World-7___-Quantifiers/', 'World-8___-Two-Puzzles/', 'World-9___-Induction/']
+  'World-5___-Classical-Logic/', 'World-6___-Equivalence-and-Truth/', 'World-7___-Quantifiers/', 'World-8___-Puzzles/', 'World-9___-Induction/']
 await page.goto(base + worlds[0]); await page.evaluate(() => { localStorage.clear(); localStorage.setItem('ipm-verso:in-order', 'off') })
 // 1. solve what the search solved: the lemmas are registered when a solved level is drawn
 let solved = 0

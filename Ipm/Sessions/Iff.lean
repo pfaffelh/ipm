@@ -395,11 +395,11 @@ example (P Q : Prop) : (P → Q) ↔ (P → False) ∨ Q :=
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "((P → Q) → ⊥) ↔ P ∧ (Q → ⊥)")
 :::en
-The final level: negating an implication.
+Negating an implication.
 :::
 
 :::de
-Das letzte Level: eine Implikation verneinen.
+Eine Implikation verneinen.
 :::
 
 ```lean -show
@@ -407,5 +407,40 @@ example (P Q : Prop) : ((P → Q) → False) ↔ P ∧ (Q → False) :=
   Iff.intro
     (fun h => ⟨(Classical.em P).elim (fun p => p) (fun np => (h (fun p => (np p).elim)).elim), fun q => h (fun _ => q)⟩)
     (fun x f => x.2 (f x.1))
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (lemma := true) (assumptions := "(A ↔ B) → ⊥") (conclusions := "A ↔ (B → ⊥)")
+:::en
+If `A` and `B` are not equivalent, then `A` is equivalent to the opposite of `B`. One direction needs
+the cases for `A`.
+:::
+
+:::de
+Wenn `A` und `B` nicht äquivalent sind, dann ist `A` zum Gegenteil von `B` äquivalent. Eine Richtung
+braucht die Fälle für `A`.
+:::
+
+```lean -show
+example (A B : Prop) (h : (A ↔ B) → False) : A ↔ (B → False) :=
+  ⟨fun a b => h ⟨fun _ => b, fun _ => a⟩,
+   fun nb => (Classical.em A).elim id (fun na => (h ⟨fun a => (na a).elim, fun b => (nb b).elim⟩).elim)⟩
+```
+::::
+
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI") (assumptions := "") (conclusions := "(A ↔ B) ∨ (A ↔ (B → ⊥))")
+:::en
+The final level: every statement is equivalent to `B` or to its opposite. The level before helps.
+:::
+
+:::de
+Das letzte Level: Jede Aussage ist zu `B` oder zu seinem Gegenteil äquivalent. Das Level davor hilft.
+:::
+
+```lean -show
+example (A B : Prop) : (A ↔ B) ∨ (A ↔ (B → False)) :=
+  (Classical.em (A ↔ B)).elim Or.inl (fun h => Or.inr
+    ⟨fun a b => h ⟨fun _ => b, fun _ => a⟩,
+     fun nb => (Classical.em A).elim id (fun na => (h ⟨fun a => (na a).elim, fun b => (nb b).elim⟩).elim)⟩)
 ```
 ::::

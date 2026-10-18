@@ -1,9 +1,9 @@
 /-
-Tactic proofs for the levels that the search of `tactic-proofs.mjs`' predecessor (`tactics-only.mjs`)
-did not find. Only tactics that the game has as buttons, with the names the game gives: the
+Tactic proofs for the levels that the search of `tactics-only.mjs` did not find, and for the levels
+added later. Only tactics that the game has as buttons, with the names the game gives: the
 assumptions h₁, h₂, …, then every new hypothesis the next number, in the order it is made.
 Lean core only: `rcases Classical.em P with h | h'` is the game's `by_cases`, `apply
-Classical.byContradiction` + `intro h` its `by_contra`, `refine ⟨x, ?_⟩` its `use x`.
+Classical.byContradiction` + `intro h` its `by_contra`, `refine ⟨x, ?_⟩` its `use x`, `have h₄ := h₁ h₂` its `have h₄ := h₁ ?_` on h₁ and `exact h₂`.
 `tactic-proofs.mjs` plays each of them in the game, with the tactic buttons alone.
 Check: `lake env lean tests/tactic-proofs.lean`.
 -/
@@ -73,7 +73,7 @@ example (A B : Prop) (h₁ : A ∧ B → False) : (A → False) ∨ (B → False
   · left
     exact h₃
 
--- level 5.6
+-- level 5.7
 example (A B C : Prop) (h₁ : A → B) (h₂ : B → C) : (A → False) ∨ C := by
   rcases Classical.em A with h₃ | h₄
   · right
@@ -83,7 +83,7 @@ example (A B C : Prop) (h₁ : A → B) (h₂ : B → C) : (A → False) ∨ C :
   · left
     exact h₄
 
--- level 5.7
+-- level 5.8
 example (A B : Prop) : ((A → B) → A) → A := by
   intro h₁
   rcases Classical.em A with h₂ | h₃
@@ -94,7 +94,7 @@ example (A B : Prop) : ((A → B) → A) → A := by
     apply h₃
     exact h₄
 
--- level 5.8
+-- level 5.9
 example (A B C : Prop) (h₁ : A ∧ B ∧ C → False) : (A → False) ∨ (B → False) ∨ (C → False) := by
   rcases Classical.em A with h₂ | h₃
   · rcases Classical.em B with h₄ | h₅
@@ -113,7 +113,7 @@ example (A B C : Prop) (h₁ : A ∧ B ∧ C → False) : (A → False) ∨ (B �
   · left
     exact h₃
 
--- level 5.9
+-- level 5.10
 example (P Q : Prop) (h₁ : P → Q) (h₂ : (P → False) → Q) : Q := by
   rcases Classical.em P with h₃ | h₄
   · apply h₁
@@ -121,7 +121,7 @@ example (P Q : Prop) (h₁ : P → Q) (h₂ : (P → False) → Q) : Q := by
   · apply h₂
     exact h₄
 
--- level 5.12
+-- level 5.13
 example (P Q : Prop) : (P → Q) ∨ (Q → P) := by
   rcases Classical.em P with h₁ | h₂
   · right
@@ -133,7 +133,7 @@ example (P Q : Prop) : (P → Q) ∨ (Q → P) := by
     apply h₂
     exact h₄
 
--- level 5.13
+-- level 5.15
 example (A B : Prop) (h₁ : (A → B) → False) : A ∧ (B → False) := by
   constructor
   · apply Classical.byContradiction
@@ -423,7 +423,7 @@ example (α : Type) (P Q : α → Prop) (h₁ : (∃ x, P x) ∨ (∃ x, Q x)) :
     right
     exact h₅
 
--- level 7.16
+-- level 7.20
 example (α : Type) (P : α → Prop) (h₁ : (∀ x, P x) → False) : ∃ x, P x → False := by
   apply Classical.byContradiction
   intro h₂
@@ -437,7 +437,7 @@ example (α : Type) (P : α → Prop) (h₁ : (∀ x, P x) → False) : ∃ x, P
   apply h₃
   exact h₄
 
--- level 7.17
+-- level 7.23
 example (α : Type) [Inhabited α] (A : Prop) (P : α → Prop) (h₁ : (∀ x, P x) → A) : ∃ x, P x → A := by
   rcases Classical.em A with h₂ | h₃
   · refine ⟨default, ?_⟩
@@ -559,3 +559,169 @@ example (P Q : Nat → Prop) (h₁ : P 0 ∨ Q 0) (h₂ : ∀ n, P n → Q (n + 
     · left
       apply h₃
       exact h₆
+
+-- level 5.6
+example (A : Prop) : A ∨ (A → False) := by
+  apply Classical.byContradiction
+  intro h₁
+  apply h₁
+  right
+  intro h₂
+  apply h₁
+  left
+  exact h₂
+
+-- level 5.14
+example (A B C : Prop) (h₁ : A → B ∨ C) : (A → B) ∨ (A → C) := by
+  rcases Classical.em A with h₂ | h₃
+  · have h₄ := h₁ h₂
+    obtain (h₅ | h₆) := h₄
+    · left
+      intro h₇
+      exact h₅
+    · right
+      intro h₈
+      exact h₆
+  · left
+    intro h₉
+    exfalso
+    apply h₃
+    exact h₉
+
+-- level 6.25
+example (A B : Prop) (h₁ : (A ↔ B) → False) : A ↔ (B → False) := by
+  constructor
+  · intro h₂
+    intro h₃
+    apply h₁
+    constructor
+    · intro h₄
+      exact h₃
+    · intro h₅
+      exact h₂
+  · intro h₆
+    rcases Classical.em A with h₇ | h₈
+    · exact h₇
+    · exfalso
+      apply h₁
+      constructor
+      · intro h₉
+        exfalso
+        apply h₈
+        exact h₉
+      · intro h₁₀
+        exfalso
+        apply h₆
+        exact h₁₀
+
+-- level 6.26
+example (A B : Prop) : (A ↔ B) ∨ (A ↔ (B → False)) := by
+  rcases Classical.em (A ↔ B) with h₁ | h₂
+  · left
+    exact h₁
+  · right
+    constructor
+    · intro h₃
+      intro h₄
+      apply h₂
+      constructor
+      · intro h₅
+        exact h₄
+      · intro h₆
+        exact h₃
+    · intro h₇
+      rcases Classical.em A with h₈ | h₉
+      · exact h₈
+      · exfalso
+        apply h₂
+        constructor
+        · intro h₁₀
+          exfalso
+          apply h₉
+          exact h₁₀
+        · intro h₁₁
+          exfalso
+          apply h₇
+          exact h₁₁
+
+-- level 7.16
+example (α : Type) (P : α → Prop) (h₁ : (∃ x, P x) → False) : ∀ x, P x → False := by
+  intro c₁
+  intro h₂
+  apply h₁
+  refine ⟨c₁, ?_⟩
+  exact h₂
+
+-- level 7.17
+example (α : Type) (P : α → Prop) (h₁ : ∀ x, P x → False) : (∃ x, P x) → False := by
+  intro h₂
+  obtain ⟨c₁, h₃⟩ := h₂
+  apply h₁
+  exact h₃
+
+-- level 7.18
+example (α : Type) (P : α → Prop) (h₁ : (∃ x, P x → False) → False) : ∀ x, P x := by
+  intro c₁
+  apply Classical.byContradiction
+  intro h₂
+  apply h₁
+  refine ⟨c₁, ?_⟩
+  exact h₂
+
+-- level 7.19
+example (α : Type) (P : α → Prop) (h₁ : (∀ x, P x → False) → False) : ∃ x, P x := by
+  apply Classical.byContradiction
+  intro h₂
+  apply h₁
+  intro c₁
+  intro h₃
+  apply h₂
+  refine ⟨c₁, ?_⟩
+  exact h₃
+
+-- level 7.21
+example (α : Type) (A : Prop) (P : α → Prop) (h₁ : ∀ x, P x ∨ A) : (∀ x, P x) ∨ A := by
+  rcases Classical.em A with h₂ | h₃
+  · right
+    exact h₂
+  · left
+    intro c₁
+    specialize h₁ c₁
+    obtain (h₄ | h₅) := h₁
+    · exact h₄
+    · exfalso
+      apply h₃
+      exact h₅
+
+-- level 7.22
+example (α : Type) [Inhabited α] (A : Prop) (P : α → Prop) (h₁ : A → ∃ x, P x) : ∃ x, A → P x := by
+  rcases Classical.em A with h₂ | h₃
+  · have h₄ := h₁ h₂
+    obtain ⟨c₁, h₅⟩ := h₄
+    refine ⟨c₁, ?_⟩
+    intro h₆
+    exact h₅
+  · refine ⟨default, ?_⟩
+    intro h₇
+    exfalso
+    apply h₃
+    exact h₇
+
+-- level 8.3
+example (A B : Prop) (h₁ : A ↔ (A → False) ∧ (B → False)) : (A → False) ∧ B := by
+  rcases Classical.em A with h₂ | h₃
+  · exfalso
+    have h₄ := h₁.mp h₂
+    obtain ⟨h₅, h₆⟩ := h₄
+    apply h₅
+    exact h₂
+  · constructor
+    · exact h₃
+    · rcases Classical.em B with h₇ | h₈
+      · exact h₇
+      · exfalso
+        apply h₃
+        apply h₁.mpr
+        constructor
+        · exact h₃
+        · exact h₈

@@ -24,12 +24,14 @@ for (const part of src.split(/^-- level /m).slice(1)) {
       const p = m[1].replace(/^\((.*)\)$/, '$1')
       steps.push([`by_cases ${m[2]} : ${p}`, `by_cases ${m[2]} : …`])
     } else if ((m = /^refine ⟨(.*), \?_⟩$/.exec(l))) steps.push([`use ${m[1]}`, 'use _'])
+    // `have h₄ := h₁ h₂` is a step forwards on h₁ (`have h₄ := h₁ ?_`) and h₂ for what it needs
+    else if ((m = /^have (\S+) := (\S+) (\S+)$/.exec(l))) { steps.push([`have ${m[1]} := ${m[2]} ?_`]); steps.push([`exact ${m[3]}`]) }
     else steps.push([l])
   }
   levels.push({ name, steps })
 }
 const pages = { 3: 'World-3___-Disjunction/', 4: 'World-4___-Falsity-and-Negation/', 5: 'World-5___-Classical-Logic/',
-  6: 'World-6___-Equivalence-and-Truth/', 7: 'World-7___-Quantifiers/', 8: 'World-8___-Two-Puzzles/', 9: 'World-9___-Induction/' }
+  6: 'World-6___-Equivalence-and-Truth/', 7: 'World-7___-Quantifiers/', 8: 'World-8___-Puzzles/', 9: 'World-9___-Induction/' }
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })
 const page = await (await browser.newContext({ viewport: { width: 1300, height: 900 } })).newPage()
 page.on('pageerror', e => console.log('PAGEERROR', e.message))

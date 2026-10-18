@@ -110,14 +110,16 @@ Columns: level, statement, rules its Lean proof uses (roughly), lemma (L) / tact
 | 5.3 | `A ∧ B → ⊥ ⊢ (A → ⊥) ∨ (B → ⊥)` | TND, conjI, disjI1, disjI2, falseE, impI | L |
 | 5.4 | `(A → ⊥) → ⊥ ⊢ A` | TND, falseE, impI | L by_contra |
 | 5.5 | `A → B ⊢ (A → ⊥) ∨ B` | TND, disjI1, disjI2, falseE, impI | L tip |
-| 5.6 | `A → B, B → C ⊢ (A → ⊥) ∨ C` | TND, disjI1, disjI2, falseE, impI |  |
-| 5.7 | ` ⊢ ((A → B) → A) → A` | TND, impI |  |
-| 5.8 | `A ∧ B ∧ C → ⊥ ⊢ (A → ⊥) ∨ (B → ⊥) ∨ (C → ⊥)` | TND, conjI, disjI1, disjI2, falseE, impI |  |
-| 5.9 | `P → Q, (P → ⊥) → Q ⊢ Q` | TND, falseE |  |
-| 5.10 | ` ⊢ ((P → ⊥) → P) → P` | TND, falseE, impI |  |
-| 5.11 | `P → Q ⊢ Q ∨ (P → ⊥)` | TND, disjI1, disjI2, falseE, impI |  |
-| 5.12 | ` ⊢ (P → Q) ∨ (Q → P)` | TND, disjI1, disjI2, impI |  |
-| 5.13 | `(A → B) → ⊥ ⊢ A ∧ (B → ⊥)` | TND, conjI, falseE, impI | L |
+| 5.6 | ` ⊢ A ∨ (A → ⊥)` | disjI1, disjI2, impI, raa |  |
+| 5.7 | `A → B, B → C ⊢ (A → ⊥) ∨ C` | TND, disjI1, disjI2, falseE, impI |  |
+| 5.8 | ` ⊢ ((A → B) → A) → A` | TND, impI |  |
+| 5.9 | `A ∧ B ∧ C → ⊥ ⊢ (A → ⊥) ∨ (B → ⊥) ∨ (C → ⊥)` | TND, conjI, disjI1, disjI2, falseE, impI |  |
+| 5.10 | `P → Q, (P → ⊥) → Q ⊢ Q` | TND, falseE |  |
+| 5.11 | ` ⊢ ((P → ⊥) → P) → P` | TND, falseE, impI |  |
+| 5.12 | `P → Q ⊢ Q ∨ (P → ⊥)` | TND, disjI1, disjI2, falseE, impI |  |
+| 5.13 | ` ⊢ (P → Q) ∨ (Q → P)` | TND, disjI1, disjI2, impI |  |
+| 5.14 | `A → B ∨ C ⊢ (A → B) ∨ (A → C)` | TND, disjI1, disjI2, impI |  |
+| 5.15 | `(A → B) → ⊥ ⊢ A ∧ (B → ⊥)` | TND, conjI, falseE, impI | L |
 
 ## World 6: Equivalence and Truth
 
@@ -147,6 +149,8 @@ Columns: level, statement, rules its Lean proof uses (roughly), lemma (L) / tact
 | 6.22 | ` ⊢ (P ∧ Q → ⊥) ↔ (P → ⊥) ∨ (Q → ⊥)` | TND, conjE, conjI, disjI1, disjI2, falseE, iffI, impI |  |
 | 6.23 | ` ⊢ (P → Q) ↔ (P → ⊥) ∨ Q` | TND, disjI1, disjI2, falseE, iffI, impI |  |
 | 6.24 | ` ⊢ ((P → Q) → ⊥) ↔ P ∧ (Q → ⊥)` | TND, conjE, conjI, falseE, iffI, impI |  |
+| 6.25 | `(A ↔ B) → ⊥ ⊢ A ↔ (B → ⊥)` | TND, conjI, falseE, impI | L |
+| 6.26 | ` ⊢ (A ↔ B) ∨ (A ↔ (B → ⊥))` | TND, conjI, disjI1, disjI2, falseE, impI |  |
 
 ## World 7: Quantifiers
 
@@ -167,15 +171,22 @@ Columns: level, statement, rules its Lean proof uses (roughly), lemma (L) / tact
 | 7.13 | `∃ x, ∃ y, P x y ⊢ ∃ y, ∃ x, P x y` | conjI, impI |  |
 | 7.14 | `∃ x, ∀ y, P x y ⊢ ∀ y, ∃ x, P x y` | conjI, impI |  |
 | 7.15 | `∀ x, P x ⊢ (∃ x, P x → ⊥) → ⊥` | conjI, impI |  |
-| 7.16 | `(∀ x, P x) → ⊥ ⊢ ∃ x, P x → ⊥` | TND, conjI, falseE, impI | L |
-| 7.17 | `(∀ x, P x) → A ⊢ ∃ x, P x → A` | TND, conjI, falseE, impI |  |
+| 7.16 | `(∃ x, P x) → ⊥ ⊢ ∀ x, P x → ⊥` | conjI, impI |  |
+| 7.17 | `∀ x, P x → ⊥ ⊢ (∃ x, P x) → ⊥` | conjI, impI |  |
+| 7.18 | `(∃ x, P x → ⊥) → ⊥ ⊢ ∀ x, P x` | conjI, impI, raa | tip |
+| 7.19 | `(∀ x, P x → ⊥) → ⊥ ⊢ ∃ x, P x` | conjI, impI, raa |  |
+| 7.20 | `(∀ x, P x) → ⊥ ⊢ ∃ x, P x → ⊥` | TND, conjI, falseE, impI | L |
+| 7.21 | `∀ x, P x ∨ A ⊢ (∀ x, P x) ∨ A` | TND, disjI1, disjI2, impI |  |
+| 7.22 | `A → ∃ x, P x ⊢ ∃ x, A → P x` | TND, conjI, impI |  |
+| 7.23 | `(∀ x, P x) → A ⊢ ∃ x, P x → A` | TND, conjI, falseE, impI |  |
 
-## World 8: Two Puzzles
+## World 8: Puzzles
 
 | | statement | rules used | gives |
 |---|---|---|---|
 | 8.1 | ` ⊢ ∃ x, P x → ∀ y, P y` | TND, conjI, falseE, impI |  |
 | 8.2 | `∀ x, (R x → ⊥) → R (f x) ⊢ ∃ x, R x ∧ R (f (f x))` | TND, conjI, falseE, impI |  |
+| 8.3 | `A ↔ (A → ⊥) ∧ (B → ⊥) ⊢ (A → ⊥) ∧ B` | TND, conjE, conjI, falseE, iffE1, iffE2, impI |  |
 
 ## World 9: Induction
 
@@ -190,7 +201,7 @@ Columns: level, statement, rules its Lean proof uses (roughly), lemma (L) / tact
 
 ## Lemmas and where they help
 
-* 2.5 `A → B, B → C ⊢ A → C` → 4.13, 5.6
+* 2.5 `A → B, B → C ⊢ A → C` → 4.13, 5.7
 * 3.5 `A ∨ B ⊢ B ∨ A` → 6.16
 * 3.16 `(A → C) ∧ (B → C) ⊢ A ∨ B → C` → 4.9
 * 3.17 `A ∨ B → C ⊢ (A → C) ∧ (B → C)` → 4.8
@@ -198,13 +209,13 @@ Columns: level, statement, rules its Lean proof uses (roughly), lemma (L) / tact
 * 4.9 `(A → ⊥) ∧ (B → ⊥) ⊢ A ∨ B → ⊥` → 6.18
 * 4.10 `(A → ⊥) ∨ (B → ⊥) ⊢ A ∧ B → ⊥` → 6.22
 * 4.12 `(A → ⊥) ∨ B ⊢ A → B` → 6.23
-* 5.3 `A ∧ B → ⊥ ⊢ (A → ⊥) ∨ (B → ⊥)` → 6.22, 5.8
-* 5.4 `(A → ⊥) → ⊥ ⊢ A` → 6.21, 7.16
-* 5.5 `A → B ⊢ (A → ⊥) ∨ B` → 6.23, 5.6
-* 5.13 `(A → B) → ⊥ ⊢ A ∧ (B → ⊥)` → 6.24
+* 5.3 `A ∧ B → ⊥ ⊢ (A → ⊥) ∨ (B → ⊥)` → 6.22, 5.9
+* 5.4 `(A → ⊥) → ⊥ ⊢ A` → 6.21, 7.20
+* 5.5 `A → B ⊢ (A → ⊥) ∨ B` → 6.23, 5.7
+* 5.15 `(A → B) → ⊥ ⊢ A ∧ (B → ⊥)` → 6.24
 * 3.14 `P ∧ Q ∨ P ∧ R ⊢ P ∧ (Q ∨ R)` → 6.19
 * 3.15 `(P ∨ Q) ∧ (P ∨ R) ⊢ P ∨ Q ∧ R` → 6.20
-* 7.16 `(∀ x, P x) → ⊥ ⊢ ∃ x, P x → ⊥` → 7.17, 8.1
+* 7.20 `(∀ x, P x) → ⊥ ⊢ ∃ x, P x → ⊥` → 7.23, 8.1
 
 ## Checks
 

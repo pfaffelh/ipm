@@ -1,7 +1,7 @@
 #!/bin/sh
 # Old addresses of the worlds forward to the new ones, so that old links and bookmarks still work:
 # Session-N___-…/ (the first names), and the worlds that moved when the levels of "From the Lean
-# Course" went into the worlds of their rules. Usage: ./redirects.sh _out/html-multi
+# Course" went into the worlds of their rules, and world 8 became "Puzzles". Usage: ./redirects.sh _out/html-multi
 set -e
 out=${1:-_out/html-multi}
 while read old new; do
@@ -24,10 +24,11 @@ Session-5___-Classical-Logic World-5___-Classical-Logic
 Session-6___-From-the-Lean-Course World-2___-Implication
 Session-7___-Equivalence-and-Truth World-6___-Equivalence-and-Truth
 Session-8___-Quantifiers World-7___-Quantifiers
-Session-9___-Two-Puzzles World-8___-Two-Puzzles
+Session-9___-Two-Puzzles World-8___-Puzzles
 World-10___-Induction World-9___-Induction
 World-6___-From-the-Lean-Course World-2___-Implication
 World-7___-Equivalence-and-Truth World-6___-Equivalence-and-Truth
 World-8___-Quantifiers World-7___-Quantifiers
-World-9___-Two-Puzzles World-8___-Two-Puzzles
+World-9___-Two-Puzzles World-8___-Puzzles
+World-8___-Two-Puzzles World-8___-Puzzles
 PAGES

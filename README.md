@@ -9,8 +9,10 @@ Assumptions are at the top, goals at the bottom; a proof connects them through r
 natural deduction, in 9 *worlds* of *levels*: the first five sessions of the Incredible Proof Machine
 (conjunction, implication, disjunction, falsity and negation, classical logic), each with the levels
 of the logic exercises of the [Lean course](https://pfaffelh.github.io/leancourse/) that need its
-rules; equivalence `↔` and truth `⊤`; the Proof Machine's quantifier session and its two puzzles; and
-induction. `docs/levels.md` lists all levels with what they need and give (lemmas, tactics, tips);
+rules; equivalence `↔` and truth `⊤`; the Proof Machine's quantifier session and its two puzzles,
+with a puzzle by Smullyan; and induction. Beyond the Proof Machine there are some classical
+classics: tertium non datur from proof by contradiction, `→` over `∨`, the duals `¬∃ ↔ ∀¬` and
+`¬∃¬ → ∀`, `¬∀¬ → ∃`, and two about `↔`. `docs/levels.md` lists all levels with what they need and give (lemmas, tactics, tips);
 `python3 docs/levels.py` writes it and checks that the dependencies fit.
 
 ## How it is played
