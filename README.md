@@ -43,6 +43,7 @@ classics: tertium non datur from proof by contradiction, `→` over `∨`, the d
   in the block mode shows the blocks of its own never met (missed in the tactic mode).
 * A finished proof turns the board green (in the tactic mode each board, once its goals are done);
   the world map counts at once, and the last level of a world leads on to the next world.
+* The browser tab shows a block of the game (its input on top, its output below) as its icon.
 * Two lexica, below the world map: the tactics and the blocks, with pictures (the same texts as the
   tips of the tactic mode).
 * Proof by contradiction (RAA, from world 5 level 5 on): from `?1 ⇒ ⊥` get `?1`; in Lean
@@ -61,16 +62,16 @@ classics: tertium non datur from proof by contradiction, `→` over `∨`, the d
 * Below the board, the same proof is shown in Lean, updated with every change (`sorry` marks what
   is still missing); a complete proof can be opened in the Lean web editor.
 * A world's page is a stage as high as the screen: one level (task) at a time, no text above the board
-  (it is under “About this level”), on a large screen the blocks in a column left of the board (the line
+  (it is under “Tips”), on a large screen the blocks in a column left of the board (the line
   between them can be dragged), and a tool bar below (＋ on phones, Undo, Start over, Tidy up, Lean;
-  About this level, Next ›), a dot per task above on the right (← → also go to
-  the previous and next level), and at its foot “About this level”: the level's tip and the rules of
+  Tips, Next ›), a dot per task above on the right (← → also go to
+  the previous and next level), and at its foot “Tips”: the level's tip and the rules of
   the world. The tip of a level (`:::tip (lang := "en")` in the task; for the first level of a world
   its rules) also appears once, when the level is played for the first time. Nothing scrolls while one plays; the
   task is in the address (`#task-3`). The start page has a big Start (or Continue) button.
 * The worlds are a map (instead of the list in the table of contents; ☰ on phones): a circle per
   world with its levels solved, lines from the worlds it builds on.
-* On phones the tool bar is one row at the bottom (a symbol over a short word), and About this level
+* On phones the tool bar is one row at the bottom (a symbol over a short word), and Tips
   and Lean are sheets over the board, which scroll.
 * Tasks come one after another; the ones not yet playable are shown greyed out (⚙ in the header
   switches this off).

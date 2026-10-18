@@ -1,5 +1,5 @@
 // The phone: the tool bar is one row at the bottom of the screen (a symbol over a short word);
-// "About this level" and Lean are sheets over the board that scroll and close with a tap elsewhere;
+// "Tips" and Lean are sheets over the board that scroll and close with a tap elsewhere;
 // the page does not scroll; ☰ shows the map of the worlds above the tool bar.
 // Usage: BASE=http://localhost:8002/ node mobile.mjs   (SHOTDIR=dir for screenshots)
 import { chromium } from 'playwright-core'

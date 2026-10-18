@@ -40,7 +40,7 @@ proof is a set of lines that lead from the assumptions to the goals, through *ru
 * Blocks can be dragged around. To remove a rule block, drag it onto the trash can 🗑, which
   appears at the corner of the board while you drag. The board always shows the whole proof.
 * Below the board: *Undo*, *Start over*, *Tidy up*, *Lean* (the same proof in Lean, updated with
-  every step), *About this level* (its text and tips) and *Next*.
+  every step), *Tips* (the level's text and tips) and *Next*.
 * The worlds are in the table of contents (☰ on a phone); the levels of a world are the dots above
   the board. A level that brings something new explains it in a tip, the first time.
 * Tactics: tapping a red circle or a blue dot can also show buttons with the step that fits, as a
@@ -71,7 +71,7 @@ aus Linien, die über *Regelblöcke* von den Annahmen zu den Zielen führen.
 * Blöcke lassen sich verschieben. Um einen Regelblock zu entfernen, zieh ihn auf den Mülleimer 🗑, der
   beim Ziehen an der Ecke des Spielfelds erscheint. Das Spielfeld zeigt immer den ganzen Beweis.
 * Unter dem Spielfeld: *Zurück*, *Neu anfangen*, *Aufräumen*, *Lean* (derselbe Beweis in Lean, bei
-  jedem Schritt aktualisiert), *Über dieses Level* (sein Text und seine Tipps) und *Weiter*.
+  jedem Schritt aktualisiert), *Tipps* (der Text des Levels und seine Tipps) und *Weiter*.
 * Die Welten stehen im Inhaltsverzeichnis (☰ auf dem Handy); die Levels einer Welt sind die Kreise
   über dem Spielfeld. Ein Level, das etwas Neues bringt, erklärt es beim ersten Mal in einem Tipp.
 * Taktiken: Ein angetippter roter Kreis oder blauer Punkt kann auch Knöpfe mit dem passenden Schritt

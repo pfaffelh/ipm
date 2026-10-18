@@ -57,7 +57,7 @@
     '{x} does not fit {y}': '{x} passt nicht zu {y}',
     'A local hypothesis may only be used inside its box.': 'Eine lokale Annahme darf nur innerhalb ihres Kastens verwendet werden.',
     'Cancel': 'Abbrechen', 'more ▸': 'mehr ▸', 'less ▾': 'weniger ▾', '1 rule ▸': '1 Regel ▸', '{n} rules ▸': '{n} Regeln ▸',
-    '{name} block': '{name}-Block', 'Next ›': 'Weiter ›', '▶ Start': '▶ Start', '▶ Continue': '▶ Weiterspielen', 'or start from the beginning': 'oder von vorn beginnen', 'About this level': 'Über dieses Level', 'This world': 'Diese Welt', 'Tip': 'Tipp', 'Got it': 'Verstanden', 'Undo': 'Zurück', 'Restart': 'Neu', 'Tidy': 'Ordnen', 'About': 'Info', 'Next': 'Weiter', 'Block': 'Baustein', 'Worlds': 'Welten', 'Drag to make the blocks or the board wider': 'Ziehen, um die Bausteine oder das Spielfeld breiter zu machen', 'Settings': 'Einstellungen', 'Off': 'Aus', 'All': 'Alle',
+    '{name} block': '{name}-Block', 'Next ›': 'Weiter ›', '▶ Start': '▶ Start', '▶ Continue': '▶ Weiterspielen', 'or start from the beginning': 'oder von vorn beginnen', 'Tips': 'Tipps', 'This world': 'Diese Welt', 'Tip': 'Tipp', 'Got it': 'Verstanden', 'Undo': 'Zurück', 'Restart': 'Neu', 'Tidy': 'Ordnen', 'About': 'Info', 'Next': 'Weiter', 'Block': 'Baustein', 'Worlds': 'Welten', 'Drag to make the blocks or the board wider': 'Ziehen, um die Bausteine oder das Spielfeld breiter zu machen', 'Settings': 'Einstellungen', 'Off': 'Aus', 'All': 'Alle',
     'Tactics: buttons with the Lean command that fits a tapped circle or dot': 'Taktiken: Knöpfe mit dem passenden Lean-Befehl zu einem angetippten Kreis oder Punkt',
     'Earned by solving levels': 'Durch Lösen von Levels freigespielt', 'Order': 'Reihenfolge', 'Levels in order': 'Levels der Reihe nach',
     'A level can be played once the one before it is solved.': 'Ein Level ist spielbar, sobald das vorherige gelöst ist.',
@@ -2275,7 +2275,7 @@
       const steps = this.steps()
       if (!steps.length) return
       if (!this.forceTactics) {
-        const fresh = [...new Set(steps.map(st => tacticOf(st.text)))].filter(id => id && !seenTip(`tactic-tip:${id}`))
+        const fresh = [...new Set(steps.map(st => tacticOf(st.text, st.rule)))].filter(id => id && !seenTip(`tactic-tip:${id}`))
         if (fresh.length) setTimeout(() => this.onNewTactics?.(fresh))
       }
       const vs = this.viewPort(this.selected), vb = this.view?.proof?.block(vs.block) ?? this.proof.block(vs.block)
@@ -2610,9 +2610,9 @@
     { id: 'exact', cmd: 'exact h', rules: [],
       en: 'When the goal is exactly something you have: `h : A` and the goal `A`. The goal is done; on the board, a line from `h` to the goal.',
       de: 'Wenn das Ziel genau etwas ist, das du hast: `h : A` und das Ziel `A`. Das Ziel ist erledigt; auf dem Spielfeld eine Linie von `h` zum Ziel.' },
-    { id: 'constructor', cmd: 'constructor', rules: ['conjI', 'iffI'],
-      en: 'For a goal `A ∧ B`: two goals, `A` and `B` (∧I). For a goal `A ↔ B`: the goals `A → B` and `B → A` (↔I).',
-      de: 'Für ein Ziel `A ∧ B`: zwei Ziele, `A` und `B` (∧I). Für ein Ziel `A ↔ B`: die Ziele `A → B` und `B → A` (↔I).' },
+    { id: 'constructor', cmd: 'constructor', rules: ['conjI'],
+      en: 'For a goal `A ∧ B`: two goals, `A` and `B` (∧I).',
+      de: 'Für ein Ziel `A ∧ B`: zwei Ziele, `A` und `B` (∧I).' },
     { id: 'obtain-and', cmd: 'obtain ⟨h₂, h₃⟩ := h₁', rules: ['conjE'],
       en: 'For `h₁ : A ∧ B` (tap its blue dot): its two parts, `h₂ : A` and `h₃ : B` (∧E).',
       de: 'Für `h₁ : A ∧ B` (tippe seinen blauen Punkt an): seine beiden Teile, `h₂ : A` und `h₃ : B` (∧E).' },
@@ -2637,6 +2637,9 @@
     { id: 'by_contra', cmd: 'by_contra h', rules: ['raa'],
       en: 'For a goal `A`: you get `h : A → ⊥` (the opposite), and the goal becomes `⊥` (RAA). Classical; in Lean from Mathlib.',
       de: 'Für ein Ziel `A`: Du bekommst `h : A → ⊥` (das Gegenteil), und das Ziel wird `⊥` (RAA). Klassisch; in Lean aus Mathlib.' },
+    { id: 'constructor-iff', cmd: 'constructor', rules: ['iffI'],
+      en: 'For a goal `A ↔ B`: two goals, `A → B` and `B → A` (↔I).',
+      de: 'Für ein Ziel `A ↔ B`: zwei Ziele, `A → B` und `B → A` (↔I).' },
     { id: 'mp', cmd: 'apply h.mp / h.mpr', rules: ['iffE1', 'iffE2'],
       en: 'For `h : A ↔ B`: with the goal `B`, `apply h.mp` makes it `A` (↔E₁); with the goal `A`, `apply h.mpr` makes it `B` (↔E₂).',
       de: 'Für `h : A ↔ B`: beim Ziel `B` macht `apply h.mp` daraus `A` (↔E₁); beim Ziel `A` macht `apply h.mpr` daraus `B` (↔E₂).' },
@@ -2691,12 +2694,14 @@
   }
 
   // One tactic: its command, the blocks it puts in, and what it does.
-  function tacticEntry(t) {
+  // (`rules`: the blocks of the level, to show only those)
+  function tacticEntry(t, rules = null) {
     const box = el('div', 'ipm-lexicon-entry')
     box.append(el('div', 'ipm-lexicon-cmd', t.cmd))
-    if (t.rules.length) {
+    const shown = rules ? t.rules.filter(r => rules.includes(r)) : t.rules
+    if (shown.length) {
       const row = el('div', 'ipm-tip-blocks')
-      for (const r of t.rules) { const fig = el('div', 'ipm-tip-block'); fig.append(rulePicture(r), el('div', 'ipm-menu-caption', RULES[r].label)); row.append(fig) }
+      for (const r of shown) { const fig = el('div', 'ipm-tip-block'); fig.append(rulePicture(r), el('div', 'ipm-menu-caption', RULES[r].label)); row.append(fig) }
       box.append(row)
     }
     box.append(el('p', 'ipm-lexicon-text', ''))
@@ -2705,8 +2710,9 @@
   }
 
   // The tactic of a button, by its command.
-  function tacticOf(text) {
+  function tacticOf(text, rule) {
     const c = text.split(' · ').pop()
+    if (c === 'constructor' && rule === 'iffI') return 'constructor-iff'
     if (/^exact .*\.elim$/.test(c) || c === 'exfalso') return 'exfalso'
     if (/^(apply|have) .*\.mpr?\b/.test(c)) return 'mp'
     for (const [re, id] of [[/^exact /, 'exact'], [/^(apply|have) /, 'apply'], [/^intro n;/, 'induction'], [/^intro c/, 'intro-all'],
@@ -2735,7 +2741,7 @@
   // A lexicon page: `:::lexicon (kind := "tactics")` or `"blocks"`.
   function lexicon() {
     for (const box of document.querySelectorAll('.ipm-lexicon'))
-      box.append(...(box.dataset.kind === 'tactics' ? TACTICS.map(tacticEntry) : Object.keys(BLOCKS).map(blockEntry)))
+      box.append(...(box.dataset.kind === 'tactics' ? TACTICS.map(t => tacticEntry(t)) : Object.keys(BLOCKS).map(r => blockEntry(r))))
   }
 
   // Which tips were seen: of the tactics, and of the blocks (wherever they were introduced), so that
@@ -2743,7 +2749,18 @@
   const seenTip = key => { try { return localStorage.getItem(`ipm-verso:${key}`) === '1' } catch { return false } }
   const markTip = key => { try { localStorage.setItem(`ipm-verso:${key}`, '1') } catch {} }
 
+  // The icon of the browser tab: a block of the game, its input on top, its output below.
+  function tabIcon() {
+    if (document.querySelector('link[rel="icon"]')) return
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect x="6" y="17" width="52" height="32" rx="9" fill="#e8f0fb" stroke="#3b6db3" stroke-width="5"/>' +
+      '<circle cx="32" cy="17" r="9" fill="#fff" stroke="#c0392b" stroke-width="5"/><circle cx="32" cy="50" r="8" fill="#3b6db3"/></svg>'
+    const link = document.createElement('link')
+    link.rel = 'icon'; link.type = 'image/svg+xml'; link.href = 'data:image/svg+xml,' + encodeURIComponent(svg)
+    document.head.append(link)
+  }
+
   function init() {
+    tabIcon()
     moveProgress()
     lexicon()
     setTimeout(worldMap)  // after translatePage, so that the names are in the language chosen
@@ -2829,7 +2846,7 @@
       .flatMap(n => (n.dataset.rules ?? '').split(',').map(x => x.trim()).filter(x => RULES[x])))]
     const tacticTips = k => tacticsFor(tasks[k].rules)
     const fillAbout = () => {
-      const tactics = MODE === 'tactics' && !tasks[current].forceTactics ? tacticTips(current).map(tacticEntry) : []
+      const tactics = MODE === 'tactics' && !tasks[current].forceTactics ? tacticTips(current).map(t => tacticEntry(t, tasks[current].rules)) : []
       const own = [...levelText(current), ...tactics, ...tipBlocks(current), ...tipNodes(current)]
       aboutBody.replaceChildren(...own, ...(hasRules ? [el('div', 'ipm-rules-head', tr('This world')), ...clone()] : []))
     }
@@ -2846,7 +2863,7 @@
         ok.type = 'button'
         ok.addEventListener('click', () => overlay.remove())
         overlay.addEventListener('click', ev => { if (ev.target === overlay) overlay.remove() })
-        card.append(el('div', 'ipm-tip-head', '💡 ' + tr('New tactic')), ...fresh.map(tacticEntry), ok)
+        card.append(el('div', 'ipm-tip-head', '💡 ' + tr('New tactic')), ...fresh.map(x => tacticEntry(x, t.rules)), ok)
         overlay.append(card)
         document.body.append(overlay)
         ok.focus({ preventScroll: true })
@@ -2924,7 +2941,7 @@
     // On the right of each tool bar: "About this level" and "Next ›" (which glows once the level is solved).
     tasks.forEach((t, k) => {
       const bar = t.root.querySelector('.ipm-tools')
-      const a = barButton('ipm-about-button', 'ⓘ', tr('About this level'), tr('About'))
+      const a = barButton('ipm-about-button', '💡', tr('Tips'), tr('Tips'))
       a.setAttribute('aria-pressed', 'false')
       a.addEventListener('click', () => toggleAbout(about.hidden))
       aboutButtons.push(a)
