@@ -411,7 +411,7 @@ example (P Q : Prop) : ((P → Q) → False) ↔ P ∧ (Q → False) := by
     apply h₇
     exact h₈
 
--- level 7.9
+-- level 8.9
 example (α : Type) (P Q : α → Prop) (h₁ : (∃ x, P x) ∨ (∃ x, Q x)) : ∃ x, P x ∨ Q x := by
   obtain (h₂ | h₃) := h₁
   · obtain ⟨c₁, h₄⟩ := h₂
@@ -423,7 +423,7 @@ example (α : Type) (P Q : α → Prop) (h₁ : (∃ x, P x) ∨ (∃ x, Q x)) :
     right
     exact h₅
 
--- level 7.20
+-- level 8.20
 example (α : Type) (P : α → Prop) (h₁ : (∀ x, P x) → False) : ∃ x, P x → False := by
   apply Classical.byContradiction
   intro h₂
@@ -437,7 +437,7 @@ example (α : Type) (P : α → Prop) (h₁ : (∀ x, P x) → False) : ∃ x, P
   apply h₃
   exact h₄
 
--- level 7.23
+-- level 8.23
 example (α : Type) [Inhabited α] (A : Prop) (P : α → Prop) (h₁ : (∀ x, P x) → A) : ∃ x, P x → A := by
   rcases Classical.em A with h₂ | h₃
   · refine ⟨default, ?_⟩
@@ -457,7 +457,7 @@ example (α : Type) [Inhabited α] (A : Prop) (P : α → Prop) (h₁ : (∀ x, 
     apply h₆
     exact h₇
 
--- level 8.1
+-- level 9.1
 example (α : Type) [Inhabited α] (P : α → Prop) : ∃ x, P x → ∀ y, P y := by
   rcases Classical.em (∀ y, P y) with h₁ | h₂
   · refine ⟨default, ?_⟩
@@ -476,7 +476,7 @@ example (α : Type) [Inhabited α] (P : α → Prop) : ∃ x, P x → ∀ y, P y
     apply h₅
     exact h₆
 
--- level 8.2
+-- level 9.2
 example (α : Type) [Inhabited α] (R : α → Prop) (f : α → α) (h₁ : ∀ x, (R x → False) → R (f x)) :
     ∃ x, R x ∧ R (f (f x)) := by
   rcases Classical.em (R default) with h₂ | h₃
@@ -510,7 +510,7 @@ example (α : Type) [Inhabited α] (R : α → Prop) (f : α → α) (h₁ : ∀
       · apply h₁
         exact h₈
 
--- level 9.4
+-- level 10.4
 example (Even Odd : Nat → Prop) (h₁ : Even 0) (h₂ : ∀ n, Even n → Odd (n + 1))
     (h₃ : ∀ n, Odd n → Even (n + 1)) : ∀ n, Even n ∨ Odd n := by
   intro n
@@ -527,7 +527,7 @@ example (Even Odd : Nat → Prop) (h₁ : Even 0) (h₂ : ∀ n, Even n → Odd 
       apply h₃
       exact h₆
 
--- level 9.5
+-- level 10.5
 example (P Q : Nat → Prop) (h₁ : P 0) (h₂ : Q 0) (h₃ : ∀ n, P n → Q (n + 1))
     (h₄ : ∀ n, Q n → P (n + 1)) : ∀ n, P n ∧ Q n := by
   intro n
@@ -544,7 +544,7 @@ example (P Q : Nat → Prop) (h₁ : P 0) (h₂ : Q 0) (h₃ : ∀ n, P n → Q 
     · apply h₃
       exact h₆
 
--- level 9.6
+-- level 10.6
 example (P Q : Nat → Prop) (h₁ : P 0 ∨ Q 0) (h₂ : ∀ n, P n → Q (n + 1))
     (h₃ : ∀ n, Q n → P (n + 1)) : ∀ n, P n ∨ Q n := by
   intro n
@@ -644,7 +644,7 @@ example (A B : Prop) : (A ↔ B) ∨ (A ↔ (B → False)) := by
           apply h₇
           exact h₁₁
 
--- level 7.16
+-- level 8.16
 example (α : Type) (P : α → Prop) (h₁ : (∃ x, P x) → False) : ∀ x, P x → False := by
   intro c₁
   intro h₂
@@ -652,14 +652,14 @@ example (α : Type) (P : α → Prop) (h₁ : (∃ x, P x) → False) : ∀ x, P
   refine ⟨c₁, ?_⟩
   exact h₂
 
--- level 7.17
+-- level 8.17
 example (α : Type) (P : α → Prop) (h₁ : ∀ x, P x → False) : (∃ x, P x) → False := by
   intro h₂
   obtain ⟨c₁, h₃⟩ := h₂
   apply h₁
   exact h₃
 
--- level 7.18
+-- level 8.18
 example (α : Type) (P : α → Prop) (h₁ : (∃ x, P x → False) → False) : ∀ x, P x := by
   intro c₁
   apply Classical.byContradiction
@@ -668,7 +668,7 @@ example (α : Type) (P : α → Prop) (h₁ : (∃ x, P x → False) → False) 
   refine ⟨c₁, ?_⟩
   exact h₂
 
--- level 7.19
+-- level 8.19
 example (α : Type) (P : α → Prop) (h₁ : (∀ x, P x → False) → False) : ∃ x, P x := by
   apply Classical.byContradiction
   intro h₂
@@ -679,7 +679,7 @@ example (α : Type) (P : α → Prop) (h₁ : (∀ x, P x → False) → False) 
   refine ⟨c₁, ?_⟩
   exact h₃
 
--- level 7.21
+-- level 8.21
 example (α : Type) (A : Prop) (P : α → Prop) (h₁ : ∀ x, P x ∨ A) : (∀ x, P x) ∨ A := by
   rcases Classical.em A with h₂ | h₃
   · right
@@ -693,7 +693,7 @@ example (α : Type) (A : Prop) (P : α → Prop) (h₁ : ∀ x, P x ∨ A) : (�
       apply h₃
       exact h₅
 
--- level 7.22
+-- level 8.22
 example (α : Type) [Inhabited α] (A : Prop) (P : α → Prop) (h₁ : A → ∃ x, P x) : ∃ x, A → P x := by
   rcases Classical.em A with h₂ | h₃
   · have h₄ := h₁ h₂
@@ -707,7 +707,7 @@ example (α : Type) [Inhabited α] (A : Prop) (P : α → Prop) (h₁ : A → �
     apply h₃
     exact h₇
 
--- level 8.3
+-- level 9.3
 example (A B : Prop) (h₁ : A ↔ (A → False) ∧ (B → False)) : (A → False) ∧ B := by
   rcases Classical.em A with h₂ | h₃
   · exfalso
@@ -725,3 +725,48 @@ example (A B : Prop) (h₁ : A ↔ (A → False) ∧ (B → False)) : (A → Fal
         constructor
         · exact h₃
         · exact h₈
+
+-- level 7.1
+example (A : Prop) : A ↔ A := by
+  rfl
+
+-- level 7.2
+example (A B : Prop) (h₁ : A ↔ B) : B ↔ A := by
+  symm
+  exact h₁
+
+-- level 7.3
+example (A B : Prop) (h₁ : A ↔ B) (h₂ : B) : A := by
+  rw [h₁]
+  exact h₂
+
+-- level 7.4
+example (A B : Prop) (h₁ : A ↔ B) (h₂ : A) : B := by
+  rw [← h₁]
+  exact h₂
+
+-- level 7.5
+example (A B C : Prop) (h₁ : A ↔ B) : A ∧ C ↔ B ∧ C := by
+  rw [h₁]
+
+-- level 7.7
+example (A B C : Prop) (h₁ : A ↔ B) (h₂ : B ↔ C) : A ↔ C := by
+  rw [h₁]
+  exact h₂
+
+-- level 7.10
+example (A B C D : Prop) (h₁ : A ↔ B) (h₂ : B ↔ C) (h₃ : C ↔ D) : A ↔ D := by
+  rw [h₁]
+  rw [h₂]
+  exact h₃
+
+-- level 7.11
+example (A B C : Prop) (h₁ : A ↔ B ∧ C) (h₂ : B) (h₃ : C) : A := by
+  rw [h₁]
+  constructor
+  · exact h₂
+  · exact h₃
+
+-- level 7.13
+example (A B : Prop) (h₁ : A ↔ B) : A ∨ (A → False) ↔ B ∨ (B → False) := by
+  rw [h₁]

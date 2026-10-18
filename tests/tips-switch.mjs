@@ -8,8 +8,8 @@ const base = process.env.BASE ?? 'http://127.0.0.1:8002/'
 const page = await (await browser.newContext({ viewport: { width: 1300, height: 800 } })).newPage()
 page.on('pageerror', e => console.log('PAGEERROR', e.message))
 const worlds = ['World-1___-Conjunction/', 'World-2___-Implication/', 'World-3___-Disjunction/', 'World-4___-Falsity-and-Negation/',
-  'World-5___-Classical-Logic/', 'World-6___-Equivalence-and-Truth/', 'World-7___-Quantifiers/', 'World-8___-Puzzles/', 'World-9___-Induction/']
-const sizes = [13, 23, 20, 21, 15, 26, 23, 3, 6]
+  'World-5___-Classical-Logic/', 'World-6___-Equivalence-and-Truth/', 'World-7___-Rewriting/', 'World-8___-Quantifiers/', 'World-9___-Puzzles/', 'World-10___-Induction/']
+const sizes = [13, 23, 20, 21, 15, 26, 13, 23, 3, 6]
 // visits a level; returns what its tip shows (tactics, blocks caught up) and closes it
 const visit = async (w, n) => {
   await page.goto(base + worlds[w] + '#level-' + n); await page.reload(); await page.waitForTimeout(250)

@@ -64,6 +64,7 @@
     'A level can be played once the one before it is solved.': 'Ein Level ist spielbar, sobald das vorherige gelöst ist.',
     '🔓 Unlocked: the tactic {t}': '🔓 Freigespielt: die Taktik {t}', '🔒 Solve this level to unlock the tactic {t}.': '🔒 Löse dieses Level, um die Taktik {t} freizuspielen.',
     'induction': 'Induktion', '∀-introduction': '∀-Einführung', '∀-elimination': '∀-Beseitigung', '∃-introduction': '∃-Einführung', '∃-elimination': '∃-Beseitigung',
+    'reflexivity': 'Reflexivität', 'symmetry': 'Symmetrie', 'rewriting': 'Umschreiben', 'rewriting backwards': 'Umschreiben rückwärts',
     '⚠ {c} escapes': '⚠ {c} entkommt',
     'The {c} of this induction block stands for an arbitrary number. So it must not occur in the conclusion, nor in an assumption other than its hypothesis that the proof of the step uses.':
       'Das {c} dieses Induktionsblocks steht für eine beliebige Zahl. Es darf daher weder in der Folgerung vorkommen noch in einer anderen Annahme als seiner eigenen, die der Beweis des Schritts verwendet.',
@@ -80,7 +81,7 @@
     'World 1: Conjunction': 'Welt 1: Konjunktion', 'World 2: Implication': 'Welt 2: Implikation',
     'World 3: Disjunction': 'Welt 3: Disjunktion', 'World 4: Falsity and Negation': 'Welt 4: Falsum und Negation',
     'World 5: Classical Logic': 'Welt 5: Klassische Logik', 'World 6: Equivalence and Truth': 'Welt 6: Äquivalenz und Wahrheit',
-    'World 7: Quantifiers': 'Welt 7: Quantoren', 'World 8: Puzzles': 'Welt 8: Rätsel', 'World 9: Induction': 'Welt 9: Induktion',
+    'World 7: Rewriting': 'Welt 7: Umschreiben', 'World 8: Quantifiers': 'Welt 8: Quantoren', 'World 9: Puzzles': 'Welt 9: Rätsel', 'World 10: Induction': 'Welt 10: Induktion',
     'Table of Contents': 'Inhalt', 'Contents': 'Inhalt',
   }
   function translatePage() {
@@ -174,7 +175,7 @@
   // eigenvariable of a ∀I or ∃E block) | {t: 'fn', n, args} | {t: 'meta', id, term: true}.
   // Statements are written as in Lean: `∀ x, P x → Q (f x)`, `∃ y, R a y`.
   function parse(src) {
-    const tokens = src.match(/[A-Za-z_][\w'₀-₉]*|\d+|∀|∃|,|\+|∧|∨|↔|→|¬|⊥|⊤|\(|\)|<->|->|\/\\|\\\/|~/g) ?? []
+    const tokens = src.match(/[A-Za-z_][\w'₀-₉]*|\d+|∀|∃|,|\+|∧|∨|↔|→|¬|⊥|⊤|\(|\)|<->|->|\/\\|\\\/|~|=/g) ?? []
     let i = 0
     const eat = t => { if (tokens[i] === t) { i++; return true } return false }
     const norm = { '/\\': '∧', '\\/': '∨', '->': '→', '<->': '↔', '~': '¬' }
@@ -225,6 +226,8 @@
         return a
       }
       if (eat('(')) { const a = iff(); if (!eat(')')) fail(); return a }
+      // an equation between objects: t = u (written as the predicate `=`)
+      if (lower(tokens[i])) { const a = term(); if (!eat('=')) fail(); return { t: 'pred', n: '=', args: [a, term()] } }
       const n = tokens[i++]
       if (!n || lower(n)) fail()
       if (n === 'True') return { t: 'top' }
@@ -263,7 +266,9 @@
     const wrap = (p, txt) => (p < ctx ? `(${txt})` : txt)
     switch (f.t) {
       case 'atom': return f.n
-      case 'pred': return wrap(5, [f.n, ...f.args.map(t => term(t, true))].join(' '))
+      case 'bv': return names[f.n] ?? baseName(f.n)  // the hole of a rewriting block
+      case 'pred': return f.n === '=' ? wrap(5, `${term(f.args[0], false)} = ${term(f.args[1], false)}`)
+        : wrap(5, [f.n, ...f.args.map(t => term(t, true))].join(' '))
       case 'bot': return lean ? 'False' : '⊥'
       case 'top': return lean ? 'True' : '⊤'
       case 'meta': return '?' + metaNumber(f.id.split('.').pop())
@@ -327,6 +332,7 @@
       case 'meta': return { t: 'sub', a: f, v, by }
       case 'sub': { const g = norm(f, s); return g.t === 'sub' ? { t: 'sub', a: g, v, by } : substF(g, v, by, s) }
       case 'atom': case 'bot': case 'top': return f
+      case 'bv': return f.n === v ? by : f  // the hole of a rewriting block, for a statement
       case 'pred': return { ...f, args: f.args.map(t => substT(t, v, by, s)) }
       case 'all': case 'ex': return f.v === v ? f : { ...f, a: substF(f.a, v, by, s) }
       case 'not': return { ...f, a: substF(f.a, v, by, s) }
@@ -368,13 +374,20 @@
   // `f` (determined) with the bound variable `v` for every occurrence of the term `by`.
   function abstract(f, by, v, s) {
     f = norm(f, s)
-    if (sameTerm(f, by)) return { t: 'bv', n: v }
+    if (sameTerm(f, by, s) || sameStatement(f, by, s)) return { t: 'bv', n: v }
     const g = { ...f }
     for (const k of ['a', 'b']) if (f[k]) g[k] = abstract(f[k], by, v, s)
     if (f.args) g.args = f.args.map(t => abstract(t, by, v, s))
     return g
   }
-  const sameTerm = (x, y) => (x.t === 'eig' || x.t === 'bv') && x.t === y.t && x.n === y.n
+  // (a statement, for rewriting with ↔)
+  const isStatement = f => !['con', 'fn', 'eig', 'bv', 'meta', 'sub'].includes(f.t)
+  const sameStatement = (x, y, s) => isStatement(y) && isStatement(x) && !undetermined(x, s) && !undetermined(y, s) && show(x, s) === show(y, s)
+  const sameTerm = (x, y, s = {}) => {
+    x = resolve(x, s); y = resolve(y, s)
+    if (x.t !== y.t || !['eig', 'bv', 'con', 'fn'].includes(x.t) || x.n !== y.n) return false
+    return x.t !== 'fn' || (x.args.length === y.args.length && x.args.every((a, k) => sameTerm(a, y.args[k], s)))
+  }
 
   // Unifies `x` and `y` under substitution `s`. Returns the extended substitution, null if they do
   // not fit, or DEFER if that cannot be decided yet (a delayed substitution into an undetermined
@@ -405,6 +418,9 @@
       const by = resolve(x.by, s)
       const known = by.t === 'bv' ? !undetermined(y, s, true) : !undetermined(y, s)
       if (y.t !== 'sub' && (by.t === 'eig' || by.t === 'bv') && known && x.a.t === 'meta')
+        return unify(x.a, abstract(y, by, x.v, s), s)
+      // (rewriting, rw: ?P A against G with a known statement A: every A in G becomes the hole)
+      if (y.t !== 'sub' && x.rewrite && !undetermined(by, s) && !undetermined(y, s) && x.a.t === 'meta')
         return unify(x.a, abstract(y, by, x.v, s), s)
       // When nothing else can be decided (`eigScope` is set): undetermined objects ?2 of blocks in
       // the scope of the eigenvariable are taken to be it. Any object may be chosen for them, and
@@ -486,6 +502,14 @@
     ind: { label: 'Ind', name: 'induction', eigen: true, local: { 1: 1 },
            build: (id, c) => ({ inputs: [delayed(body(id), id, { t: 'con', n: '0' }, 'n'), delayed(body(id), id, { t: 'fn', n: 'succ', args: [eig(c)] }, 'n')],
                                 outputs: [{ t: 'all', v: `n#${id}`, a: body(id) }, delayed(body(id), id, eig(c), 'n')] }) },
+    // Rewriting with ↔ (as Lean's rw does): A ↔ A; from A ↔ B, B ↔ A; and rw [h] with h : A ↔ B:
+    // from ?P B, ?P A (rw [← h]: from ?P A, ?P B), where ?P is the goal with a hole for a statement.
+    refl: { label: '↔rfl', name: 'reflexivity', vars: ['A'], inputs: [], outputs: ['A↔A'] },
+    symm: { label: '↔sym', name: 'symmetry', vars: ['A', 'B'], inputs: ['A↔B'], outputs: ['B↔A'] },
+    rw: { label: 'rw', name: 'rewriting',
+          build: id => ({ inputs: [iff(meta(id, 'L'), meta(id, 'R')), hole(id, meta(id, 'R'))], outputs: [hole(id, meta(id, 'L'))] }) },
+    rwr: { label: 'rw←', name: 'rewriting backwards',
+           build: id => ({ inputs: [iff(meta(id, 'L'), meta(id, 'R')), hole(id, meta(id, 'L'))], outputs: [hole(id, meta(id, 'R'))] }) },
     exE: { label: '∃E', name: '∃-elimination', eigen: true, local: { 1: 1 },
            build: (id, c) => ({ inputs: [ex(id), meta(id, 'B')], outputs: [meta(id, 'B'), delayed(body(id), id, eig(c))] }) },
   }
@@ -494,6 +518,9 @@
   function body(id) { return meta(id, 'A') }
   function termMeta(id) { return { t: 'meta', id: `${id}.B`, term: true } }
   function eig(c) { return { t: 'eig', n: c } }
+  function iff(a, b) { return { t: 'iff', a, b } }
+  // the statement ?P of a rewriting block, with the statement `by` in its hole (X)
+  function hole(id, by) { return { t: 'sub', a: meta(id, 'P'), v: `X#${id}`, by, rewrite: true } }
   function delayed(a, id, by, v = 'x') { return { t: 'sub', a, v: `${v}#${id}`, by } }
   function all(id) { return { t: 'all', v: `x#${id}`, a: body(id) } }
   function ex(id) { return { t: 'ex', v: `x#${id}`, a: body(id) } }
@@ -744,7 +771,7 @@
     let quantifiers = false, needDefault = false, nat = false
     const collect = f => {
       if (f.t === 'atom') atoms.add(f.n)
-      if (f.t === 'pred') preds[f.n] = f.args.length
+      if (f.t === 'pred' && f.n !== '=') preds[f.n] = f.args.length
       if (f.t === 'fn' && f.n !== 'succ') fns[f.n] = f.args.length
       if (f.t === 'con' && f.n !== '0') cons.add(f.n)
       if ((f.t === 'fn' && f.n === 'succ') || (f.t === 'con' && f.n === '0')) nat = true
@@ -821,6 +848,10 @@
         case 'iffE1': return app('Iff.mp', major(0), arg(1))
         case 'iffE2': return app('Iff.mpr', major(0), arg(1))
         case 'trueI': return { k: 'var', n: 'trivial' }
+        case 'refl': return { k: 'var', n: 'Iff.rfl' }
+        case 'symm': return app('Iff.symm', arg(0))
+        // rewriting: Eq.mpr (congrArg (fun X => ?P X) (propext h)) proves ?P A from h : A ↔ B and ?P B
+        case 'rw': case 'rwr': return app(b.rule === 'rw' ? 'Eq.mpr' : 'Eq.mp', app('congrArg', { k: 'motive', f: meta(b.id, 'P') }, app('propext', arg(0))), arg(1))
         case 'allI': return { k: 'fun', x: b.eig, body: arg(0) }
         case 'allE': return { k: 'app', f: major(0), a: { k: 'term', t: termMeta(b.id) } }
         case 'exI': return { k: 'pair', a: { k: 'term', t: termMeta(b.id) }, b: arg(0) }
@@ -849,7 +880,7 @@
       return { k: 'sorry' }
     }
     // Printing, with as few parentheses as Lean needs.
-    const atomic = t => ['var', 'sorry', 'pair', 'proj', 'typed', 'type'].includes(t.k) || (t.k === 'term' && resolve(t.t, s).t !== 'fn')
+    const atomic = t => ['var', 'sorry', 'pair', 'proj', 'typed', 'type', 'motive'].includes(t.k) || (t.k === 'term' && resolve(t.t, s).t !== 'fn')
     // In a complete proof, unused names are written `_`, as Lean asks for.
     const used = new Set()
     const useTerm = t => { t = resolve(t, s); if (t.t === 'eig') used.add(t.n); parts(t).forEach(useTerm) }
@@ -858,7 +889,7 @@
     const use = t => {
       if (t.k === 'var') used.add(t.n)
       if (t.k === 'term') { useTerm(t.t); return }
-      if (t.k === 'typed' || t.k === 'type') useFormula(t.f)
+      if (t.k === 'typed' || t.k === 'type' || t.k === 'motive') useFormula(t.f)
       if (t.k === 'lemma') t.vars.forEach(([, f]) => useFormula(f))
       for (const k of ['f', 'a', 'b', 'body', 'z', 'st']) if (t[k]) use(t[k])
     }
@@ -874,6 +905,7 @@
         case 'typed': return `(${pr(t.a)} : ${closedNow(t.f)})`
         case 'lemma': return [t.n, ...t.vars.filter(([, f]) => t.all || undetermined(f, s)).map(([x, f]) => `(${x} := ${closedNow(f)})`)].join(' ')
         case 'type': { const a = closedNow(t.f); return /\s/.test(a) ? `(${a})` : a }
+        case 'motive': return `(fun X => ${closedNow(t.f)})`
         case 'app': return `${t.f.k === 'fun' ? `(${pr(t.f)})` : pr(t.f)} ${atomic(t.a) ? pr(t.a) : `(${pr(t.a)})`}`
         case 'fun': {  // fun x => fun y => … is written fun x y => …
           const xs = [], eigs = []
@@ -959,6 +991,16 @@
           return ['intro n', 'induction n with', '| zero =>', ...z.map(l => `  ${l}`), `| succ ${src.eig} ${local(1)} =>`, ...st.map(l => `  ${l}`)]
         }
         case 'TND': return [`exact Classical.em ${pr({ k: 'type', f: { t: 'meta', id: `${src.id}.A` } })}`]
+        case 'refl': return ['rfl']
+        case 'symm': return ['symm', ...next(src, 0)]
+        case 'rw': case 'rwr': {
+          const c0 = conn(src, 0), h = c0 && nm(c0.from.block, c0.from.port)
+          if (!h) return term()
+          // (rw closes a goal t = t by itself)
+          const g = norm(src.inputs[1], analysis.s)
+          const closed = g.t === 'iff' && sameStatement(g.a, g.b, analysis.s)
+          return [...forward(p.block(c0.from.block), rn, have), `rw [${src.rule === 'rwr' ? '← ' : ''}${h}]`, ...(closed ? [] : next(src, 1))]
+        }
       }
       return term()
     }
@@ -971,7 +1013,7 @@
       have.add(x.id)
       if (x.rule === 'conjE' && h) return [...forward(from, rn, have), `obtain ⟨${nm(0)}, ${nm(1)}⟩ := ${h}`]
       if (x.rule === 'allE' && h) return [...forward(from, rn, have), `specialize ${h} ${leanTerm(termMeta(x.id), true)}`]
-      if (x.named && !RULES[x.rule]?.local && nm(0)) return [`have ${nm(0)} := ${pr(output(x, 0, 0))}`]
+      if (x.named && !RULES[x.rule]?.local && nm(0)) return [`have ${nm(0)} : ${closedNow(x.outputs[0])} := ${pr(output(x, 0, 0))}`]
       return []
     }
     const goals = p.blocks.filter(b => b.kind === 'conclusion').map(g => ({ g, term: input(g, 0, 0) }))
@@ -1256,7 +1298,7 @@
       reset.addEventListener('click', () => { this.change(() => { this.proof = new Proof(this.assumptions, this.conclusions) }) })
       const tidy = barButton('', '⇅', tr('Tidy up'), tr('Tidy'))
       tidy.title = tr('Arrange the blocks automatically again')
-      tidy.addEventListener('click', () => { this.change(() => { this.proof.moved = {} }) })
+      tidy.addEventListener('click', () => { this.places = {}; this.change(() => { this.proof.moved = {} }) })
       window.addEventListener('ipm-settings', () => this.render())
       this.info = el('div', 'ipm-info')
       // a selected goal with what one has there, as Lean shows it: h₁ : A ∨ B, h₂ : A ⊢ B ∨ A
@@ -1456,6 +1498,7 @@
         }
       })
       for (const [id, m] of Object.entries(p.moved ?? {})) if (pos[id]) Object.assign(pos[id], m)
+      if (this.tacticsOnly) this.keepPlaces(p, pos)
       // The picture covers all blocks, wherever they were dragged.
       const qs = Object.values(pos)
       const minX = Math.min(0, ...qs.map(q => q.x - 20)), minY = Math.min(0, ...qs.map(q => q.y - 20))
@@ -1466,6 +1509,66 @@
     }
 
     portXY(pos, b, kind, i) { return portAt(pos[b.id], b, kind, i) }
+
+    // In the tactic mode the picture stays as it is: the blocks keep their places. A new block that
+    // proves a goal takes the goal's place, and the goal with what is below it moves down (as in Lean,
+    // where the goal moves on); a block that takes something apart goes below it, where that is free.
+    // Tidy up lays out everything anew.
+    keepPlaces(p, pos) {
+      if (this.placesOf !== this.proof) { this.places = {}; this.placesOf = this.proof }
+      const kept = this.places
+      for (const id of Object.keys(kept)) if (!pos[id]) delete kept[id]
+      const old = Object.keys(kept).length > 0
+      for (const [id, q] of Object.entries(kept)) if (pos[id] && !p.moved?.[id]) Object.assign(pos[id], q)
+      if (old) {
+        const placed = new Set(Object.keys(kept).filter(id => pos[id]))
+        const free = (q, x, y) => [...placed].every(id => {
+          const r = pos[id]
+          return x + q.w + 14 < r.x || r.x + r.w + 14 < x || y + q.h + 30 < r.y || r.y + r.h + 30 < y
+        })
+        let todo = Object.keys(pos).filter(id => !placed.has(id) && !p.moved?.[id])
+        for (let round = 0; round < 4 && todo.length; round++) {
+          for (const id of todo) {
+            const q = pos[id], b = p.block(id)
+            // a neighbor that has its place: what this block proves (below it), or what it takes (above)
+            const down = p.connections.find(c => c.from.block === id && placed.has(c.to.block))
+            const up = p.connections.find(c => c.to.block === id && placed.has(c.from.block))
+            if (!down && !up && round < 3) continue
+            let x, y
+            if (down) {
+              // the goal and everything below it move down by the height of the new block
+              const at = portAt(pos[down.to.block], p.block(down.to.block), 'in', down.to.port), o = portAt({ ...q, x: 0, y: 0 }, b, 'out', down.from.port)
+              x = at.x - o.x; y = pos[down.to.block].y
+              const below = new Set(), stack = [down.to.block]
+              while (stack.length) {
+                const id2 = stack.pop()
+                if (below.has(id2) || !placed.has(id2)) continue
+                below.add(id2)
+                for (const c of p.connections) if (c.from.block === id2 && !isLocal(p.block(id2), c.from.port)) stack.push(c.to.block)
+              }
+              // and whatever lies at that height or lower, below the goal's column
+              const dy = q.h + 46
+              for (const id2 of placed) if (!below.has(id2) && pos[id2].y >= y && pos[id2].x < x + q.w + 20 && pos[id2].x + pos[id2].w > x - 20) below.add(id2)
+              for (const id2 of below) pos[id2].y += dy
+            }
+            else if (up) { const at = portAt(pos[up.from.block], p.block(up.from.block), 'out', up.from.port); const i = portAt({ ...q, x: 0, y: 0 }, b, 'in', up.to.port); x = at.x - i.x; y = at.y + 46 }
+            else { x = q.x; y = q.y }
+            // the nearest free place: sideways first, then further down
+            const dir = 1
+            let best = null
+            for (let k = 0; k < 8 && !best; k++)
+              for (const dx of [0, 1, -1, 2, -2, 3, -3]) {
+                const cx = x + dx * (q.w + 20), cy = y + dir * k * (q.h + 40)
+                if (free(q, cx, cy)) { best = { x: cx, y: cy }; break }
+              }
+            Object.assign(q, best ?? { x, y })
+            placed.add(id)
+          }
+          todo = todo.filter(id => !placed.has(id))
+        }
+      }
+      for (const [id, q] of Object.entries(pos)) kept[id] = { x: q.x, y: q.y }
+    }
 
     // A position for a block of size `q` at (x, y), kept inside the board, which shows `this.view`.
     inside(x, y, q) {
@@ -2126,9 +2229,14 @@
         // before at its input 0 (h : A → B → C with goal C: two →E blocks; `A` and `B` are left to prove).
         const chain = (rule, text, rules) => {
           const build = q => {
-            let from = o
-            for (const r of rules) { const nb = q.addRule(r); q.connect(from, { block: nb.id, port: 0 }); from = { block: nb.id, port: 0 } }
+            let from = o, last
+            for (const r of rules) { const nb = q.addRule(r); q.connect(from, { block: nb.id, port: 0 }); from = { block: nb.id, port: 0 }; last = nb }
             q.connect(from, goalTo)
+            // rw closes a goal X ↔ X by itself, as in Lean: the ↔rfl block comes with it
+            if ((rule === 'rw' || rule === 'rwr') && this.rules.includes('refl')) {
+              const g = norm(last.inputs[1], q.analyze().s)
+              if (g.t === 'iff' && sameStatement(g.a, g.b, q.analyze().s)) { const r = q.addRule('refl'); q.connect({ block: r.id, port: 0 }, { block: last.id, port: 1 }) }
+            }
           }
           if (this.tryOut(build)) apply.push({ rule, text, act: () => { this.selected = null; this.change(() => build(this.proof)) } })
         }
@@ -2150,9 +2258,19 @@
         }
         if (g.t === 'bot' && f.t !== 'bot' && this.rules.includes('falseE') && tacticAllowed('exfalso'))
           chain('falseE', `⊥E · exact ${name}.elim`, ['falseE'])
+        // h : A ↔ B: rw [h] where the goal has A, rw [← h] where it has B
+        if (g.t === 'iff' && !undetermined(g, this.analysis.s)) {
+          if (this.rules.includes('rw') && containsStatement(f, g.a, this.analysis.s)) chain('rw', `rw · rw [${name}]`, ['rw'])
+          if (this.rules.includes('rwr') && containsStatement(f, g.b, this.analysis.s)) chain('rwr', `rw← · rw [← ${name}]`, ['rwr'])
+        }
       }
       // For any goal: exfalso (prove ⊥ instead), by_contra (assume the opposite), by_cases (two cases)
       const any = []
+      // A ↔ B: rfl when both sides are the same, symm to swap them
+      if (f.t === 'iff') {
+        if (this.rules.includes('refl') && sameStatement(f.a, f.b, this.analysis.s)) any.push({ rule: 'refl', text: '↔rfl · rfl', act: () => this.takeStep('refl') })
+        if (this.rules.includes('symm')) any.push({ rule: 'symm', text: '↔sym · symm', act: () => this.takeStep('symm') })
+      }
       if (f.t !== 'bot' && this.rules.includes('falseE') && tacticAllowed('exfalso'))
         any.push({ rule: 'falseE', text: '⊥E · exfalso', act: () => this.takeStep('falseE') })
       if (f.t !== 'bot' && this.rules.includes('raa') && tacticAllowed('by_contra'))
@@ -2456,8 +2574,8 @@
     { n: 1, levels: 13, at: [0, 0], after: [] }, { n: 2, levels: 23, at: [0, 1], after: [1] },
     { n: 3, levels: 20, at: [0, 2], after: [2] }, { n: 4, levels: 21, at: [0, 3], after: [3] },
     { n: 5, levels: 15, at: [0, 4], after: [4] }, { n: 6, levels: 26, at: [0, 5], after: [5] },
-    { n: 7, levels: 23, at: [0, 6], after: [5] }, { n: 8, levels: 3, at: [1, 7], after: [7] },
-    { n: 9, levels: 6, at: [1, 8], after: [7] },
+    { n: 7, levels: 13, at: [0, 6], after: [6] }, { n: 8, levels: 23, at: [0, 7], after: [5] },
+    { n: 9, levels: 3, at: [1, 8], after: [8] }, { n: 10, levels: 6, at: [1, 9], after: [8] },
   ]
   function worldMap() {
     const toc = document.querySelector('#toc')
@@ -2570,11 +2688,15 @@
   // Then (layout 3) new levels went into worlds 5 and 7 where they fit, and world 8 became "Puzzles".
   const MOVED3 = {"World-5___-Classical-Logic/:5": "World-5___-Classical-Logic/:6", "World-5___-Classical-Logic/:6": "World-5___-Classical-Logic/:7", "World-5___-Classical-Logic/:7": "World-5___-Classical-Logic/:8", "World-5___-Classical-Logic/:8": "World-5___-Classical-Logic/:9", "World-5___-Classical-Logic/:9": "World-5___-Classical-Logic/:10", "World-5___-Classical-Logic/:10": "World-5___-Classical-Logic/:11", "World-5___-Classical-Logic/:11": "World-5___-Classical-Logic/:12", "World-5___-Classical-Logic/:12": "World-5___-Classical-Logic/:14", "World-7___-Quantifiers/:15": "World-7___-Quantifiers/:19", "World-7___-Quantifiers/:16": "World-7___-Quantifiers/:22", "World-8___-Two-Puzzles/:0": "World-8___-Puzzles/:0", "World-8___-Two-Puzzles/:1": "World-8___-Puzzles/:1"}
   const MOVED_PAGES3 = {"World-8___-Two-Puzzles":"World-8___-Puzzles"}
+  // Then (layout 4) the world "Rewriting" came in as world 7, and the worlds after it one number up.
+  const MOVED4 = {"World-7___-Quantifiers/:0": "World-8___-Quantifiers/:0", "World-7___-Quantifiers/:1": "World-8___-Quantifiers/:1", "World-7___-Quantifiers/:2": "World-8___-Quantifiers/:2", "World-7___-Quantifiers/:3": "World-8___-Quantifiers/:3", "World-7___-Quantifiers/:4": "World-8___-Quantifiers/:4", "World-7___-Quantifiers/:5": "World-8___-Quantifiers/:5", "World-7___-Quantifiers/:6": "World-8___-Quantifiers/:6", "World-7___-Quantifiers/:7": "World-8___-Quantifiers/:7", "World-7___-Quantifiers/:8": "World-8___-Quantifiers/:8", "World-7___-Quantifiers/:9": "World-8___-Quantifiers/:9", "World-7___-Quantifiers/:10": "World-8___-Quantifiers/:10", "World-7___-Quantifiers/:11": "World-8___-Quantifiers/:11", "World-7___-Quantifiers/:12": "World-8___-Quantifiers/:12", "World-7___-Quantifiers/:13": "World-8___-Quantifiers/:13", "World-7___-Quantifiers/:14": "World-8___-Quantifiers/:14", "World-7___-Quantifiers/:15": "World-8___-Quantifiers/:15", "World-7___-Quantifiers/:16": "World-8___-Quantifiers/:16", "World-7___-Quantifiers/:17": "World-8___-Quantifiers/:17", "World-7___-Quantifiers/:18": "World-8___-Quantifiers/:18", "World-7___-Quantifiers/:19": "World-8___-Quantifiers/:19", "World-7___-Quantifiers/:20": "World-8___-Quantifiers/:20", "World-7___-Quantifiers/:21": "World-8___-Quantifiers/:21", "World-7___-Quantifiers/:22": "World-8___-Quantifiers/:22", "World-8___-Puzzles/:0": "World-9___-Puzzles/:0", "World-8___-Puzzles/:1": "World-9___-Puzzles/:1", "World-8___-Puzzles/:2": "World-9___-Puzzles/:2", "World-9___-Induction/:0": "World-10___-Induction/:0", "World-9___-Induction/:1": "World-10___-Induction/:1", "World-9___-Induction/:2": "World-10___-Induction/:2", "World-9___-Induction/:3": "World-10___-Induction/:3", "World-9___-Induction/:4": "World-10___-Induction/:4", "World-9___-Induction/:5": "World-10___-Induction/:5"}
+  const MOVED_PAGES4 = {"World-7___-Quantifiers": "World-8___-Quantifiers", "World-8___-Puzzles": "World-9___-Puzzles", "World-9___-Induction": "World-10___-Induction"}
   function moveProgress() {
     let layout = null
     try { layout = localStorage.getItem('ipm-verso:layout') } catch {}
-    if (layout !== '2' && layout !== '3') movePlaces(MOVED, MOVED_PAGES, '2')
-    if (layout !== '3') movePlaces(MOVED3, MOVED_PAGES3, '3')
+    if (!['2', '3', '4'].includes(layout)) movePlaces(MOVED, MOVED_PAGES, '2')
+    if (!['3', '4'].includes(layout)) movePlaces(MOVED3, MOVED_PAGES3, '3')
+    if (layout !== '4') movePlaces(MOVED4, MOVED_PAGES4, '4')
   }
   // Moves what the browser keeps under the places of `moved` (world page/:level → new place) and the
   // last page of `pages`. The lemmas and the current level of each world are made anew.
@@ -2644,6 +2766,15 @@
     { id: 'mp', cmd: 'apply h.mp / h.mpr', rules: ['iffE1', 'iffE2'],
       en: 'For `h : A ↔ B`: with the goal `B`, `apply h.mp` makes it `A` (↔E₁); with the goal `A`, `apply h.mpr` makes it `B` (↔E₂).',
       de: 'Für `h : A ↔ B`: beim Ziel `B` macht `apply h.mp` daraus `A` (↔E₁); beim Ziel `A` macht `apply h.mpr` daraus `B` (↔E₂).' },
+    { id: 'rfl', cmd: 'rfl', rules: ['refl'],
+      en: 'For a goal `A ↔ A`: done, a statement is equivalent to itself.',
+      de: 'Für ein Ziel `A ↔ A`: erledigt, eine Aussage ist zu sich selbst äquivalent.' },
+    { id: 'symm', cmd: 'symm', rules: ['symm'],
+      en: 'For a goal `A ↔ B`: the goal becomes `B ↔ A`.',
+      de: 'Für ein Ziel `A ↔ B`: Das Ziel wird `B ↔ A`.' },
+    { id: 'rw', cmd: 'rw [h] / rw [← h]', rules: ['rw', 'rwr'],
+      en: 'For `h : A ↔ B`: `rw [h]` puts `B` for every `A` in the goal, `rw [← h]` `A` for every `B`. A goal that becomes `X ↔ X` is done at once.',
+      de: 'Für `h : A ↔ B`: `rw [h]` setzt im Ziel für jedes `A` ein `B` ein, `rw [← h]` für jedes `B` ein `A`. Ein Ziel, das dabei zu `X ↔ X` wird, ist sofort erledigt.' },
     { id: 'trivial', cmd: 'trivial', rules: ['trueI'],
       en: 'For the goal `⊤`: done (⊤I).',
       de: 'Für das Ziel `⊤`: erledigt (⊤I).' },
@@ -2680,6 +2811,10 @@
     iffE1: { en: 'From `A ↔ B` and `A`, `B`.', de: 'Aus `A ↔ B` und `A` folgt `B`.' },
     iffE2: { en: 'From `A ↔ B` and `B`, `A`.', de: 'Aus `A ↔ B` und `B` folgt `A`.' },
     trueI: { en: '`⊤`, without anything.', de: '`⊤`, ohne alles.' },
+    refl: { en: '`A ↔ A`, for any `A`.', de: '`A ↔ A`, für jedes `A`.' },
+    symm: { en: 'From `A ↔ B`, `B ↔ A`.', de: 'Aus `A ↔ B` folgt `B ↔ A`.' },
+    rw: { en: 'From `A ↔ B` and a statement with `B` in some places (`?3 ?2`), the same statement with `A` there (`?3 ?1`). Lean: `rw [h]`.', de: 'Aus `A ↔ B` und einer Aussage mit `B` an einigen Stellen (`?3 ?2`) folgt dieselbe Aussage mit `A` an diesen Stellen (`?3 ?1`). Lean: `rw [h]`.' },
+    rwr: { en: 'The same the other way: from `A ↔ B` and a statement with `A`, the statement with `B`. Lean: `rw [← h]`.', de: 'Dasselbe andersherum: aus `A ↔ B` und einer Aussage mit `A` die Aussage mit `B`. Lean: `rw [← h]`.' },
     allI: { en: 'To prove `∀ x, P x`, prove `P c₁` for an object `c₁` about which nothing is known (it may not occur in what the proof assumes).', de: 'Um `∀ x, P x` zu beweisen, beweise `P c₁` für ein Objekt `c₁`, über das nichts bekannt ist (es darf in dem, was der Beweis annimmt, nicht vorkommen).' },
     allE: { en: 'From `∀ x, P x`, `P a` for any object `a`.', de: 'Aus `∀ x, P x` folgt `P a` für jedes Objekt `a`.' },
     exI: { en: 'From `P a`, `∃ x, P x`.', de: 'Aus `P a` folgt `∃ x, P x`.' },
@@ -2710,6 +2845,13 @@
     return box
   }
 
+  // Whether the statement `f` contains the statement `a` (for rw).
+  function containsStatement(f, a, s) {
+    f = norm(f, s)
+    if (sameStatement(f, a, s)) return true
+    return [f.a, f.b].some(g => g && containsStatement(g, a, s))
+  }
+
   // The tactic of a button, by its command.
   function tacticOf(text, rule) {
     const c = text.split(' · ').pop()
@@ -2719,7 +2861,7 @@
     for (const [re, id] of [[/^exact /, 'exact'], [/^(apply|have) /, 'apply'], [/^intro n;/, 'induction'], [/^intro c/, 'intro-all'],
       [/^intro /, 'intro'], [/^obtain ⟨c/, 'obtain-ex'], [/^obtain \(/, 'obtain-or'], [/^obtain ⟨/, 'obtain-and'], [/^(left|right)$/, 'left-right'],
       [/^constructor$/, 'constructor'], [/^by_cases /, 'by_cases'], [/^by_contra /, 'by_contra'], [/^trivial$/, 'trivial'],
-      [/^specialize /, 'specialize'], [/^use /, 'use']]) if (re.test(c)) return id
+      [/^specialize /, 'specialize'], [/^use /, 'use'], [/^rfl$/, 'rfl'], [/^symm$/, 'symm'], [/^rw /, 'rw']]) if (re.test(c)) return id
     return null
   }
 

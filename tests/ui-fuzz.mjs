@@ -14,8 +14,8 @@ const page = await (await browser.newContext({ viewport: { width: 1300, height: 
 const errors = []
 page.on('pageerror', e => errors.push(`${page.url()}: ${e.stack}`))
 const pages = process.env.ONLY ? [process.env.ONLY] : ['World-1___-Conjunction/', 'World-2___-Implication/', 'World-3___-Disjunction/', 'World-4___-Falsity-and-Negation/',
-  'World-5___-Classical-Logic/', 'World-6___-Equivalence-and-Truth/', 'World-7___-Quantifiers/', 'World-8___-Puzzles/',
-  'World-9___-Induction/', 'Tactic-Trainer/']
+  'World-5___-Classical-Logic/', 'World-6___-Equivalence-and-Truth/', 'World-7___-Rewriting/', 'World-8___-Quantifiers/', 'World-9___-Puzzles/',
+  'World-10___-Induction/', 'Tactic-Trainer/']
 const proofs = new Map()
 const targets = ['.ipm-current .ipm-canvas .ipm-port', '.ipm-current .ipm-canvas .ipm-port', '.ipm-current .ipm-canvas .ipm-port',
   '.ipm-current .ipm-step', '.ipm-current .ipm-step', '.ipm-current .ipm-canvas .ipm-rule', '.ipm-current .ipm-palette-item',

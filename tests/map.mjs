@@ -8,7 +8,7 @@ const page = await (await browser.newContext({ viewport: { width: 1300, height: 
 page.on('pageerror', e => console.log('PAGEERROR', e.message))
 await page.goto(base + 'World-2___-Implication/'); await page.evaluate(() => { localStorage.clear(); localStorage.setItem('ipm-verso:lang', 'de') })
 // level 1 of world 1 solved, all levels of world 8 (two)
-await page.evaluate(p => { for (const k of [`ipm-verso:${p}World-1___-Conjunction/:0`, `ipm-verso:${p}World-8___-Puzzles/:0`, `ipm-verso:${p}World-8___-Puzzles/:1`, `ipm-verso:${p}World-8___-Puzzles/:2`]) localStorage.setItem(k, JSON.stringify({ proof: '{"b":[],"c":[],"n":0,"m":{}}', solved: true })) }, new URL(base).pathname)
+await page.evaluate(p => { for (const k of [`ipm-verso:${p}World-1___-Conjunction/:0`, `ipm-verso:${p}World-9___-Puzzles/:0`, `ipm-verso:${p}World-9___-Puzzles/:1`, `ipm-verso:${p}World-9___-Puzzles/:2`]) localStorage.setItem(k, JSON.stringify({ proof: '{"b":[],"c":[],"n":0,"m":{}}', solved: true })) }, new URL(base).pathname)
 await page.reload(); await page.waitForTimeout(400)
 if (await page.locator('.ipm-tip-ok').count()) await page.locator('.ipm-tip-ok').click()
 const worlds = page.locator('#toc .ipm-map-world')

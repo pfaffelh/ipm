@@ -25,7 +25,7 @@ const done = async (name, t) => {
   console.log(`${name}: ${await state(t)}\n${code}\n`)
   proofs.push(code)
 }
-await page.goto(base + 'World-9___-Induction/')
+await page.goto(base + 'World-10___-Induction/')
 await page.evaluate(() => localStorage.clear()); await page.reload()
 await page.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => { x.classList.remove('ipm-locked'); x.inert = false }))
 const task = n => page.locator('.ipm-task').nth(n)

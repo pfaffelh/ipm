@@ -6,6 +6,7 @@ import Ipm.Sessions.Disjunction
 import Ipm.Sessions.Falsity
 import Ipm.Sessions.Classical
 import Ipm.Sessions.Iff
+import Ipm.Sessions.Rewriting
 import Ipm.Sessions.Quantifiers
 import Ipm.Sessions.Puzzles
 import Ipm.Sessions.Induction
@@ -98,6 +99,8 @@ gespeichert.
 {include 1 Ipm.Sessions.Classical}
 
 {include 1 Ipm.Sessions.Iff}
+
+{include 1 Ipm.Sessions.Rewriting}
 
 {include 1 Ipm.Sessions.Quantifiers}
 

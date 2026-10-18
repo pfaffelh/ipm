@@ -12,7 +12,7 @@ const newPage = async () => {
 await newPage()
 const worlds = process.argv.slice(2).length ? process.argv.slice(2) : ['World-1___-Conjunction/', 'World-2___-Implication/',
   'World-3___-Disjunction/', 'World-4___-Falsity-and-Negation/', 'World-5___-Classical-Logic/', 'World-6___-Equivalence-and-Truth/',
-  'World-7___-Quantifiers/', 'World-8___-Puzzles/', 'World-9___-Induction/']
+  'World-7___-Rewriting/', 'World-8___-Quantifiers/', 'World-9___-Puzzles/', 'World-10___-Induction/']
 const failed = [], solutions = []
 let solved = 0, total = 0
 for (const w of worlds) {

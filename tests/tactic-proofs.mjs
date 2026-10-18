@@ -31,7 +31,7 @@ for (const part of src.split(/^-- level /m).slice(1)) {
   levels.push({ name, steps })
 }
 const pages = { 3: 'World-3___-Disjunction/', 4: 'World-4___-Falsity-and-Negation/', 5: 'World-5___-Classical-Logic/',
-  6: 'World-6___-Equivalence-and-Truth/', 7: 'World-7___-Quantifiers/', 8: 'World-8___-Puzzles/', 9: 'World-9___-Induction/' }
+  6: 'World-6___-Equivalence-and-Truth/', 7: 'World-7___-Rewriting/', 8: 'World-8___-Quantifiers/', 9: 'World-9___-Puzzles/', 10: 'World-10___-Induction/' }
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })
 const page = await (await browser.newContext({ viewport: { width: 1300, height: 900 } })).newPage()
 page.on('pageerror', e => console.log('PAGEERROR', e.message))

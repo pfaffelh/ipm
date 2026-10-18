@@ -4,11 +4,12 @@
 # - texts that point to another level ("level 6", "level 7 of the previous world") still fit.
 # Usage (from the repository): python3 docs/levels.py   (exits with 1 if a check fails)
 import re, sys
-ORDER = ['Conjunction', 'Implication', 'Disjunction', 'Falsity', 'Classical', 'Iff', 'Quantifiers', 'Puzzles', 'Induction']
+ORDER = ['Conjunction', 'Implication', 'Disjunction', 'Falsity', 'Classical', 'Iff', 'Rewriting', 'Quantifiers', 'Puzzles', 'Induction']
 NEEDS = [  # word in the Lean proof → rule
     (r'⟨', 'conjI'), (r'\.[12]\b', 'conjE'), (r'\bfun\b', 'impI'), (r'\bOr\.inl\b', 'disjI1'), (r'\bOr\.inr\b', 'disjI2'),
     (r'\bClassical\.em\b', 'TND'), (r'\bIff\.intro\b', 'iffI'), (r'\.mp\b', 'iffE1'), (r'\.mpr\b', 'iffE2'), (r'\btrivial\b', 'trueI'),
     (r'\bNat\.rec\b', 'ind'), (r'\bbyContradiction\b', 'raa'),
+    (r'^\s*rfl$', 'refl'), (r'^\s*symm$', 'symm'), (r'\brw \[[^←]', 'rw'), (r'\brw \[←', 'rwr'),
 ]
 USES = {  # lemma (statement) → levels (statements) that it shortens, as they were chosen
     'A → B, B → C ⊢ A → C': ['A → ⊥, B → A ⊢ B → ⊥', 'A → B, B → C ⊢ (A → ⊥) ∨ C'],

@@ -11,7 +11,7 @@ quantifiers, written as in Lean.
 Each task carries a Lean proof, checked when the site is built.
 -/
 
-#doc (Manual) "World 7: Quantifiers" =>
+#doc (Manual) "World 8: Quantifiers" =>
 
 :::en
 Statements about objects: `P a` says that the object `a` has the property `P`, `R a b` that `a`
