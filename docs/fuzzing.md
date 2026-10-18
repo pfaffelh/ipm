@@ -10,6 +10,7 @@ in Lean too. Lean is the referee: the fuzzers below collect every proof the game
 | `tests/mutate.mjs` (node) | Starts from correct proofs (`tactics-only.mjs` with `SNAPOUT=…`) and moves lines to other outputs that fit, takes blocks out, forgets fixed objects. Writes `fuzz-out/mutated.lean`. |
 | `tests/tactics-only.mjs` | Solves the levels with the tactic buttons alone (search, as Lean would: at the newest goal, with what one has there). `SNAPOUT=…` keeps the proofs. |
 | `tests/fuzz-tactics.mjs` | Taps random tactic buttons; a button must never draw a line with ☠ or ⚠ or cause an eigenvariable ⚠. Writes `fuzz-out/tactics.lean`. |
+| `tests/tactic-proofs.lean`, `tests/tactic-proofs.mjs` | Lean tactic proofs (checked by Lean) of the levels the search does not find, with the game's names and only tactics the game has as buttons; the script plays each of them in the game with the buttons alone (`LEANOUT=…` for the game's own Lean proofs). With the search, every level can be played with tactics only. |
 | `tests/lemma-fuzz.mjs` | Solves the levels with the proofs of `tactics-only.mjs` (so the lemma levels become lemmas), then adds lemma blocks in later levels and connects at random. Writes `lemma.lean` (check each proof in a `namespace` of its own: they bring the lemma theorems along). |
 | `tests/ui-fuzz.mjs` | Taps at random what a player can tap, in both modes; collects page errors and lines between ports that do not exist. Writes `fuzz-out/ui.lean`. |
 
