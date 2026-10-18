@@ -246,6 +246,8 @@
 
   // The type of objects in Lean: α, or Nat for statements about natural numbers.
   let leanDomain = 'α'
+  // While a Lean type is written: what an eigenvariable outside its block is written as (`default`).
+  let eigOutside = null
 
   // Names of bound variables of rule blocks carry the block (`x#b3`), so that they never clash; they
   // are shown without it.
@@ -297,7 +299,8 @@
     t = resolve(t, s)
     switch (t.t) {
       case 'bv': return names[t.n] ?? baseName(t.n)
-      case 'con': case 'eig': return t.n
+      case 'con': return t.n
+      case 'eig': return eigOutside?.(t.n) ?? t.n
       case 'meta': return '?' + metaNumber(t.id.split('.').pop())
       case 'fn': {
         const txt = t.n === 'succ' ? `${showTerm(t.args[0], s, false, names)} + 1`
@@ -590,7 +593,11 @@
       // Objects chosen with a tactic (specialize h₁ a, use a) are fixed from the start.
       let s = Object.assign({}, ...this.blocks.map(b => b.fix ?? {}))
       const status = {}
-      let todo = [...this.connections], progress = true
+      // A line that closes a circle (a block that would help to prove itself) is never part of a
+      // proof, however it came in (the interface does not draw one).
+      for (const c of this.connections)
+        if (!isLocal(this.block(c.from.block), c.from.port) && (c.from.block === c.to.block || this.createsCycle(c.from.block, c.to.block))) status[c.id] = 'cycle'
+      let todo = this.connections.filter(c => !status[c.id]), progress = true
       eigScope = null
       for (;;) {
         progress = false
@@ -684,7 +691,7 @@
         const inside = new Set(), hyps = []
         const visit = (x, k) => {
           for (const c of this.connections) {
-            if (c.to.block !== x.id || c.to.port !== k || status[c.id] === 'fail') continue
+            if (c.to.block !== x.id || c.to.port !== k || ['fail', 'cycle'].includes(status[c.id])) continue
             const src = this.block(c.from.block)
             if (src.kind === 'assumption' || isLocal(src, c.from.port)) hyps.push([src, c.from.port])
             else if (!inside.has(src.id)) { inside.add(src.id); src.inputs.forEach((_, j) => visit(src, j)) }
@@ -757,7 +764,7 @@
     const lean = f => show(f, s, 0, true)
     // `f` in Lean with what is still undetermined filled in: True for a statement, `default` for an
     // object (a proof is a proof of the statement with any of them).
-    const closed = f => {
+    const closedNow = f => {
       const s2 = { ...s }
       const fill = g => {
         g = norm(g, s2)
@@ -765,17 +772,20 @@
         parts(g).forEach(fill)
       }
       for (let k = 0; k < 5 && undetermined(f, s2); k++) fill(f)
-      return show(f, s2, 0, true)
+      eigOutside = n => (boundEig.has(n) ? null : (needDefault = true, 'default'))
+      try { return show(f, s2, 0, true) } finally { eigOutside = null }
     }
     // The major premise of an elimination, with its type if Lean could not find it: ⟨a, b⟩.1 or
     // Or.elim (Or.inl a) … do not elaborate, (⟨a, b⟩ : A ∧ B).1 does.
     const head = t => (t.k === 'app' ? head(t.f) : t)
     const typed = (t, f) => (['pair', 'fun'].includes(t.k) || (t.k === 'app' && ['Or.inl', 'Or.inr', 'Iff.intro', 'False.elim',
-      'Classical.byContradiction', 'Or.elim', 'Exists.elim'].includes(head(t).n)) ? { k: 'typed', a: t, type: closed(f) } : t)
+      'Classical.byContradiction', 'Or.elim', 'Exists.elim'].includes(head(t).n)) ? { k: 'typed', a: t, f } : t)
     // A term in the proof: an object of α; an undetermined one is `default`.
+    const boundEig = new Set()
     const leanTerm = (t, atomic) => {
       t = resolve(t, s)
-      if (t.t === 'meta') { needDefault = true; return 'default' }
+      // undetermined, or an eigenvariable outside its block (where it stands for any object)
+      if (t.t === 'meta' || (t.t === 'eig' && !boundEig.has(t.n))) { needDefault = true; return 'default' }
       if (t.t === 'fn') {
         const txt = t.n === 'succ' ? `${leanTerm(t.args[0], false)} + 1` : [t.n, ...t.args.map(a => leanTerm(a, true))].join(' ')
         return atomic ? `(${txt})` : txt
@@ -790,7 +800,7 @@
     { const all = hypNames(p).names; for (const b of p.blocks) if (b.kind === 'rule') b.outputs.forEach((_, j) => { if (isLocal(b, j)) locals[`${b.id}.${j}`] = all[`${b.id}.${j}`] }) }
     // Terms: {k: 'var', n} | {k: 'sorry'} | {k: 'app', f, a} | {k: 'fun', x, body} | {k: 'pair', a, b} | {k: 'proj', a, i}
     const input = (b, i, depth) => {
-      const c = p.connections.find(c => c.to.block === b.id && c.to.port === i && analysis.status[c.id] !== 'fail')
+      const c = p.connections.find(c => c.to.block === b.id && c.to.port === i && !['fail', 'cycle'].includes(analysis.status[c.id]))
       return c && depth < 60 ? output(p.block(c.from.block), c.from.port, depth + 1) : { k: 'sorry' }
     }
     const output = (b, j, depth) => {
@@ -810,7 +820,7 @@
           return app('Or.elim', h, { k: 'fun', x, body: arg(1) }, { k: 'fun', x: y, body: arg(2) })
         }
         case 'falseE': return app('False.elim', arg(0))
-        case 'TND': return app('Classical.em', { k: 'var', n: '_' })
+        case 'TND': return app('Classical.em', { k: 'type', f: { t: 'meta', id: `${b.id}.A` } })
         case 'raa': { const x = hyp(b, 1); return app('Classical.byContradiction', { k: 'fun', x, body: arg(0) }) }
         case 'iffI': return app('Iff.intro', arg(0), arg(1))
         case 'iffE1': return app('Iff.mp', major(0), arg(1))
@@ -839,7 +849,7 @@
       return { k: 'sorry' }
     }
     // Printing, with as few parentheses as Lean needs.
-    const atomic = t => ['var', 'sorry', 'pair', 'proj', 'typed'].includes(t.k) || (t.k === 'term' && resolve(t.t, s).t !== 'fn')
+    const atomic = t => ['var', 'sorry', 'pair', 'proj', 'typed', 'type'].includes(t.k) || (t.k === 'term' && resolve(t.t, s).t !== 'fn')
     // In a complete proof, unused names are written `_`, as Lean asks for.
     const used = new Set()
     const useTerm = t => { t = resolve(t, s); if (t.t === 'eig') used.add(t.n); parts(t).forEach(useTerm) }
@@ -857,12 +867,18 @@
         case 'sorry': return 'sorry'
         case 'pair': return `⟨${pr(t.a)}, ${pr(t.b)}⟩`
         case 'proj': return `${atomic(t.a) ? pr(t.a) : `(${pr(t.a)})`}.${t.i}`
-        case 'typed': return `(${pr(t.a)} : ${t.type})`
+        case 'typed': return `(${pr(t.a)} : ${closedNow(t.f)})`
+        case 'type': { const a = closedNow(t.f); return /\s/.test(a) ? `(${a})` : a }
         case 'app': return `${t.f.k === 'fun' ? `(${pr(t.f)})` : pr(t.f)} ${atomic(t.a) ? pr(t.a) : `(${pr(t.a)})`}`
         case 'fun': {  // fun x => fun y => … is written fun x y => …
-          const xs = []
-          for (; t.k === 'fun'; t = t.body) xs.push(named(t.x) ? t.x : '_')
-          return `fun ${xs.join(' ')} => ${pr(t)}`
+          const xs = [], eigs = []
+          for (; t.k === 'fun'; t = t.body) {
+            xs.push(named(t.x) ? t.x : '_')
+            if (/^c[₀-₉]+$/.test(t.x) && !boundEig.has(t.x)) { boundEig.add(t.x); eigs.push(t.x) }
+          }
+          const body = pr(t)
+          eigs.forEach(x => boundEig.delete(x))
+          return `fun ${xs.join(' ')} => ${body}`
         }
       }
     }
@@ -1539,12 +1555,12 @@
           this.hideSheet()
           this.render()
         })
-        if (this.selectedConn === c.id && (st === 'fail' || st === 'escape')) {
+        if (this.selectedConn === c.id && (st === 'fail' || st === 'escape' || st === 'cycle')) {
           // A line with ☠ or ⚠: the explanation and ✕ in a box right beside it (drawn over the blocks).
           g.classList.add('ipm-conn-selected')
           const out = p.block(c.from.block).outputs[c.from.port], inp = p.block(c.to.block).inputs[c.to.port]
-          bubble = { c, m: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, text: st === 'fail'
-            ? tr('{x} does not fit {y}', { x: show(out, s), y: show(inp, s) })
+          bubble = { c, m: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, text: st === 'cycle' ? tr('That would go round in a circle.')
+            : st === 'fail' ? tr('{x} does not fit {y}', { x: show(out, s), y: show(inp, s) })
             : tr('A local hypothesis may only be used inside its box.') }
         } else if (this.selectedConn === c.id) {
           g.classList.add('ipm-conn-selected')
@@ -1557,7 +1573,7 @@
           })
           g.append(x)
         }
-        if (st === 'fail') {
+        if (st === 'fail' || st === 'cycle') {
           const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
           const skull = svg('text', { x: m.x, y: m.y + 7, class: 'ipm-skull', 'text-anchor': 'middle' }, '☠')
           skull.addEventListener('click', ev => { ev.stopPropagation(); this.selectConn(c) })
@@ -1772,7 +1788,9 @@
       const objects = new Set()
       const collect = g => { if (g.t === 'con' && g.n !== '0') objects.add(g.n); parts(g).forEach(collect) }
       for (const x of this.proof.blocks) if (x.kind !== 'rule') [...x.inputs, ...x.outputs].forEach(collect)
-      for (const x of this.proof.blocks) if (x.eig) objects.add(x.eig)
+      // (an eigenvariable only inside its block: the input of ∀I, the case of ∃E and induction)
+      for (const x of this.proof.blocks)
+        if (x.eig && sel.kind === 'in' && this.within(sel, x.id, x.rule === 'allI' ? 0 : 1)) objects.add(x.eig)
       const objs = [...objects].slice(0, 4)
       // [rule, Lean command, tactic (which must be allowed)]
       const goal = { imp: [['impI', `intro ${fresh()}`, 'intro']], and: [['conjI', 'constructor', 'constructor']],
@@ -1860,22 +1878,8 @@
     // whose box the input is not. Returns the names by `block.port`.
     usableAt(at) {
       const p = this.proof
-      // whether `at` leads into the input k of block x (where x's local hypothesis may be used)
-      const leadsInto = (x, k) => {
-        if (at.block === x && at.port === k) return true
-        const seen = new Set(), stack = [at.block]
-        while (stack.length) {
-          const b = stack.pop()
-          if (seen.has(b)) continue
-          seen.add(b)
-          for (const c of p.connections) {
-            if (c.from.block !== b || isLocal(p.block(b), c.from.port)) continue
-            if (c.to.block === x && c.to.port === k) return true
-            stack.push(c.to.block)
-          }
-        }
-        return false
-      }
+      const leadsInto = (x, k) => this.within(at, x, k)
+      // the local hypotheses an output rests on
       // the local hypotheses an output rests on
       const rests = (o, seen = new Set()) => {
         const b = p.block(o.block)
@@ -1893,20 +1897,44 @@
       return out
     }
 
+    // Whether the input `at` lies in the box of block x's input k (where x's local hypothesis or
+    // eigenvariable may be used): it leads into that input, and on no way to a goal past it (an
+    // output may be used more than once).
+    within(at, x, k) {
+      const p = this.proof
+      if (at.block === x && at.port === k) return true
+      const seen = new Set(), stack = [at.block]
+      let into = false
+      while (stack.length) {
+        const b = stack.pop()
+        if (seen.has(b)) continue
+        seen.add(b)
+        if (p.block(b).kind === 'conclusion') return false
+        for (const c of p.connections) {
+          if (c.from.block !== b || isLocal(p.block(b), c.from.port)) continue
+          if (c.to.block === x && c.to.port === k) { into = true; continue }
+          stack.push(c.to.block)
+        }
+      }
+      return into
+    }
+
     // Whether the lines that `connect` draws (on a copy of the proof) fit, and no local hypothesis escapes.
     tryOut(connect) {
       const q = new Proof([], [])
       q.restore(this.proof.snapshot())
-      const before = new Set(q.connections.map(c => c.id))
+      const before = new Set(q.connections.map(c => c.id)), eig = Object.keys(this.analysis.eigen).length
       connect(q)
       const a = q.analyze()
-      return q.connections.every(c => before.has(c.id) || ['ok', 'pending'].includes(a.status[c.id]))
+      return q.connections.every(c => before.has(c.id) || ['ok', 'pending'].includes(a.status[c.id])) &&
+        Object.keys(a.eigen).length <= eig
     }
 
     // by_cases: a case distinction (∨E) on A ∨ ¬A (TND) for the selected goal; A is the chosen
     // proposition (or left open).
     takeCases(prop = null) {
       const sel = this.selected
+      if (!sel) return  // a button left over from an earlier picture
       this.selected = null
       this.change(() => {
         const cases = this.proof.addRule('disjE'), tnd = this.proof.addRule('TND')
@@ -1919,6 +1947,7 @@
     // Puts the block of a step in and connects it to the selected port.
     takeStep(rule, object = null) {
       const sel = this.selected
+      if (!sel) return  // a button left over from an earlier picture
       this.selected = null
       this.change(() => {
         const nb = this.proof.addRule(rule)
@@ -1933,7 +1962,7 @@
           if (RULES[rule].local) {
             this.analysis = this.proof.analyze()
             const key = `${sel.block}.${sel.port}`
-            const goal = this.analysis.openInputs.find(o => o.block !== nb.id && this.usableAt(o)[key])
+            const goal = this.analysis.openInputs.find(o => o.block !== nb.id && !this.proof.createsCycle(nb.id, o.block) && this.usableAt(o)[key])
             if (goal) this.proof.connect({ block: nb.id, port: 0 }, goal)
           }
         }
@@ -1999,11 +2028,12 @@
     tapBlock(b) {
       const sel = this.selected
       if (sel && this.tacticsOnly) return this.closeSheet()
-      if (sel?.kind === 'in') {
+      if (sel?.kind === 'in' && b.outputs.length) {
         const j = b.outputs.findIndex((_, j) => this.fits({ block: b.id, port: j }, sel))
         return this.link({ block: b.id, port: Math.max(j, 0) }, sel)
       }
-      if (sel?.kind === 'out') {
+      // (a block without inputs, like ⊤I, takes no line)
+      if (sel?.kind === 'out' && b.inputs.length) {
         const open = this.analysis.openInputs.filter(o => o.block === b.id)
         const target = open.find(o => this.fits(sel, o)) ?? open[0] ?? { block: b.id, port: 0 }
         return this.link(sel, target)

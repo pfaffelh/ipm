@@ -4,8 +4,12 @@
 import { chromium } from 'playwright-core'
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })
 const base = process.env.BASE ?? 'http://127.0.0.1:8002/'
-const page = await (await browser.newContext({ viewport: { width: 1300, height: 900 } })).newPage()
-page.on('pageerror', e => console.log('PAGEERROR', e.message))
+let page
+const newPage = async () => {
+  page = await (await browser.newContext({ viewport: { width: 1300, height: 900 } })).newPage()
+  page.on('pageerror', e => console.log('PAGEERROR', e.message))
+}
+await newPage()
 const worlds = process.argv.slice(2).length ? process.argv.slice(2) : ['World-1___-Conjunction/', 'World-2___-Implication/',
   'World-3___-Disjunction/', 'World-4___-Falsity-and-Negation/', 'World-5___-Classical-Logic/', 'World-6___-Equivalence-and-Truth/',
   'World-7___-Quantifiers/', 'World-8___-Two-Puzzles/', 'World-9___-Induction/']
@@ -17,7 +21,8 @@ for (const w of worlds) {
   const n = await page.evaluate(() => window.ipmTasks.length)
   for (let i = 0; i < n; i++) {
     total++
-    const r = await page.evaluate(i => {
+    let r
+    try { r = await page.evaluate(i => {
       const t = window.ipmTasks[i]
       t.tacticsOnly = true
       t.render = function () { this.analysis = this.proof.analyze() }
@@ -50,9 +55,13 @@ for (const w of worlds) {
       const search = depth => {
         if (t.analysis.qed) return true
         if (depth === 0 || Date.now() > deadline) return false
-        const k = t.proof.snapshot().replace(/"(b|c)\d+"/g, '') + '|' + t.analysis.openInputs.length
+        // a short key: a hash of the picture without the ids
+        const str = t.proof.snapshot().replace(/"(b|c)\d+"/g, '')
+        let hsh = 0
+        for (let q = 0; q < str.length; q++) hsh = (hsh * 31 + str.charCodeAt(q)) | 0
+        const k = hsh + '|' + t.analysis.openInputs.length
         if ((seen.get(k) ?? -1) >= depth) return false
-        if (seen.size > 200000) return false
+        if (seen.size > 100000) return false
         seen.set(k, depth)
         for (const m of moves()) {
           const snap = t.proof.snapshot()
@@ -71,10 +80,16 @@ for (const w of worlds) {
       }
       for (let d = 1; d <= 14; d++) { seen.clear(); const r = search(d); if (r) return { ok: true, steps: r, graph: t.proof.snapshot() }; if (Date.now() > deadline) break }
       return { ok: false }
-    }, i)
+    }, i) } catch (e) {
+      // the page gave up (memory): a new one, and on with the next level
+      r = { ok: false, crash: String(e).split('\n')[0] }
+      await newPage(); await page.goto(base + w)
+      await page.evaluate(() => { localStorage.setItem('ipm-verso:in-order', 'off') }); await page.reload()
+    }
     const name = `${w.match(/World-(\d+)/)[1]}.${i + 1}`
     if (r.ok) { solved++; solutions.push({ level: name, graph: r.graph }); if (process.env.VERBOSE) console.log(name, r.steps.join(' ; ')) }
-    else { failed.push(name); console.log(name, 'not found') }
+    else { failed.push(name); console.log(name, r.crash ? 'CRASH ' + r.crash : 'not found') }
+    if (process.env.SNAPOUT) (await import('node:fs')).writeFileSync(process.env.SNAPOUT, JSON.stringify(solutions))
   }
 }
 console.log(`solved with tactics alone: ${solved}/${total}`, failed.length ? `not found: ${failed.join(', ')}` : '')

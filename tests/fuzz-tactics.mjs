@@ -37,12 +37,12 @@ for (const w of pages) {
           const steps = t.steps()
           if (!steps.length) continue
           const s = pick(steps)
-          const before = new Set(t.proof.connections.map(c => c.id))
+          const before = new Set(t.proof.connections.map(c => c.id)), eigBefore = Object.keys(t.analysis.eigen).length
           try { s.act() } catch (e) { bad.push(`exception in ${s.text}: ${e}`); break }
           t.render()
           const a = t.analysis
           const wrong = t.proof.connections.filter(c => !before.has(c.id) && !['ok', 'pending'].includes(a.status[c.id]))
-          if (wrong.length || Object.keys(a.eigen).length)
+          if (wrong.length || Object.keys(a.eigen).length > eigBefore)
             bad.push(`${s.text} → ${wrong.map(c => a.status[c.id]).join(',')}${Object.keys(a.eigen).length ? ' eigen⚠' : ''} | ${t.proof.snapshot()}`)
         }
         if (t.analysis.qed) { render.call(t); found.push(t.leanCode.textContent); t.render = function () { this.analysis = this.proof.analyze() } }
