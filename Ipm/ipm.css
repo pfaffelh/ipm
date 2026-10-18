@@ -522,3 +522,5 @@ main section:has(> ol.section-toc) { display: none; }
 .ipm-lexicon-cmd { font-family: var(--verso-code-font-family, monospace); font-weight: bold; font-size: 1.1em; color: #1d3f73; margin-bottom: 0.3rem; }
 .ipm-lexicon-text, .ipm-lexicon-tactic { margin: 0.3rem 0; }
 .ipm-tip-sub { font-weight: bold; margin: 0.4rem 0; }
+/* a proof done (in the tactic mode: the goals of this board): the board turns green */
+.ipm-canvas.ipm-board-done { background-color: #e9f7ee; border-color: #8cc4a2; }

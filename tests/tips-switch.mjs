@@ -1,6 +1,7 @@
 // No tip is lost when the mode is switched: what was missed in the other mode comes at the next level
-// that needs it. 1) the whole game with blocks: never a block before its tip; 2) world 1 with blocks,
-// then tactics; 3) worlds 1–2 with tactics, then blocks. Usage: BASE=http://localhost:8002/ node tips-switch.mjs
+// that needs it (a tactic's tip comes when its button is first offered). 1) the whole game with
+// blocks: never a block before its tip; 2) world 1 with blocks, then tactics; 3) worlds 1–2 with
+// tactics, then blocks. Usage: BASE=http://localhost:8002/ node tips-switch.mjs
 import { chromium } from 'playwright-core'
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })
 const base = process.env.BASE ?? 'http://127.0.0.1:8002/'
@@ -26,19 +27,19 @@ await fresh('blocks')
 let lost = []
 for (let w = 0; w < worlds.length; w++) for (let n = 1; n <= sizes[w]; n++) { const r = await visit(w, n); if (r?.missed.length) lost.push(`${w + 1}.${n}: ${r.missed.join(', ')}`) }
 console.log('1) whole game with blocks, blocks before their tip:', lost.length ? lost.join(' | ') : 'none')
-// 2)
+// 2) world 1 with blocks, then tactics: the tactics come with their buttons, exact too
 await fresh('blocks')
 for (let n = 1; n <= 13; n++) await visit(0, n)
 await setMode('tactics')
-console.log('2) world 1 with blocks, then tactics: tip at 2.1:', JSON.stringify((await visit(1, 1))?.tactics))
-// 3)
+await visit(1, 1)  // the introduction to the tactic mode
+await page.locator('.ipm-task.ipm-current .ipm-conclusion .ipm-port.ipm-in').dispatchEvent('click'); await page.waitForTimeout(300)
+console.log('2) world 1 with blocks, then tactics: at the goal of 2.1:', JSON.stringify(await page.locator('.ipm-tip-card .ipm-lexicon-cmd').allTextContents()))
+// 3) worlds 1–2 with tactics (no tips at the start of a level but the first), then blocks
 await fresh('tactics')
-const seen = []
-for (let n = 1; n <= 13; n++) seen.push(...((await visit(0, n))?.tactics ?? []))
-for (let n = 1; n <= 23; n++) seen.push(...((await visit(1, n))?.tactics ?? []))
-console.log('3) tactics seen in worlds 1–2:', JSON.stringify(seen))
+for (let n = 1; n <= 13; n++) await visit(0, n)
+for (let n = 1; n <= 23; n++) await visit(1, n)
 await setMode('blocks')
 const r3 = await visit(2, 1)
-console.log('   then blocks: blocks caught up at 3.1:', JSON.stringify(r3?.missed))
+console.log('3) worlds 1–2 with tactics, then blocks: caught up at 3.1:', JSON.stringify(r3?.missed))
 console.log('   and at 3.2 nothing more:', JSON.stringify(await visit(2, 2)))
 await browser.close()

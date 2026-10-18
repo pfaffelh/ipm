@@ -32,13 +32,17 @@ classics: tertium non datur from proof by contradiction, `→` over `∨`, the d
   `apply h₁.mp`, `trivial`, `intro c₁`, `specialize h₁ a`, `use a`, `obtain ⟨c₁, h₂⟩ := h₁`,
   `intro n; induction n`, and `exact h₁` for what fits); one tap puts the block in, already
   connected. A level offers the tactics of its blocks, so they come one by one as the blocks do;
-  where a block is introduced, the tactic mode shows the tip of its tactic, once. The names h₁, h₂, …
+  a tactic's tip appears when its button is offered for the first time. Below the board, the
+  Lean proof is the tactic script one has played (`refine ⟨a, ?_⟩  -- use a` for `use`, whose
+  automation could close a goal early). The names h₁, h₂, …
   stand beside the blue dots. Goals with different hypotheses (the two cases of `obtain (h₂ | h₃)`)
   each get a **board** of their own, as tabs above the picture; local hypotheses stand on top as
   blocks of their own (dashed), so there are no compartments and boxes; “Whole proof” shows the
   usual picture. Both modes build the same proof, so one can switch in the middle of a level.
-* No tip is lost when the mode is switched: a level shows the tips of its tactics (or blocks) that
-  were never seen, also those missed in the other mode.
+* No tip is lost when the mode is switched: a tactic explains itself when first offered, and a level
+  in the block mode shows the blocks of its own never met (missed in the tactic mode).
+* A finished proof turns the board green (in the tactic mode each board, once its goals are done);
+  the world map counts at once, and the last level of a world leads on to the next world.
 * Two lexica, below the world map: the tactics and the blocks, with pictures (the same texts as the
   tips of the tactic mode).
 * Proof by contradiction (RAA, from world 5 level 5 on): from `?1 ⇒ ⊥` get `?1`; in Lean

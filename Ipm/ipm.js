@@ -27,7 +27,10 @@
   const DE = {
     '🎯 Tactic trainer': '🎯 Taktik-Trainer', '📖 Tactics': '📖 Taktiken', '🧱 Blocks': '🧱 Bausteine',
     'Blocks': 'Bausteine', 'Tactics': 'Taktiken', 'New tactics': 'Neue Taktiken', 'Tactic: ': 'Taktik: ',
-    'Blocks you have not met yet': 'Bausteine, die du noch nicht kennst',
+    'Blocks you have not met yet': 'Bausteine, die du noch nicht kennst', 'New tactic': 'Neue Taktik',
+    'Next world ›': 'Nächste Welt ›', 'World': 'Welt',
+    'In the tactic mode you prove with tactics, as in Lean. Tap a red circle (a goal) or a blue dot (something you have): the tactics that fit appear beside it, and each puts its block in. Below the board you see what you have at a goal. A tactic that comes for the first time explains itself.':
+      'Im Taktik-Modus beweist du mit Taktiken, wie in Lean. Tippe einen roten Kreis (ein Ziel) oder einen blauen Punkt (etwas, das du hast) an: Daneben erscheinen die Taktiken, die passen, und jede setzt ihren Baustein ein. Unter dem Spielfeld siehst du, was du bei einem Ziel hast. Eine Taktik, die zum ersten Mal kommt, erklärt sich selbst.',
     '▶ Start in the tactic mode': '▶ Start im Taktik-Modus',
     '∧-introduction': '∧-Einführung', '∧-elimination': '∧-Beseitigung',
     '→-introduction': '→-Einführung', '→-elimination': '→-Beseitigung',
@@ -883,6 +886,93 @@
         }
       }
     }
+    // The proof as a tactic script, as the tactic mode builds it: the block that proves a goal is the
+    // tactic of its button (∧I constructor, →I intro, a row of →E/∀E apply, ∨E with TND by_cases, …),
+    // with the names of the buttons; what one gets forwards (obtain ⟨…⟩, specialize, have) comes right
+    // before its first use in each branch. What the tactics cannot say is written as a term (exact …).
+    const allNames = hypNames(p).names
+    const conn = (b, i) => p.connections.find(c => c.to.block === b.id && c.to.port === i && !['fail', 'cycle'].includes(analysis.status[c.id]))
+    const bullet = ls => [`· ${ls[0]}`, ...ls.slice(1).map(l => `  ${l}`)]
+    const goalsOf = list => (list.length === 1 ? list[0] : list.flatMap(bullet))
+    const tactics = (b, i, rn, have, depth = 0) => {
+      const c = conn(b, i)
+      if (!c || depth > 60) return ['sorry']
+      const src = p.block(c.from.block), j = c.from.port
+      const nm = (id, k) => { const n = allNames[`${id}.${k}`]; return rn[n] ?? n }
+      const next = (bb, ii, extra = {}) => tactics(bb, ii, { ...rn, ...extra }, new Set(have), depth + 1)
+      // something one has: from the assumptions, a local hypothesis, or a step forwards
+      if (nm(src.id, j)) return [...forward(src, rn, have), `exact ${nm(src.id, j)}`]
+      const term = () => [`exact ${pr(output(src, j, 0))}`]
+      const local = k => nm(src.id, k)
+      switch (src.rule) {
+        case 'conjI': case 'iffI': return ['constructor', ...goalsOf([next(src, 0), next(src, 1)])]
+        case 'impI': return [`intro ${local(1)}`, ...next(src, 0)]
+        case 'allI': boundEig.add(src.eig); return [`intro ${src.eig}`, ...next(src, 0)]
+        case 'disjI1': return ['left', ...next(src, 0)]
+        case 'disjI2': return ['right', ...next(src, 0)]
+        case 'trueI': return ['trivial']
+        case 'falseE': return ['exfalso', ...next(src, 0)]
+        case 'raa': return [`by_contra ${local(1)}`, ...next(src, 0)]
+        // (Mathlib's use may close what is left by itself, and then the next line has no goal: refine
+        // does the same as the button, without that)
+        case 'exI': { const t = leanTerm(termMeta(src.id), false); return [`refine ⟨${t}, ?_⟩  -- use ${t}`, ...next(src, 0)] }
+        case 'impE': case 'allE': case 'iffE1': case 'iffE2': {
+          // a row of →E and ∀E (and ↔E on top) from something one has: apply h, the premises as goals
+          const row = []
+          let x = src
+          for (;;) {
+            row.unshift(x)
+            const c0 = conn(x, 0), y = c0 && p.block(c0.from.block)
+            if (!y || nm(y.id, c0.from.port) || !['impE', 'allE'].includes(y.rule) || row.length > 8) break
+            x = y
+          }
+          const c0 = conn(row[0], 0)
+          const h = c0 && nm(c0.from.block, c0.from.port)
+          if (!h || row.slice(1).some(r => r.rule.startsWith('iff'))) return term()
+          const before = forward(p.block(c0.from.block), rn, have)  // (first: the premises know it)
+          const premises = row.filter(r => r.rule !== 'allE').map(r => next(r, 1))
+          const head = src.rule === 'iffE1' && row.length === 1 ? `${h}.mp` : src.rule === 'iffE2' && row.length === 1 ? `${h}.mpr` : h
+          return [...before, `apply ${head}`, ...(premises.length ? goalsOf(premises) : [])]
+        }
+        case 'disjE': {
+          const c0 = conn(src, 0), y = c0 && p.block(c0.from.block)
+          const n1 = local(1), n2 = local(2)
+          if (y?.rule === 'TND') {
+            // by_cases names both cases alike; the second case of the button is h₃, in Lean h₂ : ¬A
+            const a = closedNow({ t: 'meta', id: `${y.id}.A` })
+            return [`by_cases ${n1} : ${a}`, ...goalsOf([next(src, 1), next(src, 2, { [n2]: n1 })])]
+          }
+          const h = c0 && nm(c0.from.block, c0.from.port)
+          if (!h) return term()
+          return [...forward(y, rn, have), `obtain (${n1} | ${n2}) := ${h}`, ...goalsOf([next(src, 1), next(src, 2)])]
+        }
+        case 'exE': {
+          const c0 = conn(src, 0), h = c0 && nm(c0.from.block, c0.from.port)
+          if (!h) return term()
+          boundEig.add(src.eig)
+          return [...forward(p.block(c0.from.block), rn, have), `obtain ⟨${src.eig}, ${local(1)}⟩ := ${h}`, ...next(src, 1)]
+        }
+        case 'ind': {
+          boundEig.add(src.eig)
+          const z = next(src, 0), st = next(src, 1)
+          return ['intro n', 'induction n with', '| zero =>', ...z.map(l => `  ${l}`), `| succ ${src.eig} ${local(1)} =>`, ...st.map(l => `  ${l}`)]
+        }
+        case 'TND': return [`exact Classical.em ${pr({ k: 'type', f: { t: 'meta', id: `${src.id}.A` } })}`]
+      }
+      return term()
+    }
+    // the steps forwards that give block x's named outputs (and what they need), once per branch
+    const forward = (x, rn, have) => {
+      if (!x || x.kind !== 'rule' || have.has(x.id)) return []
+      const nm = k => { const n = allNames[`${x.id}.${k}`]; return rn[n] ?? n }
+      const c0 = conn(x, 0)
+      const from = c0 && p.block(c0.from.block), h = c0 && (rn[allNames[`${c0.from.block}.${c0.from.port}`]] ?? allNames[`${c0.from.block}.${c0.from.port}`])
+      have.add(x.id)
+      if (x.rule === 'conjE' && h) return [...forward(from, rn, have), `obtain ⟨${nm(0)}, ${nm(1)}⟩ := ${h}`]
+      if (x.rule === 'allE' && h) return [...forward(from, rn, have), `specialize ${h} ${leanTerm(termMeta(x.id), true)}`]
+      if (x.named && !RULES[x.rule]?.local && nm(0)) return [`have ${nm(0)} := ${pr(output(x, 0, 0))}`]
+      return []
+    }
     const goals = p.blocks.filter(b => b.kind === 'conclusion').map(g => ({ g, term: input(g, 0, 0) }))
     return {
       uses: [...uses],
@@ -891,6 +981,8 @@
         use(term)
         needDefault = false
         const txt = pr(term)
+        boundEig.clear()
+        const script = tactics(g, 0, {}, new Set())
         // The variables of the statement, as groups [names, type]; `[Inhabited α]` if `default` is used.
         const arrow = (n, res) => [...Array(n).fill(D), res].join(' → ')
         const groups = []
@@ -907,6 +999,7 @@
           hyps: assumptions.map(b => `(${named(names[b.id]) ? names[b.id] : '_'} : ${lean(b.outputs[0])})`),
           goal: lean(g.inputs[0]),
           term: txt,
+          script,
         }
       }),
     }
@@ -922,6 +1015,15 @@
     const examples = goals.map(g =>
       ['example', ...binders(g.groups, false), ...g.hyps, `: ${g.goal} :=\n  ${g.term}`].join(' '))
     return [...lemmaTheorems(uses), ...examples].join('\n\n')
+  }
+
+  // The same proof as a tactic script, as the tactic mode builds it (by_contra is Mathlib's).
+  function leanTactics(proof, analysis) {
+    const { uses, goals } = leanParts(proof, analysis)
+    const examples = goals.map(g =>
+      ['example', ...binders(g.groups, false), ...g.hyps, `: ${g.goal} := by\n${g.script.map(l => `  ${l}`).join('\n')}`].join(' '))
+    const mathlib = examples.some(e => /^\s*(· )*by_contra /m.test(e))
+    return [...(mathlib ? ['import Mathlib'] : []), ...lemmaTheorems(uses), ...examples].join('\n\n')
   }
 
   // ---------------------------------------------------------------- lemmas
@@ -1840,8 +1942,12 @@
       })
       this.canvas.replaceChildren(root)
       const qed = this.analysis.qed
+      // done: the whole proof, or on a board of the tactic mode its own goals
+      const boardDone = qed || (!bv.whole && bv.boards.length > 1 &&
+        !this.analysis.openInputs.some(o => bv.scope.chain(bv.scope.goalScope(o)).includes(this.board)))
+      this.canvas.classList.toggle('ipm-board-done', boardDone)
       this.root.classList.toggle('ipm-solved', qed)
-      const code = leanProof(p, this.analysis)
+      const code = this.tacticsOnly ? leanTactics(p, this.analysis) : leanProof(p, this.analysis)
       this.leanCode.textContent = code
       this.leanLink.href = 'https://live.lean-lang.org/#code=' + encodeURIComponent(code)
       this.leanLink.hidden = !qed
@@ -2164,9 +2270,14 @@
 
     // The steps as small buttons beside the selected port: above a red circle, below a blue dot.
     // If they do not fit side by side into the picture, they are stacked, and kept inside it.
+    // A tactic offered for the first time brings its tip (in the tactic mode, not on the trainer).
     drawSteps(root, pos, view) {
       const steps = this.steps()
       if (!steps.length) return
+      if (!this.forceTactics) {
+        const fresh = [...new Set(steps.map(st => tacticOf(st.text)))].filter(id => id && !seenTip(`tactic-tip:${id}`))
+        if (fresh.length) setTimeout(() => this.onNewTactics?.(fresh))
+      }
       const vs = this.viewPort(this.selected), vb = this.view?.proof?.block(vs.block) ?? this.proof.block(vs.block)
       if (!vb || !pos[vb.id]) return
       const sel = this.selected
@@ -2351,6 +2462,7 @@
     const toc = document.querySelector('#toc')
     const links = {}
     for (const a of document.querySelectorAll('#toc a[href*="World-"]')) {
+      if (a.closest('.ipm-worlds')) continue  // (the map's own links, when it is drawn anew)
       const m = /World-(\d+)___/.exec(a.getAttribute('href'))
       if (m && !links[m[1]]) links[m[1]] = a
     }
@@ -2395,6 +2507,7 @@
       g.append(svg('text', { x: x + r + 8, y: y + 13, class: 'ipm-map-count' }, `${k}/${w.levels}`))
       map.append(g)
     }
+    toc.querySelector('.ipm-worlds')?.remove()  // (drawn anew when a level is solved)
     const box = el('div', 'ipm-worlds')
     box.append(el('div', 'ipm-worlds-title', tr('Worlds')), map)
     // the tactic trainer, beside the way through the worlds
@@ -2591,6 +2704,18 @@
     return box
   }
 
+  // The tactic of a button, by its command.
+  function tacticOf(text) {
+    const c = text.split(' · ').pop()
+    if (/^exact .*\.elim$/.test(c) || c === 'exfalso') return 'exfalso'
+    if (/^(apply|have) .*\.mpr?\b/.test(c)) return 'mp'
+    for (const [re, id] of [[/^exact /, 'exact'], [/^(apply|have) /, 'apply'], [/^intro n;/, 'induction'], [/^intro c/, 'intro-all'],
+      [/^intro /, 'intro'], [/^obtain ⟨c/, 'obtain-ex'], [/^obtain \(/, 'obtain-or'], [/^obtain ⟨/, 'obtain-and'], [/^(left|right)$/, 'left-right'],
+      [/^constructor$/, 'constructor'], [/^by_cases /, 'by_cases'], [/^by_contra /, 'by_contra'], [/^trivial$/, 'trivial'],
+      [/^specialize /, 'specialize'], [/^use /, 'use']]) if (re.test(c)) return id
+    return null
+  }
+
   // The tactics introduced with these blocks (and `exact` with the first).
   const tacticsFor = rules => TACTICS.filter(t => t.rules.some(r => rules.includes(r)) || (t.id === 'exact' && rules.length))
 
@@ -2710,15 +2835,30 @@
     }
     // The tip of a level, once: in a box over the stage, closed with "Got it".
     const seenKey = k => `${tasks[k].key}:tip`
+    // the tips of tactics offered for the first time
+    tasks.forEach(t => {
+      t.onNewTactics = ids => {
+        if (document.querySelector('.ipm-tip-overlay')) return
+        const fresh = TACTICS.filter(x => ids.includes(x.id) && !seenTip(`tactic-tip:${x.id}`))
+        if (!fresh.length) return
+        fresh.forEach(x => markTip(`tactic-tip:${x.id}`))
+        const overlay = el('div', 'ipm-tip-overlay'), card = el('div', 'ipm-tip-card'), ok = el('button', 'ipm-tip-ok', tr('Got it'))
+        ok.type = 'button'
+        ok.addEventListener('click', () => overlay.remove())
+        overlay.addEventListener('click', ev => { if (ev.target === overlay) overlay.remove() })
+        card.append(el('div', 'ipm-tip-head', '💡 ' + tr('New tactic')), ...fresh.map(tacticEntry), ok)
+        overlay.append(card)
+        document.body.append(overlay)
+        ok.focus({ preventScroll: true })
+      }
+    })
     const showTip = k => {
       if (tasks[k].root.inert) return
       let nodes, mark
       if (MODE === 'tactics' && !tasks[k].forceTactics) {
-        // the tactic mode: every tactic this level offers whose tip was never seen (where it is
-        // introduced, or here, if it was missed in the other mode)
-        const fresh = tacticsFor(tasks[k].rules).filter(t => !seenTip(`tactic-tip:${t.id}`))
-        nodes = fresh.length ? [el('div', 'ipm-tip-sub', tr('New tactics')), ...fresh.map(tacticEntry)] : []
-        mark = () => fresh.forEach(t => markTip(`tactic-tip:${t.id}`))
+        // the tactic mode: once, how it is played (the tactics bring their tips when first offered)
+        nodes = seenTip('tactic-mode') ? [] : [el('p', '', tr('In the tactic mode you prove with tactics, as in Lean. Tap a red circle (a goal) or a blue dot (something you have): the tactics that fit appear beside it, and each puts its block in. Below the board you see what you have at a goal. A tactic that comes for the first time explains itself.'))]
+        mark = () => markTip('tactic-mode')
       } else {
         // the level's own tip, once; and every block of the level whose tip was never seen (missed in
         // the tactic mode), from the lexicon
@@ -2788,9 +2928,12 @@
       a.setAttribute('aria-pressed', 'false')
       a.addEventListener('click', () => toggleAbout(about.hidden))
       aboutButtons.push(a)
-      const b = barButton('ipm-next', '›', tr('Next ›'), tr('Next'))
-      b.disabled = k === tasks.length - 1
-      b.addEventListener('click', () => show(k + 1))
+      // at the last level of a world: on to the next world
+      const w = Number(/World-(\d+)___/.exec(location.pathname)?.[1] ?? 0)
+      const nextWorld = k === tasks.length - 1 && w ? document.querySelector(`#toc a[href*="World-${w + 1}___"]`) : null
+      const b = nextWorld ? barButton('ipm-next', '›', tr('Next world ›'), tr('World')) : barButton('ipm-next', '›', tr('Next ›'), tr('Next'))
+      b.disabled = k === tasks.length - 1 && !nextWorld
+      b.addEventListener('click', () => (nextWorld ? (location.href = nextWorld.getAttribute('href').replace(/#.*$/, '')) : show(k + 1)))
       bar?.append(a, b)
     })
     const update = () => {
@@ -2810,6 +2953,7 @@
         if (t.reported) return
         t.reported = true
         setTimeout(update, 300)
+        worldMap()  // the count of the world
       }
       if (t.root.classList.contains('ipm-solved')) t.reported = true
     })
