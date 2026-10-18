@@ -43,9 +43,10 @@ proof is a set of lines that lead from the assumptions to the goals, through *ru
   every step), *Tips* (the level's text and tips) and *Next*.
 * The worlds are in the table of contents (☰ on a phone); the levels of a world are the dots above
   the board. A level that brings something new explains it in a tip, the first time.
-* Tactics: tapping a red circle or a blue dot can also show buttons with the step that fits, as a
-  Lean tactic: for the goal `A → B` it is *→I · intro h*. You earn each tactic by solving the level
-  that introduces it by hand (in the settings ⚙ you can also switch them all on, or off).
+* Two modes, switched above each level: in the *puzzle mode* you build the proof from blocks and
+  lines, as described here; in the *Lean tactic mode* you only tap tactic buttons, as in Lean (for
+  the goal `A → B`: *→I · intro h*), and goals with different hypotheses get boards of their own.
+  Both build the same proof; below the board it is the Lean proof, a term or a tactic script.
 * Some solved levels become *lemmas*: in later levels they appear with the blocks, under “Lemmas
   from solved levels”.
 
@@ -74,10 +75,11 @@ aus Linien, die über *Regelblöcke* von den Annahmen zu den Zielen führen.
   jedem Schritt aktualisiert), *Tipps* (der Text des Levels und seine Tipps) und *Weiter*.
 * Die Welten stehen im Inhaltsverzeichnis (☰ auf dem Handy); die Levels einer Welt sind die Kreise
   über dem Spielfeld. Ein Level, das etwas Neues bringt, erklärt es beim ersten Mal in einem Tipp.
-* Taktiken: Ein angetippter roter Kreis oder blauer Punkt kann auch Knöpfe mit dem passenden Schritt
-  als Lean-Taktik zeigen: für das Ziel `A → B` ist das *→I · intro h*. Jede Taktik spielst du frei,
-  indem du das Level, das sie einführt, von Hand löst (in den Einstellungen ⚙ kannst du auch alle ein-
-  oder ausschalten).
+* Zwei Modi, umschaltbar über jedem Level: Im *Puzzle-Modus* baust du den Beweis aus Bausteinen und
+  Linien, wie hier beschrieben; im *Lean-Taktik-Modus* tippst du nur Taktik-Knöpfe an, wie in Lean
+  (für das Ziel `A → B`: *→I · intro h*), und Ziele mit verschiedenen Annahmen bekommen eigene
+  Spielfelder. Beide bauen denselben Beweis; unter dem Spielfeld steht er in Lean, als Term oder als
+  Taktik-Skript.
 * Manche gelösten Levels werden zu *Hilfssätzen*: In späteren Levels stehen sie bei den Bausteinen,
   unter „Hilfssätze aus gelösten Levels“.
 

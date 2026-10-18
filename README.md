@@ -24,8 +24,8 @@ classics: tertium non datur from proof by contradiction, `→` over `∨`, the d
   onto the board), and the menu closes again. You then connect the block.
   Unification fills in `?1`, `?2`. Rule blocks you no longer need go into the trash can 🗑, which
   appears while you drag a block.
-* Two modes, switched above each level (the choice is kept; the start page has “Start” and, less
-  prominent, “Start in the tactic mode”): the Proof Machine (blocks and lines) and the **tactic
+* Two modes, switched above each level (the choice is kept; the start page has two buttons alike,
+  one for each): the **puzzle mode**, the Proof Machine (blocks and lines), and the **Lean tactic
   mode**, where one plays only with tactic buttons. A tapped circle or dot offers the tactics that
   fit, named as in Lean, with the names of the Lean proof (`intro h₃`, `constructor`,
   `obtain ⟨h₃, h₄⟩ := h₁`, `apply h₁`, `left`/`right`, `exfalso`, `by_contra h₃`, `by_cases h₃ : A`,
@@ -40,12 +40,12 @@ classics: tertium non datur from proof by contradiction, `→` over `∨`, the d
   blocks of their own (dashed), so there are no compartments and boxes; “Whole proof” shows the
   usual picture. Both modes build the same proof, so one can switch in the middle of a level.
 * No tip is lost when the mode is switched: a tactic explains itself when first offered, and a level
-  in the block mode shows the blocks of its own never met (missed in the tactic mode).
-* A finished proof turns the board green (in the tactic mode each board, once its goals are done);
+  in the puzzle mode shows the blocks of its own never met (missed in the Lean tactic mode).
+* A finished proof turns the board green (in the Lean tactic mode each board, once its goals are done);
   the world map counts at once, and the last level of a world leads on to the next world.
 * The browser tab shows a block of the game (its input on top, its output below) as its icon.
 * Two lexica, below the world map: the tactics and the blocks, with pictures (the same texts as the
-  tips of the tactic mode).
+  tips of the Lean tactic mode).
 * Proof by contradiction (RAA, from world 5 level 5 on): from `?1 ⇒ ⊥` get `?1`; in Lean
   `Classical.byContradiction`.
 * A line that does not fit gets a ☠, a local hypothesis used outside its box a ⚠; tap them for an
@@ -79,7 +79,7 @@ classics: tertium non datur from proof by contradiction, `→` over `∨`, the d
   block of its own (assumptions as inputs, goals as outputs, `?1`, `?2` for the statements). In the
   Lean proof, a lemma is a `theorem` that the proof applies.
 * Tactic trainer: a page of its own (from the start page and below the world map), ten lessons
-  always played in the tactic mode (`(tactics := true)`), each on one tactic (exact, constructor,
+  always played in the Lean tactic mode (`(tactics := true)`), each on one tactic (exact, constructor,
   obtain, intro, apply, left/right, obtain on ∨, exfalso, by_contra).
 * A tapped goal shows, below the board, what one has there, as Lean shows it
   (`h₁ : A ∨ B   h₃ : B ⊢ B ∨ A`); what cannot be used there is dimmed.

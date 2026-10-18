@@ -10,7 +10,7 @@ const tap = async l => { await l.dispatchEvent('click'); await page.waitForTimeo
 await page.goto(base)
 await page.evaluate(() => localStorage.clear()); await page.reload()
 console.log('start page:', JSON.stringify(await page.locator('.ipm-start a').allTextContents()))
-await page.locator('.ipm-start-tactics').click(); await page.waitForTimeout(600)
+await page.locator('.ipm-start-button').nth(1).click(); await page.waitForTimeout(600)
 console.log('mode:', await page.evaluate(() => localStorage.getItem('ipm-verso:mode')), '| at', new URL(page.url()).pathname)
 console.log('tip:', JSON.stringify(await page.locator('.ipm-tip-card .ipm-lexicon-cmd').allTextContents()))
 if (process.env.SHOT) await page.screenshot({ path: process.env.SHOT + '/mode-tip.png' })

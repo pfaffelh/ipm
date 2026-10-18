@@ -29,9 +29,10 @@
     'Blocks': 'Bausteine', 'Tactics': 'Taktiken', 'New tactics': 'Neue Taktiken', 'Tactic: ': 'Taktik: ',
     'Blocks you have not met yet': 'Bausteine, die du noch nicht kennst', 'New tactic': 'Neue Taktik',
     'Next world ›': 'Nächste Welt ›', 'World': 'Welt',
-    'In the tactic mode you prove with tactics, as in Lean. Tap a red circle (a goal) or a blue dot (something you have): the tactics that fit appear beside it, and each puts its block in. Below the board you see what you have at a goal. A tactic that comes for the first time explains itself.':
-      'Im Taktik-Modus beweist du mit Taktiken, wie in Lean. Tippe einen roten Kreis (ein Ziel) oder einen blauen Punkt (etwas, das du hast) an: Daneben erscheinen die Taktiken, die passen, und jede setzt ihren Baustein ein. Unter dem Spielfeld siehst du, was du bei einem Ziel hast. Eine Taktik, die zum ersten Mal kommt, erklärt sich selbst.',
-    '▶ Start in the tactic mode': '▶ Start im Taktik-Modus',
+    'In the Lean tactic mode you prove with tactics, as in Lean. Tap a red circle (a goal) or a blue dot (something you have): the tactics that fit appear beside it, and each puts its block in. Below the board you see what you have at a goal. A tactic that comes for the first time explains itself.':
+      'Im Lean-Taktik-Modus beweist du mit Taktiken, wie in Lean. Tippe einen roten Kreis (ein Ziel) oder einen blauen Punkt (etwas, das du hast) an: Daneben erscheinen die Taktiken, die passen, und jede setzt ihren Baustein ein. Unter dem Spielfeld siehst du, was du bei einem Ziel hast. Eine Taktik, die zum ersten Mal kommt, erklärt sich selbst.',
+    '▶ Puzzle mode': '▶ Puzzle-Modus', '▶ Lean tactic mode': '▶ Lean-Taktik-Modus',
+    'Puzzle mode': 'Puzzle-Modus', 'Lean tactic mode': 'Lean-Taktik-Modus', 'Continue: {w}': 'Weiter: {w}',
     '∧-introduction': '∧-Einführung', '∧-elimination': '∧-Beseitigung',
     '→-introduction': '→-Einführung', '→-elimination': '→-Beseitigung',
     '∨-introduction (left)': '∨-Einführung (links)', '∨-introduction (right)': '∨-Einführung (rechts)',
@@ -2531,21 +2532,21 @@
     let last = null
     try { last = JSON.parse(localStorage.getItem('ipm-verso:last')) } catch {}
     const box = el('div', 'ipm-start')
-    const go = el('a', 'ipm-start-button', last ? tr('▶ Continue') : tr('▶ Start'))
-    go.href = last?.href ?? first.getAttribute('href')
-    box.append(go)
+    // two buttons alike: the two modes (where one left off, or at the start)
+    const row = el('div', 'ipm-start-modes')
+    for (const [m, text] of [['blocks', tr('▶ Puzzle mode')], ['tactics', tr('▶ Lean tactic mode')]]) {
+      const go = el('a', 'ipm-start-button' + (last && MODE === m ? ' ipm-start-last' : ''), text)
+      go.href = last?.href ?? first.getAttribute('href')
+      go.addEventListener('click', () => setMode(m))
+      row.append(go)
+    }
+    box.append(row)
     if (last) {
-      box.append(el('div', 'ipm-start-where', last.title))
+      box.append(el('div', 'ipm-start-where', tr('Continue: {w}', { w: last.title })))
       const again = el('a', 'ipm-start-again', tr('or start from the beginning'))
       again.href = first.getAttribute('href')
       box.append(again)
     }
-    // the same, in the tactic mode
-    const tactic = el('a', 'ipm-start-tactics', tr('▶ Start in the tactic mode'))
-    tactic.href = go.href
-    tactic.addEventListener('click', () => setMode('tactics'))
-    go.addEventListener('click', () => setMode('blocks'))
-    box.append(tactic)
     const train = document.querySelector('#toc a[href*="Tactic-Trainer"], main a[href*="Tactic-Trainer"]')
     if (train) {
       const t = el('a', 'ipm-start-trainer', tr('🎯 Tactic trainer'))
@@ -2782,7 +2783,7 @@
     if (h1) h1.hidden = true
     // the mode, for all levels: blocks (the Proof Machine) or tactics (not on the tactic trainer's levels)
     const modeSwitch = el('div', 'ipm-mode-switch')
-    const modeButtons = [['blocks', tr('Blocks')], ['tactics', tr('Tactics')]].map(([m, text]) => {
+    const modeButtons = [['blocks', tr('Puzzle mode')], ['tactics', tr('Lean tactic mode')]].map(([m, text]) => {
       const b = el('button', '', text)
       b.type = 'button'
       b.addEventListener('click', () => { if (MODE !== m) { setMode(m); fillAbout(); showTip(current) } })
@@ -2874,7 +2875,7 @@
       let nodes, mark
       if (MODE === 'tactics' && !tasks[k].forceTactics) {
         // the tactic mode: once, how it is played (the tactics bring their tips when first offered)
-        nodes = seenTip('tactic-mode') ? [] : [el('p', '', tr('In the tactic mode you prove with tactics, as in Lean. Tap a red circle (a goal) or a blue dot (something you have): the tactics that fit appear beside it, and each puts its block in. Below the board you see what you have at a goal. A tactic that comes for the first time explains itself.'))]
+        nodes = seenTip('tactic-mode') ? [] : [el('p', '', tr('In the Lean tactic mode you prove with tactics, as in Lean. Tap a red circle (a goal) or a blue dot (something you have): the tactics that fit appear beside it, and each puts its block in. Below the board you see what you have at a goal. A tactic that comes for the first time explains itself.'))]
         mark = () => markTip('tactic-mode')
       } else {
         // the level's own tip, once; and every block of the level whose tip was never seen (missed in

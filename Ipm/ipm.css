@@ -516,7 +516,10 @@ main section:has(> ol.section-toc) { display: none; }
 .ipm-mode-switch[hidden] { display: none; }
 .ipm-mode-switch button { font: inherit; font-family: var(--verso-structure-font-family, sans-serif); font-size: 0.85em; padding: 0.2rem 0.7rem; border: none; background: white; color: #1d3f73; cursor: pointer; }
 .ipm-mode-switch button.ipm-mode-current { background: #3b6db3; color: white; }
-.ipm-start-tactics { display: block; margin-top: 0.7rem; font-size: 1.05em; }
+/* the two modes, as two buttons alike; the one played last stands out a little */
+.ipm-start-modes { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.8rem; }
+.ipm-start-modes .ipm-start-button { min-width: 15rem; text-align: center; }
+.ipm-start-modes .ipm-start-last { box-shadow: 0 0 0 3px #a9c3e8; }
 /* lexicon and tips of tactics */
 .ipm-lexicon-entry { border-top: 1px solid #d9e1ec; padding: 0.8rem 0; }
 .ipm-lexicon-cmd { font-family: var(--verso-code-font-family, monospace); font-weight: bold; font-size: 1.1em; color: #1d3f73; margin-bottom: 0.3rem; }
@@ -524,3 +527,4 @@ main section:has(> ol.section-toc) { display: none; }
 .ipm-tip-sub { font-weight: bold; margin: 0.4rem 0; }
 /* a proof done (in the tactic mode: the goals of this board): the board turns green */
 .ipm-canvas.ipm-board-done { background-color: #e9f7ee; border-color: #8cc4a2; }
+.ipm-start-modes .ipm-start-button { font-size: 1.35em; padding: 0.6em 1.4em; }

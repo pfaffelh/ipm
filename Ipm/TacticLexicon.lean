@@ -11,12 +11,12 @@ number := false
 %%%
 
 :::en
-The tactics of the tactic mode, in the order they come in the game. Each puts in the block shown
+The tactics of the Lean tactic mode, in the order they come in the game. Each puts in the block shown
 beside it; in a level, the tactics of its blocks are offered.
 :::
 
 :::de
-Die Taktiken des Taktik-Modus, in der Reihenfolge, in der sie im Spiel kommen. Jede setzt den
+Die Taktiken des Lean-Taktik-Modus, in der Reihenfolge, in der sie im Spiel kommen. Jede setzt den
 Baustein ein, der daneben steht; in einem Level werden die Taktiken seiner Bausteine angeboten.
 :::
 
