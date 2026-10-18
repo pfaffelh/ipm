@@ -34,7 +34,7 @@ Die Levels enthalten keine Arithmetik: Eigenschaften wie `P`, `Even`, `Odd` sind
 Annahmen beschrieben.
 :::
 
-::::task (unlocks := "induction") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE, ind") (assumptions := "P 0; ∀ n, P n → P (n + 1)") (conclusions := "∀ n, P n")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE, ind") (assumptions := "P 0; ∀ n, P n → P (n + 1)") (conclusions := "∀ n, P n")
 :::en
 The induction rule itself: connect the start and the step.
 :::

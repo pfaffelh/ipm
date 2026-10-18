@@ -55,7 +55,7 @@ example (A B : Prop) (a : A) (_ : B) : A ∨ B := Or.inl a
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (unlocks := "left") (assumptions := "A") (conclusions := "A ∨ B")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "A") (conclusions := "A ∨ B")
 :::en
 `B` need not be true at all.
 :::
@@ -69,7 +69,7 @@ example (A B : Prop) (a : A) : A ∨ B := Or.inl a
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (unlocks := "right") (assumptions := "B") (conclusions := "A ∨ B")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE") (assumptions := "B") (conclusions := "A ∨ B")
 :::en
 And from the other side.
 :::

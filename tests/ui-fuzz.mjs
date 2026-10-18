@@ -25,7 +25,7 @@ for (const w of pages) {
   for (const mode of ['all', 'tactics']) {
     if (w === 'Tactic-Trainer/' && mode === 'tactics') continue
     await page.goto(base + w)
-    await page.evaluate(m => { localStorage.clear(); localStorage.setItem('ipm-verso:in-order', 'off'); localStorage.setItem('ipm-verso:tactics', 'all') }, mode)
+    await page.evaluate(m => { localStorage.clear(); localStorage.setItem('ipm-verso:in-order', 'off'); localStorage.setItem('ipm-verso:mode', 'tactics') }, mode)
     await page.reload()
     const n = await page.evaluate(() => window.ipmTasks?.length ?? 0)
     for (let i = 0; i < n; i++) {

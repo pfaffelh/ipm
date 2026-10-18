@@ -49,7 +49,7 @@ in einer Annahme, die der Beweis verwendet. Sonst bekommt ihr Block ein ⚠. Wie
 Lean als `default`.
 :::
 
-::::task (unlocks := "specialize") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "∀ x, P x") (conclusions := "P a")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "∀ x, P x") (conclusions := "P a")
 :::en
 Your first ∀E: what holds for all `x` holds for `a`.
 :::
@@ -81,7 +81,7 @@ example (α : Type) (P : α → Prop) (a b : α) (h : ∀ x, P x) : P a ∧ P b 
 ```
 ::::
 
-::::task (unlocks := "use") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "P a") (conclusions := "∃ x, P x")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, allI, allE, exI, exE") (assumptions := "P a") (conclusions := "∃ x, P x")
 :::en
 Your first ∃I: `a` is an example.
 :::

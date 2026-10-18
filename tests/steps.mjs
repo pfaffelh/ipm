@@ -19,7 +19,7 @@ const hyp = (t, n) => t.locator('.ipm-assumption .ipm-port.ipm-out').nth(n)
 const steps = async t => (await t.locator('.ipm-step text').allTextContents()).join(', ') || '(none)'
 const open = async (path, tactics = true) => {
   await page.goto(base + path)
-  await page.evaluate(on => { localStorage.clear(); if (on) localStorage.setItem('ipm-verso:tactics', 'on') }, tactics); await page.reload()
+  await page.evaluate(on => { localStorage.clear(); if (on) localStorage.setItem('ipm-verso:mode', 'tactics') }, tactics); await page.reload()
   await page.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => { x.classList.remove('ipm-locked'); x.inert = false }))
 }
 
@@ -27,9 +27,9 @@ await open('World-2___-Implication/', false)
 // A → B, B → C ⊢ A → C, with steps
 let t = page.locator('.ipm-task').nth(4)
 await tap(goal(t))
-console.log('no tactics earned yet, goal A → C:', await steps(t))
-await page.locator('.ipm-settings-button').click(); await page.locator('.ipm-settings input[value="all"]').check(); await page.waitForTimeout(150)
-console.log('after ⚙ tactics "all": goal A → C:', await steps(t))
+console.log('blocks mode, goal A → C:', await steps(t))
+// the tactic mode (the switch above a level; kept in the browser)
+await page.evaluate(() => localStorage.setItem('ipm-verso:mode', 'tactics'))
 await page.reload()
 await page.evaluate(() => document.querySelectorAll('.ipm-task').forEach(x => { x.classList.remove('ipm-locked'); x.inert = false }))
 t = page.locator('.ipm-task').nth(4)

@@ -497,3 +497,28 @@ main section:has(> ol.section-toc) { display: none; }
 .ipm-hyp-name { font-family: var(--verso-code-font-family, monospace); font-size: 13px; font-weight: bold; fill: #2f5a96;
   paint-order: stroke; stroke: white; stroke-width: 4px; pointer-events: none; }
 .ipm-hyp-name.ipm-out-of-scope { opacity: 0.25; }
+
+/* boards: goals with different hypotheses each on a board of their own, as tabs */
+.ipm-boards { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.35rem; }
+.ipm-boards[hidden] { display: none; }
+.ipm-board-tab { font-family: var(--verso-code-font-family, monospace); font-size: 0.85em; padding: 0.25rem 0.7rem; border: 1px solid #3b6db3; border-radius: 14px; background: white; color: #1d3f73; cursor: pointer; }
+.ipm-board-tab.ipm-board-current { background: #3b6db3; color: white; }
+.ipm-board-whole { font-family: var(--verso-structure-font-family, sans-serif); margin-left: auto; }
+.ipm-port.ipm-elsewhere circle:not(.ipm-hit) { fill: #e8f0fb; stroke: #3b6db3; }
+.ipm-elsewhere-mark { font-size: 14px; font-weight: bold; fill: #3b6db3; pointer-events: none; }
+/* a local hypothesis on top of a board: it holds only there */
+.ipm-block.ipm-local-hyp rect { stroke-dasharray: 5 3; }
+/* the tactic mode: no blocks to add */
+.ipm-tactics-only .ipm-palette, .ipm-tactics-only .ipm-splitter, .ipm-tactics-only .ipm-menu { display: none !important; }
+
+/* the switch between the two modes, above each level */
+.ipm-mode-switch { display: inline-flex; border: 1px solid #3b6db3; border-radius: 14px; overflow: hidden; margin-left: auto; margin-right: 0.8rem; flex: none; }
+.ipm-mode-switch[hidden] { display: none; }
+.ipm-mode-switch button { font: inherit; font-family: var(--verso-structure-font-family, sans-serif); font-size: 0.85em; padding: 0.2rem 0.7rem; border: none; background: white; color: #1d3f73; cursor: pointer; }
+.ipm-mode-switch button.ipm-mode-current { background: #3b6db3; color: white; }
+.ipm-start-tactics { display: block; margin-top: 0.7rem; font-size: 1.05em; }
+/* lexicon and tips of tactics */
+.ipm-lexicon-entry { border-top: 1px solid #d9e1ec; padding: 0.8rem 0; }
+.ipm-lexicon-cmd { font-family: var(--verso-code-font-family, monospace); font-weight: bold; font-size: 1.1em; color: #1d3f73; margin-bottom: 0.3rem; }
+.ipm-lexicon-text, .ipm-lexicon-tactic { margin: 0.3rem 0; }
+.ipm-tip-sub { font-weight: bold; margin: 0.4rem 0; }

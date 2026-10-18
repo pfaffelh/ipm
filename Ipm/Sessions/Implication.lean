@@ -34,7 +34,7 @@ Zwei neue Regeln, für die Implikation:
   außerhalb des Kastens zu verwenden, ist nicht erlaubt (⚠).
 :::
 
-::::task (rules := "conjI, conjE, impI, impE") (unlocks := "apply") (assumptions := "A, A → B") (conclusions := "B")
+::::task (rules := "conjI, conjE, impI, impE") (assumptions := "A, A → B") (conclusions := "B")
 :::en
 Your first →E: from `A → B` and `A` you get `B`.
 :::
@@ -137,7 +137,7 @@ example (A B C : Prop) (f : A → B) (g : A → B → C) : A → C := fun a => g
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE") (unlocks := "intro") (conclusions := "A → A") (assumptions := "")
+::::task (rules := "conjI, conjE, impI, impE") (conclusions := "A → A") (assumptions := "")
 :::en
 No assumptions at all.
 :::

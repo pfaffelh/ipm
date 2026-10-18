@@ -36,7 +36,7 @@ verwenden dann klassische Logik. Meist verwendest du TND zusammen mit ∨E: „E
 nicht. Im ersten Fall …“
 :::
 
-::::task (unlocks := "by_cases") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (conclusions := "A ∨ (A → ⊥)") (assumptions := "")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (conclusions := "A ∨ (A → ⊥)") (assumptions := "")
 :::en
 Just the new rule.
 :::
@@ -84,7 +84,7 @@ example (A B : Prop) (h : A ∧ B → False) : (A → False) ∨ (B → False) :
 ```
 ::::
 
-::::task (unlocks := "by_contra") (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (lemma := true) (assumptions := "(A → ⊥) → ⊥") (conclusions := "A")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (lemma := true) (assumptions := "(A → ⊥) → ⊥") (conclusions := "A")
 :::en
 Double negation: if `A` is not false, it is true.
 :::

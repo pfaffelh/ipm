@@ -10,6 +10,8 @@ import Ipm.Sessions.Quantifiers
 import Ipm.Sessions.Puzzles
 import Ipm.Sessions.Induction
 import Ipm.Trainer
+import Ipm.TacticLexicon
+import Ipm.BlockLexicon
 
 open Verso.Genre Manual
 open Ipm
@@ -102,3 +104,7 @@ gespeichert.
 {include 1 Ipm.Sessions.Induction}
 
 {include 1 Ipm.Trainer}
+
+{include 1 Ipm.TacticLexicon}
+
+{include 1 Ipm.BlockLexicon}

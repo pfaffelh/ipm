@@ -24,17 +24,21 @@ classics: tertium non datur from proof by contradiction, `→` over `∨`, the d
   onto the board), and the menu closes again. You then connect the block.
   Unification fills in `?1`, `?2`. Rule blocks you no longer need go into the trash can 🗑, which
   appears while you drag a block.
-* Tactics, earned: a task marked `(unlocks := "intro")` unlocks the tactic `intro` once solved (the
-  settings ⚙ in the header switch tactics off, to earned, or to all; and whether tasks come in
-  order). A selected port offers the block that fits its statement, named after the Lean
-  command, with the names the Lean proof below the board uses (goal `A → B`: `intro h₃`; `A ∧ B`,
-  `A ↔ B`: `constructor`; `A ∨ B`: `left`/`right`; `⊤`: `trivial`; `∃ x, P x`: `use a` for each
-  object of the level, or `use default`; any goal: `exfalso` (⊥E), `by_contra h₃` (proof by
-  contradiction, RAA), `by_cases h₃ : A` (TND with ∨E, one button for each proposition of the level); assumption `h₁ : A ∧ B`:
-  `obtain ⟨h₃, h₄⟩ := h₁`; `A ∨ B`: `obtain (h₃ | h₄) := h₁`; `A → B`: `apply h₁`; `⊥`:
-  `exact h₁.elim`; `A ↔ B`: `apply h₁.mp`/`apply h₁.mpr`; `∀ x, P x`: `specialize h₁ a`). One tap
-  adds the block, already connected. A goal also offers `exact h₁` for an assumption that fits it,
-  and `apply h₁` for an assumption `h₁ : A → B` whose `B` fits it.
+* Two modes, switched above each level (the choice is kept; the start page has “Start” and, less
+  prominent, “Start in the tactic mode”): the Proof Machine (blocks and lines) and the **tactic
+  mode**, where one plays only with tactic buttons. A tapped circle or dot offers the tactics that
+  fit, named as in Lean, with the names of the Lean proof (`intro h₃`, `constructor`,
+  `obtain ⟨h₃, h₄⟩ := h₁`, `apply h₁`, `left`/`right`, `exfalso`, `by_contra h₃`, `by_cases h₃ : A`,
+  `apply h₁.mp`, `trivial`, `intro c₁`, `specialize h₁ a`, `use a`, `obtain ⟨c₁, h₂⟩ := h₁`,
+  `intro n; induction n`, and `exact h₁` for what fits); one tap puts the block in, already
+  connected. A level offers the tactics of its blocks, so they come one by one as the blocks do;
+  where a block is introduced, the tactic mode shows the tip of its tactic, once. The names h₁, h₂, …
+  stand beside the blue dots. Goals with different hypotheses (the two cases of `obtain (h₂ | h₃)`)
+  each get a **board** of their own, as tabs above the picture; local hypotheses stand on top as
+  blocks of their own (dashed), so there are no compartments and boxes; “Whole proof” shows the
+  usual picture. Both modes build the same proof, so one can switch in the middle of a level.
+* Two lexica, below the world map: the tactics and the blocks, with pictures (the same texts as the
+  tips of the tactic mode).
 * Proof by contradiction (RAA, from world 5 level 5 on): from `?1 ⇒ ⊥` get `?1`; in Lean
   `Classical.byContradiction`.
 * A line that does not fit gets a ☠, a local hypothesis used outside its box a ⚠; tap them for an
@@ -62,15 +66,14 @@ classics: tertium non datur from proof by contradiction, `→` over `∨`, the d
   world with its levels solved, lines from the worlds it builds on.
 * On phones the tool bar is one row at the bottom (a symbol over a short word), and About this level
   and Lean are sheets over the board, which scroll.
-* Tasks come one after another; the ones not yet playable are shown greyed out.
+* Tasks come one after another; the ones not yet playable are shown greyed out (⚙ in the header
+  switches this off).
 * Solved tasks marked `(lemma := true)` become lemmas, offered only in the tasks after them (no circles): in the menu of ＋, “Lemmas from solved tasks” offers each solved task as a
   block of its own (assumptions as inputs, goals as outputs, `?1`, `?2` for the statements). In the
   Lean proof, a lemma is a `theorem` that the proof applies.
-* Tactic trainer: a page of its own (from the start page and below the world map), lessons on the
-  board played with tactics only (`(tactics := true)`): no blocks to add, no lines to draw; a tapped
-  goal or dot offers the tactics that fit, each puts its block in, already connected. Each lesson
-  explains one tactic in its tip (exact, constructor, obtain, intro, apply, left/right, obtain on ∨,
-  exfalso, by_contra).
+* Tactic trainer: a page of its own (from the start page and below the world map), ten lessons
+  always played in the tactic mode (`(tactics := true)`), each on one tactic (exact, constructor,
+  obtain, intro, apply, left/right, obtain on ∨, exfalso, by_contra).
 * A tapped goal shows, below the board, what one has there, as Lean shows it
   (`h₁ : A ∨ B   h₃ : B ⊢ B ∨ A`); what cannot be used there is dimmed.
 * Bugs are hunted with fuzzers, with Lean as the referee (`docs/fuzzing.md`).
