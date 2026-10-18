@@ -39,7 +39,7 @@
     
     'The proof in Lean': 'Der Beweis in Lean', 'Try it in Lean ↗': 'In Lean ausprobieren ↗',
     'goals accomplished 🎉': 'goals accomplished 🎉',
-    'Now choose a tactic': 'Jetzt eine Taktik wählen',
+    'Now choose a tactic': 'Jetzt eine Taktik wählen', 'Whole proof': 'Ganzer Beweis',
     'Now tap a glowing green dot, or add a block with ＋': 'Jetzt einen grün leuchtenden Punkt antippen oder mit ＋ einen Baustein hinzufügen',
     'Now tap a glowing green circle, or add a block with ＋': 'Jetzt einen grün leuchtenden Kreis antippen oder mit ＋ einen Baustein hinzufügen',
     '1 red circle left — tap one': 'Noch 1 roter Kreis — tippe ihn an',
@@ -1046,7 +1046,7 @@
   function topRow(b) {
     const row = []
     b.inputs.forEach((_, i) => {
-      b.outputs.forEach((_, j) => { if (isLocal(b, j) && consumer(b, j) === i) row.push(`out${j}`) })
+      b.outputs.forEach((_, j) => { if (isLocal(b, j) && consumer(b, j) === i && !b.hideLocal) row.push(`out${j}`) })
       row.push(`in${i}`)
     })
     return row
@@ -1083,19 +1083,20 @@
       // its statements are filled in. Not in the pictures of the menu, which have it below.
       if (RULES[b.rule] && !b.picture) g.append(svg('text', { x: q.x + 5, y: q.y + q.h - 5, class: 'ipm-lemma-tag' }, RULES[b.rule].label))
       b.outputs.forEach((_, j) => {
-        if (!isLocal(b, j) || !q.topLeft) return
+        if (!isLocal(b, j) || !q.topLeft || b.hideLocal) return
         const c = compartment(q, b, j)
         g.append(svg('rect', { x: c.x0, y: q.y + 4, width: c.x1 - c.x0, height: 26, rx: 6, class: 'ipm-compartment' }),
           svg('text', { x: c.arrow, y: q.y + 22, 'text-anchor': 'middle', class: 'ipm-implies' }, '⇒'))
       })
       b.inputs.forEach((f, i) => g.append(svg('text', { x: portAt(q, b, 'in', i).x, y: q.y + 22, 'text-anchor': 'middle', class: 'ipm-port-label' }, show(f, s))))
-      b.outputs.forEach((f, i) => g.append(svg('text', { x: portAt(q, b, 'out', i).x, y: isLocal(b, i) ? q.y + 22 : q.y + q.h - 10, 'text-anchor': 'middle', class: 'ipm-port-label' + (isLocal(b, i) ? ' ipm-local-label' : '') }, show(f, s))))
+      b.outputs.forEach((f, i) => (b.hideLocal && isLocal(b, i)) || g.append(svg('text', { x: portAt(q, b, 'out', i).x, y: isLocal(b, i) ? q.y + 22 : q.y + q.h - 10, 'text-anchor': 'middle', class: 'ipm-port-label' + (isLocal(b, i) ? ' ipm-local-label' : '') }, show(f, s))))
     } else {
       const f = b.kind === 'assumption' ? b.outputs[0] : b.inputs[0]
       g.append(svg('text', { x: q.x + q.w / 2, y: q.y + q.h / 2 + 5, 'text-anchor': 'middle', class: 'ipm-prop' }, show(f, s)))
     }
     for (const kind of ['in', 'out'])
       (kind === 'in' ? b.inputs : b.outputs).forEach((_, i) => {
+        if (kind === 'out' && b.hideLocal && isLocal(b, i)) return
         const xy = portAt(q, b, kind, i)
         const local = kind === 'out' && isLocal(b, i)
         const port = svg('g', { class: `ipm-port ipm-${kind} ${local ? 'ipm-local ' : ''}${portClass(kind, i)}`, 'data-kind': kind, 'data-i': i })
@@ -1233,10 +1234,13 @@
       tools.append(...(this.tacticsOnly ? [] : [this.menu]), undo, reset, tidy, leanButton)
       this.refreshLemmas()
       window.addEventListener('ipm-lemmas', () => this.refreshLemmas())
+      // the boards (when goals with different hypotheses are open), as tabs above the picture
+      this.tabs = el('div', 'ipm-boards')
+      this.tabs.hidden = true
       this.play = el('div', 'ipm-play')
       if (this.tacticsOnly) this.play.append(this.canvas)
       else this.play.append(this.palette, this.splitter(), this.canvas)
-      root.querySelector('.ipm-board').append(this.play, this.info, this.lean, this.sheet, tools, this.trash)
+      root.querySelector('.ipm-board').append(this.tabs, this.play, this.info, this.lean, this.sheet, tools, this.trash)
       this.render()
     }
 
@@ -1320,8 +1324,7 @@
 
     // `board` = {w, h}: the size of the board in the picture's units; rows are centred in its width,
     // and the picture covers at least the whole board.
-    layout(board = { w: 0, h: 0 }) {
-      const p = this.proof
+    layout(board = { w: 0, h: 0 }, p = this.view?.proof ?? this.proof) {
       const layer = {}
       const order = p.blocks.filter(b => b.kind !== 'conclusion')
       for (const b of p.blocks) if (b.kind === 'assumption') layer[b.id] = 0
@@ -1377,7 +1380,7 @@
 
     // A position for a block of size `q` at (x, y), kept inside the board, which shows `this.view`.
     inside(x, y, q) {
-      const [vx, vy, vw, vh] = this.view ?? [x, y, Infinity, Infinity]
+      const [vx, vy, vw, vh] = this.view?.box ?? [x, y, Infinity, Infinity]
       return { x: Math.max(vx + 4, Math.min(x, vx + vw - q.w - 4)), y: Math.max(vy + 30, Math.min(y, vy + vh - q.h - 4)) }
     }
 
@@ -1509,9 +1512,177 @@
       })
     }
 
+    // ------------------------------------------------------------ boards
+
+    // Where a block or a goal lies: in the box of a local hypothesis, a scope `X.k` (block X and its
+    // input k, which the hypothesis is for; the innermost one), or '' outside all boxes. A block that
+    // leads nowhere yet lies where it was made (`home`).
+    scopeOf() {
+      const p = this.proof, memo = {}
+      const scopes = []
+      for (const x of p.blocks)
+        if (x.kind === 'rule' && RULES[x.rule]?.local)
+          for (const k of new Set(Object.values(RULES[x.rule].local))) scopes.push({ key: `${x.id}.${k}`, x: x.id, k })
+      // whether the ways from block id reach a goal or the input of a box
+      const leads = id => {
+        const seen = new Set(), stack = [id]
+        while (stack.length) {
+          const b = stack.pop()
+          if (seen.has(b)) continue
+          seen.add(b)
+          if (p.block(b)?.kind === 'conclusion') return true
+          for (const c of p.connections) {
+            if (c.from.block !== b || isLocal(p.block(b), c.from.port)) continue
+            if (scopes.some(sc => sc.x === c.to.block && sc.k === c.to.port)) return true
+            stack.push(c.to.block)
+          }
+        }
+        return false
+      }
+      // (boxes can lie in each other in a picture that is wrong: no way round in a circle)
+      const depth = (key, seen = new Set()) => (key === '' || seen.has(key) ? 0 : (seen.add(key), 1 + depth(blockScope(key.split('.')[0]), seen)))
+      const blockScope = id => {
+        if (id in memo) return memo[id]
+        const b = p.block(id)
+        memo[id] = ''
+        if (!b || b.kind !== 'rule') return ''
+        if (!leads(id)) return (memo[id] = b.home && scopes.some(sc => sc.key === b.home) ? b.home : '')
+        let best = ''
+        for (const sc of scopes)
+          if (sc.x !== id && this.within({ block: id, port: -1 }, sc.x, sc.k) && depth(sc.key) > depth(best)) best = sc.key
+        return (memo[id] = best)
+      }
+      const goalScope = at => {
+        const b = p.block(at.block)
+        const local = b.kind === 'rule' && RULES[b.rule]?.local
+        return local && Object.values(local).includes(at.port) ? `${at.block}.${at.port}` : blockScope(at.block)
+      }
+      const chain = (key, seen = new Set()) => (key === '' || seen.has(key) ? [''] : (seen.add(key), [...chain(blockScope(key.split('.')[0]), seen), key]))
+      return { scopes, blockScope, goalScope, chain }
+    }
+
+    // The boards: the open goals grouped by their scope (what one has there). With one board the
+    // whole picture is shown (the local hypotheses on top as blocks of their own); with several,
+    // each shows only its own blocks, with what holds there on top and its goal below. With no
+    // goal left, the whole proof (`*`). Returns the picture to draw.
+    boardView() {
+      const p = this.proof, a = this.analysis
+      const sc = this.scopeOf()
+      for (const b of p.blocks) if (b.kind === 'rule' && b.home === undefined) b.home = this.board && this.board !== '*' ? this.board : ''
+      const boards = []
+      for (const o of a.openInputs) { const k = sc.goalScope(o); if (!boards.includes(k)) boards.push(k) }
+      // No goal left: the boxes that are used, as boards to look at (one, if they are nested in a row)
+      if (!boards.length) {
+        const used = sc.scopes.filter(x => p.connections.some(c => c.to.block === x.x && c.to.port === x.k)).map(x => x.key)
+        const leaves = used.filter(k => !used.some(l => l !== k && sc.chain(l).includes(k)))
+        if (leaves.length <= 1) boards.push(leaves[0] ?? '')
+        else boards.push('', ...used)
+      }
+      this.boards = boards
+      const off = (() => { try { return localStorage.getItem('ipm-verso:boards') === 'off' } catch { return false } })()
+      if (off || this.board === '*') return { proof: p, boards, whole: true }
+      if (!boards.includes(this.board)) this.board = boards[0]
+      const S = this.board, split = boards.length > 1
+      const chainSet = new Set(sc.chain(S))
+      const visible = new Set(p.blocks.filter(b => {
+        const k = b.kind === 'rule' ? sc.blockScope(b.id) : ''
+        return split ? k === S : chainSet.has(k)
+      }).map(b => b.id))
+      // what holds at the goal of this board, from outside it (local hypotheses, assumptions, …)
+      const goal = a.openInputs.find(o => sc.goalScope(o) === S) ??
+        (S === '' ? { block: p.blocks.find(b => b.kind === 'conclusion').id, port: 0 } : { block: S.split('.')[0], port: Number(S.split('.')[1]) })
+      const proxies = []
+      for (const k of Object.keys(this.usableAt(goal))) {
+        const [id, port] = k.split('.'), b = p.block(id)
+        if (visible.has(id) && !isLocal(b, Number(port))) continue
+        proxies.push({ kind: 'assumption', id: `p:${k}`, inputs: [], outputs: [b.outputs[Number(port)]], real: { block: id, port: Number(port) },
+          local: b.kind === 'rule' })
+      }
+      const blocks = [...proxies]
+      for (const b of p.blocks) if (visible.has(b.id)) blocks.push(b.kind === 'rule' && RULES[b.rule]?.local ? { ...b, hideLocal: true } : b)
+      // the goal of a board of its own: the input of the box, below
+      let goalBlock = null
+      if (split && S !== '') {
+        const [x, k] = S.split('.')
+        goalBlock = { kind: 'conclusion', id: `g:${S}`, inputs: [p.block(x).inputs[Number(k)]], outputs: [], goalOf: { block: x, port: Number(k) } }
+        blocks.push(goalBlock)
+      }
+      const proxyOf = Object.fromEntries(proxies.map(q => [`${q.real.block}.${q.real.port}`, q.id]))
+      const connections = []
+      for (const c of p.connections) {
+        const from = visible.has(c.from.block) && !isLocal(p.block(c.from.block), c.from.port) ? c.from
+          : proxyOf[`${c.from.block}.${c.from.port}`] ? { block: proxyOf[`${c.from.block}.${c.from.port}`], port: 0 } : null
+        const to = visible.has(c.to.block) ? c.to
+          : goalBlock && c.to.block === goalBlock.goalOf.block && c.to.port === goalBlock.goalOf.port ? { block: goalBlock.id, port: 0 } : null
+        if (from && to) connections.push({ id: c.id, from, to })
+      }
+      // inputs whose goal is on another board (or done there): shown as a link to it
+      const elsewhere = {}
+      for (const b of p.blocks) {
+        if (!visible.has(b.id) || b.kind !== 'rule' || !RULES[b.rule]?.local) continue
+        for (const k of new Set(Object.values(RULES[b.rule].local))) {
+          const key = `${b.id}.${k}`
+          if (chainSet.has(key) || (split && key === S)) continue
+          elsewhere[key] = boards.find(bd => sc.chain(bd).includes(key)) ?? 'done'
+        }
+      }
+      const view = new Proof([], [])
+      view.blocks = blocks; view.connections = connections; view.moved = p.moved
+      return { proof: view, boards, whole: false, elsewhere, scope: sc }
+    }
+
+    // The block and port of the picture for a port of the proof (a proxy for a hypothesis from outside).
+    viewPort(sel) {
+      const vp = this.view?.proof
+      if (!vp) return sel
+      const proxy = vp.blocks.find(b => b.real && b.real.block === sel.block && b.real.port === sel.port)
+      if (proxy && sel.kind !== 'in') return { kind: sel.kind, block: proxy.id, port: 0 }
+      const goal = vp.blocks.find(b => b.goalOf && b.goalOf.block === sel.block && b.goalOf.port === sel.port)
+      if (goal && sel.kind === 'in') return { kind: 'in', block: goal.id, port: 0 }
+      return sel
+    }
+
+    // The port of the proof for a port of the picture.
+    realPort(b, kind, i) {
+      if (b.real) return { block: b.real.block, port: b.real.port }
+      if (b.goalOf) return { block: b.goalOf.block, port: b.goalOf.port }
+      return { block: b.id, port: i }
+    }
+
+    drawBoardTabs() {
+      const bv = this.boardInfo
+      this.tabs.replaceChildren()
+      this.tabs.hidden = !bv || bv.boards.length < 2
+      if (this.tabs.hidden) return
+      const s = this.analysis.s
+      bv.boards.forEach(key => {
+        const goal = this.analysis.openInputs.find(o => bv.scope?.goalScope(o) === key) ??
+          (key === '' ? { block: this.proof.blocks.find(b => b.kind === 'conclusion').id, port: 0 } : { block: key.split('.')[0], port: Number(key.split('.')[1]) })
+        const done = !this.analysis.openInputs.some(o => bv.scope?.chain(bv.scope.goalScope(o)).includes(key))
+        const f = goal && this.proof.block(goal.block).inputs[goal.port]
+        // what this board has that the others do not: the local hypotheses of its box
+        const names = hypNames(this.proof).names
+        const own = key === '' ? [] : this.proof.block(key.split('.')[0]).outputs
+          .map((g, j) => ({ g, j })).filter(({ j }) => isLocal(this.proof.block(key.split('.')[0]), j) && `${key.split('.')[0]}.${consumer(this.proof.block(key.split('.')[0]), j)}` === key)
+          .map(({ g, j }) => `${names[`${key.split('.')[0]}.${j}`] ?? 'h'} : ${show(g, s)}`)
+        const t = el('button', 'ipm-board-tab' + (this.board === key ? ' ipm-board-current' : ''), `${done ? '✓ ' : ''}${own.length ? own.join(', ') + ' ' : ''}⊢ ${f ? show(f, s) : ''}`)
+        t.type = 'button'
+        t.addEventListener('click', () => { this.board = key; this.selected = null; this.render() })
+        this.tabs.append(t)
+      })
+      const whole = el('button', 'ipm-board-tab ipm-board-whole' + (this.board === '*' ? ' ipm-board-current' : ''), tr('Whole proof'))
+      whole.type = 'button'
+      whole.addEventListener('click', () => { this.board = this.board === '*' ? null : '*'; this.selected = null; this.render() })
+      this.tabs.append(whole)
+    }
+
     render() {
       const p = this.proof
       this.analysis = p.analyze()
+      const bv = this.boardView()
+      this.boardInfo = bv
+      this.view = { proof: bv.proof }
+      const vp = bv.proof
       // The whole picture is always in view: it is scaled to fit the board, in width and height (the
       // board is about as high as the screen), and then covers the whole board, so that blocks can
       // be put anywhere on it. A locked task's board is only as high as its picture.
@@ -1521,7 +1692,7 @@
       // On a large board the picture is drawn larger (up to 1.4 times), so that it is easy to read.
       const scale = Math.min(cw > 700 ? 1.4 : 1, cw / natural[2], ch ? ch / natural[3] : Infinity)
       const { pos, view } = this.layout({ w: cw / scale - 2, h: ch ? ch / scale - 2 : 0 })
-      this.view = view
+      this.view = { proof: vp, box: view }
       const s = this.analysis.s
       const root = svg('svg', { viewBox: view.join(' '), class: 'ipm-svg' })
       // Natural size: the picture's own units, at most the width of the page.
@@ -1538,7 +1709,8 @@
       defs.append(marker)
       root.append(defs)
       // The box of each local hypothesis: around the blocks that use it, and the top of its block.
-      for (const sc of this.analysis.scopes) {
+      // (Only in the whole picture: on a board, the hypotheses stand on top as blocks of their own.)
+      for (const sc of bv.whole ? this.analysis.scopes : []) {
         // Only once the hypothesis is used: the box starts at its compartment.
         if (!sc.used) continue
         const x = pos[sc.block], cm = compartment(x, p.block(sc.block), sc.port)
@@ -1548,11 +1720,11 @@
         root.append(svg('rect', { x: x0, y: y0, width: x1 - x0, height: y1 - y0, rx: 12, class: 'ipm-box' }))
       }
       // connections
-      for (const c of p.connections) {
-        const a = this.portXY(pos, p.block(c.from.block), 'out', c.from.port)
-        const b = this.portXY(pos, p.block(c.to.block), 'in', c.to.port)
+      for (const c of vp.connections) {
+        const a = this.portXY(pos, vp.block(c.from.block), 'out', c.from.port)
+        const b = this.portXY(pos, vp.block(c.to.block), 'in', c.to.port)
         const st = this.analysis.status[c.id]
-        const up = isLocal(p.block(c.from.block), c.from.port)
+        const up = isLocal(vp.block(c.from.block), c.from.port)
         const g = svg('g', { class: `ipm-conn ipm-${st}` + (up ? ' ipm-from-local' : '') })
         const path = svg('path', { d: curve(a, b, up) })
         paths.push({ path, c, a, b, up })
@@ -1573,7 +1745,7 @@
         if (this.selectedConn === c.id && (st === 'fail' || st === 'escape' || st === 'cycle')) {
           // A line with ☠ or ⚠: the explanation and ✕ in a box right beside it (drawn over the blocks).
           g.classList.add('ipm-conn-selected')
-          const out = p.block(c.from.block).outputs[c.from.port], inp = p.block(c.to.block).inputs[c.to.port]
+          const out = vp.block(c.from.block).outputs[c.from.port], inp = vp.block(c.to.block).inputs[c.to.port]
           bubble = { c, m: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, text: st === 'cycle' ? tr('That would go round in a circle.')
             : st === 'fail' ? tr('{x} does not fit {y}', { x: show(out, s), y: show(inp, s) })
             : tr('A local hypothesis may only be used inside its box.') }
@@ -1584,7 +1756,7 @@
           x.append(svg('circle', { cx: m.x + 18, cy: m.y, r: 13 }), svg('text', { x: m.x + 18, y: m.y + 5, 'text-anchor': 'middle' }, '✕'))
           x.addEventListener('click', () => {
             this.selectedConn = null
-            this.change(() => { p.connections = p.connections.filter(e => e !== c) })
+            this.change(() => { p.connections = p.connections.filter(e => e.id !== c.id) })
           })
           g.append(x)
         }
@@ -1605,25 +1777,29 @@
       // blocks
       const sel = this.selected
       // While tactics are offered, the names they use (h₁, h₂, …) stand beside the blue dots.
-      const shownNames = this.tacticsOnly || allowedTactic('exact') || SETTINGS.tactics === 'all' ? hypNames(p).names : {}
+      const realNames = this.tacticsOnly || allowedTactic('exact') || SETTINGS.tactics === 'all' ? hypNames(p).names : {}
+      const shownNames = { ...realNames }
+      for (const b of vp.blocks) if (b.real && realNames[`${b.real.block}.${b.real.port}`]) shownNames[`${b.id}.0`] = realNames[`${b.real.block}.${b.real.port}`]
       // a selected goal: what one has there (the rest is dimmed), shown in a line as in Lean
       const usable = sel?.kind === 'in' ? this.usableAt(sel) : null
       const hypNamesNow = usable ? hypNames(p).names : {}
-      for (const b of p.blocks) {
-        const proved = b.kind === 'conclusion' && !this.analysis.openInputs.some(o => o.block === b.id)
+      for (const b of vp.blocks) {
+        const real = (kind, i) => this.realPort(b, kind, i)
+        const proved = b.kind === 'conclusion' && !this.analysis.openInputs.some(o => o.block === real('in', 0).block && o.port === real('in', 0).port)
         const portClass = (kind, i) => {
-          const at = { block: b.id, port: i }
+          const at = real(kind, i)
+          if (kind === 'in' && bv.elsewhere?.[`${b.id}.${i}`]) return 'ipm-elsewhere'
           if (kind === 'in') {
-            const open = this.analysis.openInputs.some(o => o.block === b.id && o.port === i)
+            const open = this.analysis.openInputs.some(o => o.block === at.block && o.port === at.port)
             return (open ? 'ipm-open ' : '') +
-              (sel?.kind === 'in' && sel.block === b.id && sel.port === i ? 'ipm-selected ' : '') +
+              (sel?.kind === 'in' && sel.block === at.block && sel.port === at.port ? 'ipm-selected ' : '') +
               (sel?.kind === 'out' && open && !this.tacticsOnly && this.fits(sel, at) ? 'ipm-candidate' : '')
           }
-          return (sel?.kind === 'out' && sel.block === b.id && sel.port === i ? 'ipm-selected ' : '') +
-            (usable && hypNamesNow[`${b.id}.${i}`] && !usable[`${b.id}.${i}`] ? 'ipm-out-of-scope ' : '') +
+          return (sel?.kind === 'out' && sel.block === at.block && sel.port === at.port ? 'ipm-selected ' : '') +
+            (usable && hypNamesNow[`${at.block}.${at.port}`] && !usable[`${at.block}.${at.port}`] ? 'ipm-out-of-scope ' : '') +
             (sel?.kind === 'in' && !this.tacticsOnly && this.fits(at, sel) ? 'ipm-candidate' : '')
         }
-        const g = drawBlock(b, pos[b.id], s, proved ? 'ipm-proved' : '', portClass, shownNames)
+        const g = drawBlock(b, pos[b.id], s, (proved ? 'ipm-proved ' : '') + (b.local ? 'ipm-local-hyp' : ''), portClass, shownNames)
         // An eigenvariable that escapes: a ⚠ at the block, which explains itself when tapped.
         if (this.analysis.eigen[b.id]) {
           const q = pos[b.id]
@@ -1631,15 +1807,28 @@
           warn.addEventListener('click', ev => { ev.stopPropagation(); this.explainEigen(b) })
           g.append(warn)
         }
+        // a port of the picture is a port of the proof; an input whose goal is on another board leads there
+        const tapPort = (kind, i) => {
+          const key = `${b.id}.${i}`, there = kind === 'in' && bv.elsewhere?.[key]
+          if (there) { if (there !== 'done') { this.board = there; this.selected = null; this.render() } return }
+          const r = real(kind, i), rb = p.block(r.block)
+          return kind === 'in' ? this.tapInput(rb, r.port) : this.tapOutput(rb, r.port)
+        }
         for (const port of g.querySelectorAll('.ipm-port')) {
           const i = Number(port.dataset.i)
-          port.addEventListener('click', () => port.dataset.kind === 'in' ? this.tapInput(b, i) : this.tapOutput(b, i))
+          port.addEventListener('click', () => tapPort(port.dataset.kind, i))
+        }
+        for (const [key, there] of Object.entries(bv.elsewhere ?? {})) {
+          const [id, k] = key.split('.')
+          if (id !== b.id) continue
+          const xy = portAt(pos[b.id], b, 'in', Number(k))
+          g.append(svg('text', { x: xy.x, y: xy.y - 12, 'text-anchor': 'middle', class: 'ipm-elsewhere-mark' }, there === 'done' ? '✓' : '▸'))
         }
         // Tapping an assumption or a goal is tapping its only port.
         const tap = () => {
-          if (b.kind === 'assumption') this.tapOutput(b, 0)
-          else if (b.kind === 'conclusion') this.tapInput(b, 0)
-          else this.tapBlock(b)
+          if (b.kind === 'assumption') tapPort('out', 0)
+          else if (b.kind === 'conclusion') tapPort('in', 0)
+          else this.tapBlock(p.block(b.id))
         }
         this.makeDraggable(g, b, pos, paths, tap)
         g.addEventListener('click', ev => {
@@ -1651,6 +1840,7 @@
       }
       if (bubble) this.drawBubble(root, bubble, view)
       this.drawSteps(root, pos, view)
+      this.drawBoardTabs()
       root.addEventListener('click', ev => {
         if (ev.target === root && (this.selected || this.selectedConn)) {
           this.selected = null; this.selectedConn = null; this.render()
@@ -1996,8 +2186,10 @@
     drawSteps(root, pos, view) {
       const steps = this.steps()
       if (!steps.length) return
-      const sel = this.selected, b = this.proof.block(sel.block)
-      const at = portAt(pos[b.id], b, sel.kind, sel.port)
+      const vs = this.viewPort(this.selected), vb = this.view?.proof?.block(vs.block) ?? this.proof.block(vs.block)
+      if (!vb || !pos[vb.id]) return
+      const sel = this.selected
+      const at = portAt(pos[vb.id], vb, vs.kind, vs.port)
       const pills = steps
       const w = t => t.length * 8.2 + 22, gap = 8
       const total = pills.reduce((s, p) => s + w(p.text), 0) + gap * (pills.length - 1)

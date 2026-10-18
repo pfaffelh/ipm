@@ -497,3 +497,14 @@ main section:has(> ol.section-toc) { display: none; }
 .ipm-hyp-name { font-family: var(--verso-code-font-family, monospace); font-size: 13px; font-weight: bold; fill: #2f5a96;
   paint-order: stroke; stroke: white; stroke-width: 4px; pointer-events: none; }
 .ipm-hyp-name.ipm-out-of-scope { opacity: 0.25; }
+
+/* boards: goals with different hypotheses each on a board of their own, as tabs */
+.ipm-boards { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.35rem; }
+.ipm-boards[hidden] { display: none; }
+.ipm-board-tab { font-family: var(--verso-code-font-family, monospace); font-size: 0.85em; padding: 0.25rem 0.7rem; border: 1px solid #3b6db3; border-radius: 14px; background: white; color: #1d3f73; cursor: pointer; }
+.ipm-board-tab.ipm-board-current { background: #3b6db3; color: white; }
+.ipm-board-whole { font-family: var(--verso-structure-font-family, sans-serif); margin-left: auto; }
+.ipm-port.ipm-elsewhere circle:not(.ipm-hit) { fill: #e8f0fb; stroke: #3b6db3; }
+.ipm-elsewhere-mark { font-size: 14px; font-weight: bold; fill: #3b6db3; pointer-events: none; }
+/* a local hypothesis on top of a board: it holds only there */
+.ipm-block.ipm-local-hyp rect { stroke-dasharray: 5 3; }
