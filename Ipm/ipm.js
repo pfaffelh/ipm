@@ -386,7 +386,11 @@
   }
   // (a statement, for rewriting with ↔)
   const isStatement = f => !['con', 'fn', 'eig', 'bv', 'meta', 'sub'].includes(f.t)
-  const sameStatement = (x, y, s) => isStatement(y) && isStatement(x) && !undetermined(x, s) && !undetermined(y, s) && show(x, s) === show(y, s)
+  // (both resolved first: after rw the sides of a goal are metavariables that stand for statements)
+  const sameStatement = (x, y, s) => {
+    x = norm(x, s); y = norm(y, s)
+    return isStatement(y) && isStatement(x) && !undetermined(x, s) && !undetermined(y, s) && show(x, s) === show(y, s)
+  }
   const sameTerm = (x, y, s = {}) => {
     x = resolve(x, s); y = resolve(y, s)
     if (x.t !== y.t || !['eig', 'bv', 'con', 'fn'].includes(x.t) || x.n !== y.n) return false
@@ -2477,21 +2481,30 @@
       if (!vb || !pos[vb.id]) return
       const sel = this.selected
       const at = portAt(pos[vb.id], vb, vs.kind, vs.port)
-      const pills = steps
-      const w = t => t.length * 8.2 + 22, gap = 8
-      const total = pills.reduce((s, p) => s + w(p.text), 0) + gap * (pills.length - 1)
-      const stacked = total > view[2] - 8
-      const inside = (x, width) => Math.max(view[0] + 4, Math.min(x, view[0] + view[2] - width - 4))
-      let x = at.x - total / 2
-      pills.forEach((p, k) => {
-        const y = sel.kind === 'in' ? at.y - 52 - (stacked ? (pills.length - 1 - k) * 40 : 0) : at.y + 18 + (stacked ? k * 40 : 0)
-        const px = inside(stacked ? at.x - w(p.text) / 2 : x, w(p.text))
-        const g = svg('g', { class: 'ipm-step', 'data-rule': p.rule ?? '' })
-        g.append(svg('rect', { x: px, y, width: w(p.text), height: 32, rx: 16 }),
-          svg('text', { x: px + w(p.text) / 2, y: y + 21, 'text-anchor': 'middle' }, p.text))
-        g.addEventListener('click', ev => { ev.stopPropagation(); p.act() })
-        root.append(g)
-        x += w(p.text) + gap
+      // The buttons in rows as wide as the board, above the goal (below a dot), or on the other side
+      // where there is no room, and always within the board.
+      const w = t => t.length * 8.2 + 22, gap = 8, rowH = 40, maxW = view[2] - 8
+      const rows = [[]]
+      for (const p of steps) {
+        const row = rows[rows.length - 1], width = row.reduce((s, q) => s + w(q.text) + gap, 0)
+        if (row.length && width + w(p.text) > maxW) rows.push([p]); else row.push(p)
+      }
+      const height = rows.length * rowH - 8, top = view[1] + 4, bottom = view[1] + view[3] - 4
+      const above = at.y - 20 - height, below = at.y + 18
+      let y0 = sel.kind === 'in' ? (above >= top ? above : below) : (below + height <= bottom ? below : above)
+      y0 = Math.max(top, Math.min(y0, bottom - height))
+      rows.forEach((row, r) => {
+        const total = row.reduce((s, q) => s + w(q.text), 0) + gap * (row.length - 1)
+        let x = Math.max(view[0] + 4, Math.min(at.x - total / 2, view[0] + view[2] - total - 4))
+        const y = y0 + r * rowH
+        for (const p of row) {
+          const g = svg('g', { class: 'ipm-step', 'data-rule': p.rule ?? '' })
+          g.append(svg('rect', { x, y, width: w(p.text), height: 32, rx: 16 }),
+            svg('text', { x: x + w(p.text) / 2, y: y + 21, 'text-anchor': 'middle' }, p.text))
+          g.addEventListener('click', ev => { ev.stopPropagation(); p.act() })
+          root.append(g)
+          x += w(p.text) + gap
+        }
       })
     }
 
