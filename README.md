@@ -37,6 +37,8 @@ classics: tertium non datur from proof by contradiction, `→` over `∨`, the d
   each get a **board** of their own, as tabs above the picture; local hypotheses stand on top as
   blocks of their own (dashed), so there are no compartments and boxes; “Whole proof” shows the
   usual picture. Both modes build the same proof, so one can switch in the middle of a level.
+* No tip is lost when the mode is switched: a level shows the tips of its tactics (or blocks) that
+  were never seen, also those missed in the other mode.
 * Two lexica, below the world map: the tactics and the blocks, with pictures (the same texts as the
   tips of the tactic mode).
 * Proof by contradiction (RAA, from world 5 level 5 on): from `?1 ⇒ ⊥` get `?1`; in Lean

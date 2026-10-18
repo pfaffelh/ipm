@@ -27,6 +27,7 @@
   const DE = {
     '🎯 Tactic trainer': '🎯 Taktik-Trainer', '📖 Tactics': '📖 Taktiken', '🧱 Blocks': '🧱 Bausteine',
     'Blocks': 'Bausteine', 'Tactics': 'Taktiken', 'New tactics': 'Neue Taktiken', 'Tactic: ': 'Taktik: ',
+    'Blocks you have not met yet': 'Bausteine, die du noch nicht kennst',
     '▶ Start in the tactic mode': '▶ Start im Taktik-Modus',
     '∧-introduction': '∧-Einführung', '∧-elimination': '∧-Beseitigung',
     '→-introduction': '→-Einführung', '→-elimination': '→-Beseitigung',
@@ -2593,23 +2594,29 @@
   // The tactics introduced with these blocks (and `exact` with the first).
   const tacticsFor = rules => TACTICS.filter(t => t.rules.some(r => rules.includes(r)) || (t.id === 'exact' && rules.length))
 
+  // One block: its picture, what it does, and its tactic.
+  function blockEntry(r) {
+    const d = BLOCKS[r], e = el('div', 'ipm-lexicon-entry')
+    const fig = el('div', 'ipm-tip-block')
+    fig.append(rulePicture(r), el('div', 'ipm-menu-caption', `${RULES[r].label} · ${tr(RULES[r].name)}`))
+    const text = el('p', 'ipm-lexicon-text')
+    text.append(inlineCode(LANG === 'de' ? d.de : d.en))
+    e.append(fig, text)
+    const tac = TACTICS.filter(t => t.rules.includes(r)).map(t => t.cmd)
+    if (tac.length) { const n = el('p', 'ipm-lexicon-tactic'); n.append(tr('Tactic: '), el('code', '', tac.join(', '))); e.append(n) }
+    return e
+  }
+
   // A lexicon page: `:::lexicon (kind := "tactics")` or `"blocks"`.
   function lexicon() {
-    for (const box of document.querySelectorAll('.ipm-lexicon')) {
-      if (box.dataset.kind === 'tactics') box.append(...TACTICS.map(tacticEntry))
-      else for (const [r, d] of Object.entries(BLOCKS)) {
-        const e = el('div', 'ipm-lexicon-entry')
-        const fig = el('div', 'ipm-tip-block')
-        fig.append(rulePicture(r), el('div', 'ipm-menu-caption', `${RULES[r].label} · ${tr(RULES[r].name)}`))
-        const text = el('p', 'ipm-lexicon-text')
-        text.append(inlineCode(LANG === 'de' ? d.de : d.en))
-        const tac = TACTICS.filter(t => t.rules.includes(r)).map(t => t.cmd)
-        if (tac.length) { const n = el('p', 'ipm-lexicon-tactic'); n.append(tr('Tactic: '), el('code', '', tac.join(', '))); e.append(fig, text, n) }
-        else e.append(fig, text)
-        box.append(e)
-      }
-    }
+    for (const box of document.querySelectorAll('.ipm-lexicon'))
+      box.append(...(box.dataset.kind === 'tactics' ? TACTICS.map(tacticEntry) : Object.keys(BLOCKS).map(blockEntry)))
   }
+
+  // Which tips were seen: of the tactics, and of the blocks (wherever they were introduced), so that
+  // after a switch of mode, what was missed comes at the next level where it is needed.
+  const seenTip = key => { try { return localStorage.getItem(`ipm-verso:${key}`) === '1' } catch { return false } }
+  const markTip = key => { try { localStorage.setItem(`ipm-verso:${key}`, '1') } catch {} }
 
   function init() {
     moveProgress()
@@ -2695,7 +2702,7 @@
     // the blocks a level's tips introduce, and in the tactic mode their tactics
     const tipRules = k => [...new Set([...tasks[k].root.querySelectorAll(':scope > .ipm-tip')]
       .flatMap(n => (n.dataset.rules ?? '').split(',').map(x => x.trim()).filter(x => RULES[x])))]
-    const tacticTips = k => tacticsFor(tipRules(k))
+    const tacticTips = k => tacticsFor(tasks[k].rules)
     const fillAbout = () => {
       const tactics = MODE === 'tactics' && !tasks[current].forceTactics ? tacticTips(current).map(tacticEntry) : []
       const own = [...levelText(current), ...tactics, ...tipBlocks(current), ...tipNodes(current)]
@@ -2703,22 +2710,27 @@
     }
     // The tip of a level, once: in a box over the stage, closed with "Got it".
     const seenKey = k => `${tasks[k].key}:tip`
-    const tacticSeen = id => { try { return localStorage.getItem(`ipm-verso:tactic-tip:${id}`) === '1' } catch { return false } }
     const showTip = k => {
       if (tasks[k].root.inert) return
-      let nodes, seen = false, mark
+      let nodes, mark
       if (MODE === 'tactics' && !tasks[k].forceTactics) {
-        // the tactic mode: the tactics this level introduces, each once (wherever it comes first)
-        const fresh = tacticTips(k).filter(t => !tacticSeen(t.id))
+        // the tactic mode: every tactic this level offers whose tip was never seen (where it is
+        // introduced, or here, if it was missed in the other mode)
+        const fresh = tacticsFor(tasks[k].rules).filter(t => !seenTip(`tactic-tip:${t.id}`))
         nodes = fresh.length ? [el('div', 'ipm-tip-sub', tr('New tactics')), ...fresh.map(tacticEntry)] : []
-        mark = () => fresh.forEach(t => { try { localStorage.setItem(`ipm-verso:tactic-tip:${t.id}`, '1') } catch {} })
+        mark = () => fresh.forEach(t => markTip(`tactic-tip:${t.id}`))
       } else {
-        const tip = [...tipBlocks(k), ...tipNodes(k), ...(k === 0 && hasRules ? clone() : [])]
-        nodes = tip.length ? [...levelText(k), ...tip] : []
-        try { seen = localStorage.getItem(seenKey(k)) === '1' } catch {}
-        mark = () => { try { localStorage.setItem(seenKey(k), '1') } catch {} }
+        // the level's own tip, once; and every block of the level whose tip was never seen (missed in
+        // the tactic mode), from the lexicon
+        const own = !seenTip(seenKey(k).replace('ipm-verso:', ''))
+        const tip = own ? [...tipBlocks(k), ...tipNodes(k), ...(k === 0 && hasRules ? clone() : [])] : []
+        const covered = own ? tipRules(k) : []
+        const missed = tasks[k].forceTactics ? [] : tasks[k].rules.filter(r => BLOCKS[r] && !covered.includes(r) && !seenTip(`block-tip:${r}`))
+        nodes = [...(tip.length ? [...levelText(k), ...tip] : []),
+          ...(missed.length ? [el('div', 'ipm-tip-sub', tr('Blocks you have not met yet')), ...missed.map(blockEntry)] : [])]
+        mark = () => { markTip(seenKey(k).replace('ipm-verso:', '')); [...covered, ...missed].forEach(r => markTip(`block-tip:${r}`)) }
       }
-      if (!nodes.length || seen || document.querySelector('.ipm-tip-overlay')) return
+      if (!nodes.length || document.querySelector('.ipm-tip-overlay')) return
       const overlay = el('div', 'ipm-tip-overlay'), card = el('div', 'ipm-tip-card'), ok = el('button', 'ipm-tip-ok', tr('Got it'))
       ok.type = 'button'
       const close = () => { mark(); overlay.remove() }
