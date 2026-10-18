@@ -39,8 +39,10 @@ classics: tertium non datur from proof by contradiction, `→` over `∨`, the d
   each get a **board** of their own, as tabs above the picture; local hypotheses stand on top as
   blocks of their own (dashed), so there are no compartments and boxes; “Whole proof” shows the
   usual picture. Both modes build the same proof, so one can switch in the middle of a level. The
-  picture stays as it is while one plays: a new block takes the place of the goal it proves, and
-  only that goal with what is below it moves down (Tidy up lays out everything anew).
+  picture stays as it is while one plays: no block moves; a new block goes to a free place, above the
+  goal it proves, and the scale stays, unless the picture has to grow (Tidy up lays out everything
+  anew). The goals are numbered as in Lean (①, ② beside the red circles, in a list below the board
+  and on the tabs), and there is always a current goal: after each step the first one.
 * No tip is lost when the mode is switched: a tactic explains itself when first offered, and a level
   in the puzzle mode shows the blocks of its own never met (missed in the Lean tactic mode).
 * A finished proof turns the board green (in the Lean tactic mode each board, once its goals are done);

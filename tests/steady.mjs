@@ -1,7 +1,6 @@
 // The tactic mode keeps the picture: after each tactic, the blocks that were there stay where they
-// were (in the picture's own units), except the goal the new block proves and what is below it,
-// which move down; nothing moves sideways. Plays 2.5 and 3.5 (with
-// boards: the goal of a case is a block of the case's board, not a moved one).
+// were (in the picture's own units); a new block goes to a free place. Plays 2.5 and 3.5 (with
+// boards: a hypothesis from outside stands on a case's board where it stands on the whole one).
 // Usage: BASE=http://localhost:8002/ node steady.mjs (SHOT=dir)
 import { chromium } from 'playwright-core'
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })

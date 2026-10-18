@@ -45,7 +45,7 @@
     'Arrange the blocks automatically again': 'Die Blöcke wieder automatisch anordnen',
     'The proof in Lean': 'Der Beweis in Lean', 'Try it in Lean ↗': 'In Lean ausprobieren ↗',
     'goals accomplished 🎉': 'goals accomplished 🎉',
-    'Now choose a tactic': 'Jetzt eine Taktik wählen', 'Goals:': 'Ziele:',
+    'Now choose a tactic': 'Jetzt eine Taktik wählen', 'Goals:': 'Ziele:', 'Goal:': 'Ziel:',
     '✓ Goal done — on to the next one, choose a tactic': '✓ Ziel erledigt — weiter mit dem nächsten, wähle eine Taktik',
     'Goal {k} of {m}: choose a tactic': 'Ziel {k} von {m}: wähle eine Taktik', 'Whole proof': 'Ganzer Beweis',
     'Now tap a glowing green dot, or add a block with ＋': 'Jetzt einen grün leuchtenden Punkt antippen oder mit ＋ einen Baustein hinzufügen',
@@ -1217,10 +1217,10 @@
   }
 
   // Draws block `b` at `q` = {x, y, w, h}. The same drawing is used on the board and in the list of
-  // rules. `portClass(kind, i)` adds classes to the ports; ports carry `data-kind` and `data-i`.
+  // rules. `portClass(kind, i)` adds classes to the ports; ports carry `data-kind` and `data-i`, the block its `data-id`.
   // `names`: the names of what one has (h₁, h₂, …) by `block.port`, written beside the blue dots.
   function drawBlock(b, q, s, extraClass = '', portClass = () => '', names = {}) {
-    const g = svg('g', { class: `ipm-block ipm-${b.kind} ${extraClass}` })
+    const g = svg('g', { class: `ipm-block ipm-${b.kind} ${extraClass}`, 'data-id': b.id ?? '' })
     g.append(svg('rect', { x: q.x, y: q.y, width: q.w, height: q.h, rx: 8 }))
     if (b.kind === 'rule') {
       // The name of the rule (or lemma) in the corner, so that one sees which block it is, also once
@@ -1459,8 +1459,7 @@
     undo() {
       const snap = this.undoStack.pop()
       if (!snap) return
-      this.proof.restore(snap)
-      this.places = {}  // (the picture of before is laid out anew)
+      this.proof.restore(snap)  // (the blocks that stay keep their places)
       this.selected = null
       this.closeSheet(false)
       this.render()
@@ -1513,35 +1512,60 @@
         }
       })
       for (const [id, m] of Object.entries(p.moved ?? {})) if (pos[id]) Object.assign(pos[id], m)
-      if (this.tacticsOnly && board.w) this.keepPlaces(p, pos)  // (not while only measuring)
+      const keep = this.tacticsOnly && board.w, key = this.board ?? ''
+      if (keep) this.keepPlaces(p, pos, key)  // (not while only measuring)
       // The picture covers all blocks, wherever they were dragged.
       const qs = Object.values(pos)
       const minX = Math.min(0, ...qs.map(q => q.x - 20)), minY = Math.min(0, ...qs.map(q => q.y - 20))
       const maxX = Math.max(width, ...qs.map(q => q.x + q.w + 20))
       const maxY = Math.max(20 + lines.length * layerH, board.h,
         ...qs.map(q => q.y + q.h + 20))
-      return { pos, view: [minX, minY, maxX - minX, maxY - minY] }
+      if (!keep) return { pos, view: [minX, minY, maxX - minX, maxY - minY] }
+      // Blocks that keep their places: the picture is the board from the top left block on, and it only
+      // grows (it covers the picture shown before), so that nothing on it moves.
+      const prev = this.places[`#box:${key}`]
+      let x0 = minX, y0 = minY
+      if (prev) { x0 = Math.min(x0, prev[0]); y0 = Math.min(y0, prev[1]) }
+      let x1 = Math.max(x0 + board.w, ...qs.map(q => q.x + q.w + 20)), y1 = Math.max(y0 + board.h, ...qs.map(q => q.y + q.h + 20))
+      if (prev) { x1 = Math.max(x1, prev[0] + prev[2]); y1 = Math.max(y1, prev[1] + prev[3]) }
+      const view = [x0, y0, x1 - x0, y1 - y0]
+      this.places[`#box:${key}`] = view
+      return { pos, view }
     }
 
     portXY(pos, b, kind, i) { return portAt(pos[b.id], b, kind, i) }
 
-    // In the Lean tactic mode the picture stays as it is: the blocks keep their places. A new block that
-    // proves a goal takes the goal's place, and the goal with what is below it moves down (as in Lean,
-    // where the goal moves on); a block that takes something apart goes below it, where that is free.
+    // In the Lean tactic mode the picture stays as it is: no block that is there moves. Each block keeps
+    // its place, the same on every board (`this.places`, by id). A new block goes to the nearest free
+    // place: one that proves a goal above the goal, one that takes something apart below it, and
+    // preferably within the picture shown before (`#box:` of the board), so that the scale stays.
     // Tidy up lays out everything anew.
-    keepPlaces(p, pos) {
+    keepPlaces(p, pos, key) {
       if (this.placesOf !== this.proof) { this.places = {}; this.placesOf = this.proof }
-      const kept = (this.places[this.board ?? ''] ??= {})  // (each board its own)
-      for (const id of Object.keys(kept)) if (!pos[id]) delete kept[id]
-      const old = Object.keys(kept).length > 0
-      for (const [id, q] of Object.entries(kept)) if (pos[id] && !p.moved?.[id]) Object.assign(pos[id], q)
+      const kept = this.places
+      // what stands on a board for an assumption stands where the assumption stands
+      for (const id of Object.keys(pos)) {
+        const real = /^p:([^.]+)\./.exec(id)?.[1]
+        if (!kept[id] && real && kept[real] && this.proof.block(real)?.kind === 'assumption') kept[id] = { ...kept[real] }
+      }
+      const old = Object.keys(pos).some(id => kept[id])
+      // A new picture (at the start, after Tidy up): the goals stand at the foot of the board, so that
+      // what proves them has room above them.
+      if (!old) {
+        const h = this.canvasH ?? 0
+        for (const [id, q] of Object.entries(pos)) if (p.block(id)?.kind === 'conclusion' && !p.moved?.[id]) q.y = Math.max(q.y, h - q.h - 30)
+      }
+      for (const id of Object.keys(pos)) if (kept[id] && !p.moved?.[id]) Object.assign(pos[id], kept[id])
       if (old) {
-        const placed = new Set(Object.keys(kept).filter(id => pos[id]))
+        const placed = new Set(Object.keys(pos).filter(id => kept[id] || p.moved?.[id]))
+        const box = kept[`#box:${key}`]
         const free = (q, x, y) => [...placed].every(id => {
           const r = pos[id]
           return x + q.w + 14 < r.x || r.x + r.w + 14 < x || y + q.h + 30 < r.y || r.y + r.h + 30 < y
         })
-        let todo = Object.keys(pos).filter(id => !placed.has(id) && !p.moved?.[id])
+        // (with the margin of 20 that the picture keeps around the blocks)
+        const within = (q, x, y) => !box || (x - 20 >= box[0] && y - 20 >= box[1] && x + q.w + 20 <= box[0] + box[2] && y + q.h + 20 <= box[1] + box[3])
+        let todo = Object.keys(pos).filter(id => !placed.has(id))
         for (let round = 0; round < 4 && todo.length; round++) {
           for (const id of todo) {
             const q = pos[id], b = p.block(id)
@@ -1549,33 +1573,24 @@
             const down = p.connections.find(c => c.from.block === id && placed.has(c.to.block))
             const up = p.connections.find(c => c.to.block === id && placed.has(c.from.block))
             if (!down && !up && round < 3) continue
-            let x, y
+            let x, y, dir
             if (down) {
-              // the goal and everything below it move down by the height of the new block
               const at = portAt(pos[down.to.block], p.block(down.to.block), 'in', down.to.port), o = portAt({ ...q, x: 0, y: 0 }, b, 'out', down.from.port)
-              x = at.x - o.x; y = pos[down.to.block].y
-              const below = new Set(), stack = [down.to.block]
-              while (stack.length) {
-                const id2 = stack.pop()
-                if (below.has(id2) || !placed.has(id2)) continue
-                below.add(id2)
-                for (const c of p.connections) if (c.from.block === id2 && !isLocal(p.block(id2), c.from.port)) stack.push(c.to.block)
-              }
-              // and whatever lies at that height or lower, below the goal's column
-              const dy = q.h + 46
-              for (const id2 of placed) if (!below.has(id2) && pos[id2].y >= y && pos[id2].x < x + q.w + 20 && pos[id2].x + pos[id2].w > x - 20) below.add(id2)
-              for (const id2 of below) pos[id2].y += dy
-            }
-            else if (up) { const at = portAt(pos[up.from.block], p.block(up.from.block), 'out', up.from.port); const i = portAt({ ...q, x: 0, y: 0 }, b, 'in', up.to.port); x = at.x - i.x; y = at.y + 46 }
-            else { x = q.x; y = q.y }
-            // the nearest free place: sideways first, then further down
-            const dir = 1
-            let best = null
-            for (let k = 0; k < 8 && !best; k++)
-              for (const dx of [0, 1, -1, 2, -2, 3, -3]) {
-                const cx = x + dx * (q.w + 20), cy = y + dir * k * (q.h + 40)
-                if (free(q, cx, cy)) { best = { x: cx, y: cy }; break }
-              }
+              x = at.x - o.x; y = pos[down.to.block].y - q.h - 46; dir = -1
+            } else if (up) {
+              const at = portAt(pos[up.from.block], p.block(up.from.block), 'out', up.from.port), i = portAt({ ...q, x: 0, y: 0 }, b, 'in', up.to.port)
+              x = at.x - i.x; y = at.y + 46; dir = 1
+            } else { x = q.x; y = q.y; dir = 1 }
+            // the nearest free place, within the picture if there is one: sideways first, then further
+            // in the direction away from the neighbor, then the other way
+            const spots = []
+            for (let k = 0; k < 8; k++)
+              for (const d of k ? [dir, -dir] : [dir])
+                for (const dx of [0, 1, -1, 2, -2, 3, -3]) spots.push({ x: x + dx * (q.w + 20), y: y + d * k * (q.h + 40) })
+            // (outside the picture: where it grows least)
+            const growth = c => !box ? 0 : (Math.max(box[0] + box[2], c.x + q.w + 20) - Math.min(box[0], c.x - 20)) * (Math.max(box[1] + box[3], c.y + q.h + 20) - Math.min(box[1], c.y - 20)) - box[2] * box[3]
+            const best = spots.find(c => free(q, c.x, c.y) && within(q, c.x, c.y)) ??
+              spots.filter(c => free(q, c.x, c.y)).reduce((m, c) => (!m || growth(c) < growth(m) ? c : m), null)
             Object.assign(q, best ?? { x, y })
             placed.add(id)
           }
@@ -1933,6 +1948,7 @@
       this.boardInfo = bv
       this.view = { proof: bv.proof }
       const vp = bv.proof
+      this.drawBoardTabs()  // (before the board is measured: the tabs take height from it)
       // The whole picture is always in view: it is scaled to fit the board, in width and height (the
       // board is about as high as the screen), and then covers the whole board, so that blocks can
       // be put anywhere on it. A locked task's board is only as high as its picture.
@@ -1940,8 +1956,17 @@
       const cw = this.canvas.clientWidth || natural[2]
       const ch = this.root.inert ? 0 : this.canvas.clientHeight
       // On a large board the picture is drawn larger (up to 1.4 times), so that it is easy to read.
-      const scale = Math.min(cw > 700 ? 1.4 : 1, cw / natural[2], ch ? ch / natural[3] : Infinity)
-      const { pos, view } = this.layout({ w: cw / scale - 2, h: ch ? ch / scale - 2 : 0 })
+      let scale = Math.min(cw > 700 ? 1.4 : 1, cw / natural[2], ch ? ch / natural[3] : Infinity)
+      // In the Lean tactic mode the scale stays (the picture does not jump), unless it no longer fits.
+      const kept = this.tacticsOnly && this.placesOf === this.proof ? this.places?.[`#scale:${this.board ?? ''}`] : null
+      if (kept && kept.cw === cw) scale = kept.scale  // (the width of the board, not its height, which the lines below it change)
+      this.canvasH = ch ? ch / scale - 2 : 0  // (for the first places of the blocks)
+      let { pos, view } = this.layout({ w: cw / scale - 2, h: ch ? ch / scale - 2 : 0 })
+      if (this.tacticsOnly && (view[2] * scale > cw + 2 || (ch && view[3] * scale > ch + 2))) {
+        scale = Math.min(cw / view[2], ch ? ch / view[3] : Infinity);
+        ({ pos, view } = this.layout({ w: cw / scale - 2, h: ch ? ch / scale - 2 : 0 }))
+      }
+      if (this.tacticsOnly && this.places) this.places[`#scale:${this.board ?? ''}`] = { scale, cw, ch }
       this.view = { proof: vp, box: view }
       const s = this.analysis.s
       const root = svg('svg', { viewBox: view.join(' '), class: 'ipm-svg' })
@@ -2099,7 +2124,6 @@
       }
       if (bubble) this.drawBubble(root, bubble, view)
       this.drawSteps(root, pos, view)
-      this.drawBoardTabs()
       root.addEventListener('click', ev => {
         if (ev.target === root && (this.selected || this.selectedConn)) {
           this.selected = null; this.selectedConn = null; this.render()
@@ -2118,12 +2142,13 @@
       this.leanLink.hidden = !qed
       const n = this.analysis.openInputs.length
       // the goals, as Lean lists them; a tap makes one the current goal (on its board)
+      // (in the Lean tactic mode always, also for one goal, so that the board keeps its height)
       this.goalList.replaceChildren()
-      if (Object.keys(this.goalNo).length && !qed) {
-        this.goalList.append(el('span', 'ipm-goals-title', tr('Goals:')))
+      if (this.tacticsOnly && order.length) {
+        this.goalList.append(el('span', 'ipm-goals-title', tr(order.length > 1 ? 'Goals:' : 'Goal:')))
         for (const o of order) {
           const k = this.goalNo[`${o.block}.${o.port}`], cur = this.selected?.kind === 'in' && this.selected.block === o.block && this.selected.port === o.port
-          const t = el('button', 'ipm-goal-item' + (cur ? ' ipm-goal-current' : ''), `${goalMark(k)} ⊢ ${show(this.proof.block(o.block).inputs[o.port], this.analysis.s)}`)
+          const t = el('button', 'ipm-goal-item' + (cur ? ' ipm-goal-current' : ''), `${k ? goalMark(k) + ' ' : ''}⊢ ${show(this.proof.block(o.block).inputs[o.port], this.analysis.s)}`)
           t.type = 'button'
           t.addEventListener('click', () => {
             if (!bv.whole && bv.boards.length > 1) { this.board = bv.scope.goalScope(o); this.boardChosen = true }
