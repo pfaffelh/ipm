@@ -778,8 +778,9 @@
     // The major premise of an elimination, with its type if Lean could not find it: ⟨a, b⟩.1 or
     // Or.elim (Or.inl a) … do not elaborate, (⟨a, b⟩ : A ∧ B).1 does.
     const head = t => (t.k === 'app' ? head(t.f) : t)
-    const typed = (t, f) => (['pair', 'fun'].includes(t.k) || (t.k === 'app' && ['Or.inl', 'Or.inr', 'Iff.intro', 'False.elim',
-      'Classical.byContradiction', 'Or.elim', 'Exists.elim'].includes(head(t).n)) ? { k: 'typed', a: t, f } : t)
+    const opaque = t => ['pair', 'fun'].includes(t.k) || (t.k === 'app' && ['Or.inl', 'Or.inr', 'Iff.intro', 'False.elim',
+      'Classical.byContradiction', 'Or.elim', 'Exists.elim'].includes(head(t).n))
+    const typed = (t, f) => (opaque(t) ? { k: 'typed', a: t, f } : t)
     // A term in the proof: an object of α; an undetermined one is `default`.
     const boundEig = new Set()
     const leanTerm = (t, atomic) => {
@@ -844,7 +845,12 @@
       const L = RULES[b.rule]?.lemma
       if (L) {
         uses.add(L.key)
-        return app(L.leanNames[j], ...b.inputs.map((_, i) => arg(i)))
+        // The statements of the lemma are given by name (`(Q := True)`) where Lean could not find
+        // them: undetermined ones, or all of them when an argument does not tell its type (fun _ => …).
+        const args = b.inputs.map((_, i) => arg(i))
+        const lemmaHead = { k: 'lemma', n: L.leanNames[j], all: args.some(opaque),
+          vars: RULES[b.rule].vars.map((v, i) => [L.atoms[i], { t: 'meta', id: `${b.id}.${v}` }]) }
+        return args.reduce((t, a) => ({ k: 'app', f: t, a }), lemmaHead)
       }
       return { k: 'sorry' }
     }
@@ -868,6 +874,7 @@
         case 'pair': return `⟨${pr(t.a)}, ${pr(t.b)}⟩`
         case 'proj': return `${atomic(t.a) ? pr(t.a) : `(${pr(t.a)})`}.${t.i}`
         case 'typed': return `(${pr(t.a)} : ${closedNow(t.f)})`
+        case 'lemma': return [t.n, ...t.vars.filter(([, f]) => t.all || undetermined(f, s)).map(([x, f]) => `(${x} := ${closedNow(f)})`)].join(' ')
         case 'type': { const a = closedNow(t.f); return /\s/.test(a) ? `(${a})` : a }
         case 'app': return `${t.f.k === 'fun' ? `(${pr(t.f)})` : pr(t.f)} ${atomic(t.a) ? pr(t.a) : `(${pr(t.a)})`}`
         case 'fun': {  // fun x => fun y => … is written fun x y => …
