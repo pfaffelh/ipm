@@ -1,6 +1,6 @@
 // The pages of the worlds moved from Session-N___-…/ to World-N___-…/, and the levels of the old world 6
 // into other worlds (layout 2); then new levels came in (layout 3), then the world Rewriting as world 7
-// (layout 4): progress kept under the old places moves to the new ones, and old addresses forward.
+// (layout 4), and level 2.16 went away (layout 5): progress kept under the old places moves to the new ones, and old addresses forward.
 // Usage: BASE=http://localhost:8002/ node migrate.mjs
 import { chromium } from 'playwright-core'
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })
@@ -50,6 +50,21 @@ await page.evaluate(p => {
 }, path)
 await page.reload(); await page.waitForTimeout(300)
 console.log('layout 4, kept under:', JSON.stringify(await page.evaluate(() => Object.keys(localStorage).filter(k => /World-([5789]|10)/.test(k)).map(k => k.replace(/.*\/(World)/, '$1')).sort())))
+// Fourth move (layout 5): level 2.16 went away; 2.17 … 2.23 are now 2.16 … 2.22.
+await page.goto(base)
+await page.evaluate(p => {
+  localStorage.clear()
+  localStorage.setItem('ipm-verso:layout', '4')
+  localStorage.setItem('ipm-verso:mode', 'tactics'); localStorage.setItem('ipm-verso:lang', 'de')
+  const proof = JSON.stringify({ b: [], c: [], n: 0, m: {} })
+  localStorage.setItem(`ipm-verso:${p}World-2___-Implication/:15`, JSON.stringify({ proof, solved: false }))
+  localStorage.setItem(`ipm-verso:${p}World-2___-Implication/:15:tip`, '1')
+  for (const k of [16, 22]) localStorage.setItem(`ipm-verso:${p}World-2___-Implication/:${k}`, JSON.stringify({ proof, solved: true }))
+}, path)
+await page.reload(); await page.waitForTimeout(300)
+console.log('layout 5, kept under:', JSON.stringify(await page.evaluate(() => Object.keys(localStorage).filter(k => /Implication/.test(k))
+  .map(k => k.replace(/.*\/(World)/, '$1') + (JSON.parse(localStorage.getItem(k)).solved ? ' solved' : '')).sort())))
+console.log('  settings kept:', JSON.stringify(await page.evaluate(() => [localStorage.getItem('ipm-verso:mode'), localStorage.getItem('ipm-verso:lang')])))
 await page.goto(base + 'World-7___-Quantifiers/#level-5'); await page.waitForTimeout(800)
 console.log('old world 7 forwards to:', new URL(page.url()).pathname + new URL(page.url()).hash)
 await page.goto(base + 'World-8___-Two-Puzzles/'); await page.waitForTimeout(800)

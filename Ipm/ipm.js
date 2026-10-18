@@ -45,7 +45,9 @@
     'Arrange the blocks automatically again': 'Die Blöcke wieder automatisch anordnen',
     'The proof in Lean': 'Der Beweis in Lean', 'Try it in Lean ↗': 'In Lean ausprobieren ↗',
     'goals accomplished 🎉': 'goals accomplished 🎉',
-    'Now choose a tactic': 'Jetzt eine Taktik wählen', 'Whole proof': 'Ganzer Beweis',
+    'Now choose a tactic': 'Jetzt eine Taktik wählen', 'Goals:': 'Ziele:',
+    '✓ Goal done — on to the next one, choose a tactic': '✓ Ziel erledigt — weiter mit dem nächsten, wähle eine Taktik',
+    'Goal {k} of {m}: choose a tactic': 'Ziel {k} von {m}: wähle eine Taktik', 'Whole proof': 'Ganzer Beweis',
     'Now tap a glowing green dot, or add a block with ＋': 'Jetzt einen grün leuchtenden Punkt antippen oder mit ＋ einen Baustein hinzufügen',
     'Now tap a glowing green circle, or add a block with ＋': 'Jetzt einen grün leuchtenden Kreis antippen oder mit ＋ einen Baustein hinzufügen',
     '1 red circle left — tap one': 'Noch 1 roter Kreis — tippe ihn an',
@@ -159,6 +161,9 @@
     try { localStorage.setItem('ipm-verso:mode', m) } catch {}
     window.dispatchEvent(new Event('ipm-mode'))
   }
+
+  // ①, ②, … for the goals of the Lean tactic mode
+  const goalMark = k => (k >= 1 && k <= 20 ? String.fromCodePoint(0x2460 + k - 1) : `(${k})`)
 
   const tr = (en, vars = {}) => (LANG === 'de' ? DE[en] ?? en : en).replace(/\{(\w+)\}/g, (_, k) => vars[k])
 
@@ -1285,7 +1290,10 @@
       try {
         const saved = JSON.parse(localStorage.getItem(this.key))
         if (saved?.proof) this.proof.restore(saved.proof)
-      } catch {}
+        // a proof kept for other assumptions or goals (an old place): start anew
+        const count = kind => this.proof.blocks.filter(b => b.kind === kind).length
+        if (count('assumption') !== this.assumptions.length || count('conclusion') !== this.conclusions.length) throw 0
+      } catch { this.proof = new Proof(this.assumptions, this.conclusions) }
 
       this.canvas = el('div', 'ipm-canvas')
       this.status = el('div', 'ipm-status')
@@ -1303,7 +1311,9 @@
       this.info = el('div', 'ipm-info')
       // a selected goal with what one has there, as Lean shows it: h₁ : A ∨ B, h₂ : A ⊢ B ∨ A
       this.context = el('div', 'ipm-context')
-      this.info.append(this.context, this.status)
+      // the goals of the Lean tactic mode, numbered as in Lean: Goals: ① ⊢ A  ② ⊢ A → B
+      this.goalList = el('div', 'ipm-goals')
+      this.info.append(this.goalList, this.context, this.status)
       this.sheet = el('div', 'ipm-sheet')
       this.sheet.hidden = true
       // The trash can appears while a rule block is dragged; dropping the block on it removes it.
@@ -1863,9 +1873,11 @@
         const own = key === '' ? [] : this.proof.block(key.split('.')[0]).outputs
           .map((g, j) => ({ g, j })).filter(({ j }) => isLocal(this.proof.block(key.split('.')[0]), j) && `${key.split('.')[0]}.${consumer(this.proof.block(key.split('.')[0]), j)}` === key)
           .map(({ g, j }) => `${names[`${key.split('.')[0]}.${j}`] ?? 'h'} : ${show(g, s)}`)
-        const t = el('button', 'ipm-board-tab' + (this.board === key ? ' ipm-board-current' : ''), `${done ? '✓ ' : ''}${own.length ? own.join(', ') + ' ' : ''}⊢ ${f ? show(f, s) : ''}`)
+        // the numbers of its goals, as in the list of goals
+        const nos = this.analysis.openInputs.filter(o => bv.scope?.goalScope(o) === key).map(o => this.goalNo[`${o.block}.${o.port}`]).filter(k => k).sort((x, y) => x - y)
+        const t = el('button', 'ipm-board-tab' + (this.board === key ? ' ipm-board-current' : ''), `${done ? '✓ ' : ''}${nos.map(goalMark).join('')}${nos.length ? ' ' : ''}${own.length ? own.join(', ') + ' ' : ''}⊢ ${f ? show(f, s) : ''}`)
         t.type = 'button'
-        t.addEventListener('click', () => { this.board = key; this.selected = null; this.render() })
+        t.addEventListener('click', () => { this.board = key; this.boardChosen = true; this.selected = null; this.render() })
         this.tabs.append(t)
       })
       const whole = el('button', 'ipm-board-tab ipm-board-whole' + (this.board === '*' ? ' ipm-board-current' : ''), tr('Whole proof'))
@@ -1874,10 +1886,45 @@
       this.tabs.append(whole)
     }
 
+    // The open goals in the order of the Lean proof: from the goals of the level backwards, the inputs
+    // of each block in turn (so `apply h₁` with `h₁ : A → B → C` gives the goals A, then B); open
+    // inputs of blocks not yet connected come last.
+    goalOrder() {
+      const p = this.proof, open = this.analysis.openInputs, order = [], seen = new Set()
+      const isOpen = (block, port) => open.some(o => o.block === block && o.port === port)
+      const visit = id => {
+        if (seen.has(id)) return
+        seen.add(id)
+        p.block(id).inputs.forEach((_, i) => {
+          if (isOpen(id, i)) order.push({ block: id, port: i })
+          else for (const c of p.connections) if (c.to.block === id && c.to.port === i) visit(c.from.block)
+        })
+      }
+      for (const b of p.blocks) if (b.kind === 'conclusion') visit(b.id)
+      for (const o of open) if (!order.some(x => x.block === o.block && x.port === o.port)) order.push(o)
+      return order
+    }
+
     render() {
       const p = this.proof
       this.root.classList.toggle('ipm-tactics-only', this.tacticsOnly)
       this.analysis = p.analyze()
+      // In the Lean tactic mode the goals are numbered in the order of the Lean proof (①, ②, …), and
+      // there is always a current goal, as in Lean: after a step the first goal (its board comes into
+      // view); after a board was chosen (a tab), the first goal on it.
+      const order = this.goalOrder()
+      this.goalNo = this.tacticsOnly && order.length > 1 ? Object.fromEntries(order.map((o, k) => [`${o.block}.${o.port}`, k + 1])) : {}
+      const fewer = this.tacticsOnly && this.openBefore !== undefined && order.length < this.openBefore && order.length > 0
+      this.openBefore = order.length
+      if (this.tacticsOnly && !this.root.inert && order.length && !this.selectedConn &&
+        (!this.selected || (this.selected.kind === 'in' && !order.some(o => o.block === this.selected.block && o.port === this.selected.port)))) {
+        const sc = this.scopeOf()
+        const o = (this.boardChosen && order.find(o => sc.goalScope(o) === this.board)) || order[0]
+        if (this.board !== '*') this.board = sc.goalScope(o)
+        this.selected = { kind: 'in', block: o.block, port: o.port }
+        this.nextGoal = fewer
+      }
+      this.boardChosen = false
       const bv = this.boardView()
       this.boardInfo = bv
       this.view = { proof: bv.proof }
@@ -1991,7 +2038,7 @@
           if (kind === 'in') {
             const open = this.analysis.openInputs.some(o => o.block === at.block && o.port === at.port)
             return (open ? 'ipm-open ' : '') +
-              (sel?.kind === 'in' && sel.block === at.block && sel.port === at.port ? 'ipm-selected ' : '') +
+              (sel?.kind === 'in' && sel.block === at.block && sel.port === at.port ? 'ipm-selected ' + (this.nextGoal ? 'ipm-goal-next ' : '') : '') +
               (sel?.kind === 'out' && open && !this.tacticsOnly && this.fits(sel, at) ? 'ipm-candidate' : '')
           }
           return (sel?.kind === 'out' && sel.block === at.block && sel.port === at.port ? 'ipm-selected ' : '') +
@@ -2009,7 +2056,7 @@
         // a port of the picture is a port of the proof; an input whose goal is on another board leads there
         const tapPort = (kind, i) => {
           const key = `${b.id}.${i}`, there = kind === 'in' && bv.elsewhere?.[key]
-          if (there) { if (there !== 'done') { this.board = there; this.selected = null; this.render() } return }
+          if (there) { if (there !== 'done') { this.board = there; this.boardChosen = true; this.selected = null; this.render() } return }
           const r = real(kind, i), rb = p.block(r.block)
           return kind === 'in' ? this.tapInput(rb, r.port) : this.tapOutput(rb, r.port)
         }
@@ -2023,14 +2070,22 @@
           const xy = portAt(pos[b.id], b, 'in', Number(k))
           g.append(svg('text', { x: xy.x, y: xy.y - 12, 'text-anchor': 'middle', class: 'ipm-elsewhere-mark' }, there === 'done' ? '✓' : '▸'))
         }
+        // the number of an open goal (Lean tactic mode, two goals or more)
+        b.inputs.forEach((_, i) => {
+          const at = real('in', i), k = this.goalNo[`${at.block}.${at.port}`]
+          if (!k || bv.elsewhere?.[`${b.id}.${i}`]) return
+          const xy = portAt(pos[b.id], b, 'in', i)
+          g.append(svg('text', { x: xy.x - 15, y: xy.y - 9, 'text-anchor': 'middle', class: 'ipm-goal-no' }, goalMark(k)))
+        })
         // Tapping an assumption or a goal is tapping its only port.
         const tap = () => {
           if (b.kind === 'assumption') tapPort('out', 0)
           else if (b.kind === 'conclusion') tapPort('in', 0)
           else this.tapBlock(p.block(b.id))
         }
-        // (what stands on a board for a block elsewhere, a hypothesis or a goal, is not dragged)
-        if (!b.real && !b.goalOf) this.makeDraggable(g, b, pos, paths, tap)
+        // (also what stands on a board for a hypothesis from outside, dashed, or for the goal of the board:
+        // their places are kept under their own ids)
+        this.makeDraggable(g, b, pos, paths, tap)
         g.addEventListener('click', ev => {
           if (this.justDragged) { this.justDragged = false; return }
           if (ev.target.closest('.ipm-port')) return
@@ -2058,6 +2113,21 @@
       this.leanLink.href = 'https://live.lean-lang.org/#code=' + encodeURIComponent(code)
       this.leanLink.hidden = !qed
       const n = this.analysis.openInputs.length
+      // the goals, as Lean lists them; a tap makes one the current goal (on its board)
+      this.goalList.replaceChildren()
+      if (Object.keys(this.goalNo).length && !qed) {
+        this.goalList.append(el('span', 'ipm-goals-title', tr('Goals:')))
+        for (const o of order) {
+          const k = this.goalNo[`${o.block}.${o.port}`], cur = this.selected?.kind === 'in' && this.selected.block === o.block && this.selected.port === o.port
+          const t = el('button', 'ipm-goal-item' + (cur ? ' ipm-goal-current' : ''), `${goalMark(k)} ⊢ ${show(this.proof.block(o.block).inputs[o.port], this.analysis.s)}`)
+          t.type = 'button'
+          t.addEventListener('click', () => {
+            if (!bv.whole && bv.boards.length > 1) { this.board = bv.scope.goalScope(o); this.boardChosen = true }
+            this.selected = { kind: 'in', block: o.block, port: o.port }; this.nextGoal = false; this.render()
+          })
+          this.goalList.append(t)
+        }
+      }
       this.context.replaceChildren()
       if (this.selected?.kind === 'in' && !qed) {
         const at = this.selected, s = this.analysis.s
@@ -2068,10 +2138,13 @@
         this.context.append(el('span', 'ipm-ctx-goal', `⊢ ${show(this.proof.block(at.block).inputs[at.port], s)}`))
       }
       this.status.textContent = tr(qed ? 'goals accomplished 🎉' :
+        this.selected && this.tacticsOnly && this.nextGoal ? '✓ Goal done — on to the next one, choose a tactic' :
+        this.selected?.kind === 'in' && this.tacticsOnly && this.goalNo[`${this.selected.block}.${this.selected.port}`] ? 'Goal {k} of {m}: choose a tactic' :
         this.selected && this.tacticsOnly ? 'Now choose a tactic' :
         this.selected?.kind === 'in' ? 'Now tap a glowing green dot, or add a block with ＋' :
         this.selected?.kind === 'out' ? 'Now tap a glowing green circle, or add a block with ＋' :
-        n === 1 ? '1 red circle left — tap one' : '{n} red circles left — tap one', { n })
+        n === 1 ? '1 red circle left — tap one' : '{n} red circles left — tap one',
+        { n, k: goalMark(this.goalNo[`${this.selected?.block}.${this.selected?.port}`]), m: order.length })
       try { localStorage.setItem(this.key, JSON.stringify({ proof: this.proof.snapshot(), solved: qed })) } catch {}
       if (qed) this.saveLemma()
       // each time it becomes solved (also again, after Undo or in the other mode): the levels after it may open
@@ -2434,6 +2507,7 @@
 
     tapInput(b, i) {
       this.selectedConn = null
+      this.nextGoal = false
       const sel = this.selected
       if (sel?.kind === 'out' && !this.tacticsOnly) return this.link(sel, { block: b.id, port: i })
       if (sel?.kind === 'in' && sel.block === b.id && sel.port === i) return this.closeSheet()
@@ -2444,6 +2518,7 @@
 
     tapOutput(b, j) {
       this.selectedConn = null
+      this.nextGoal = false
       const sel = this.selected
       if (sel?.kind === 'in' && !this.tacticsOnly) return this.link({ block: b.id, port: j }, sel)
       if (sel?.kind === 'out' && sel.block === b.id && sel.port === j) return this.closeSheet()
@@ -2573,7 +2648,7 @@
   // ring for the levels solved, and lines from the worlds it builds on. The number of levels of each
   // world is here (docs/levels.py checks it); `at` is the place on the map.
   const WORLDS = [
-    { n: 1, levels: 13, at: [0, 0], after: [] }, { n: 2, levels: 23, at: [0, 1], after: [1] },
+    { n: 1, levels: 13, at: [0, 0], after: [] }, { n: 2, levels: 22, at: [0, 1], after: [1] },
     { n: 3, levels: 20, at: [0, 2], after: [2] }, { n: 4, levels: 21, at: [0, 3], after: [3] },
     { n: 5, levels: 15, at: [0, 4], after: [4] }, { n: 6, levels: 26, at: [0, 5], after: [5] },
     { n: 7, levels: 13, at: [0, 6], after: [6] }, { n: 8, levels: 23, at: [0, 7], after: [5] },
@@ -2695,15 +2770,18 @@
   // Then (layout 4) the world "Rewriting" came in as world 7, and the worlds after it one number up.
   const MOVED4 = {"World-7___-Quantifiers/:0": "World-8___-Quantifiers/:0", "World-7___-Quantifiers/:1": "World-8___-Quantifiers/:1", "World-7___-Quantifiers/:2": "World-8___-Quantifiers/:2", "World-7___-Quantifiers/:3": "World-8___-Quantifiers/:3", "World-7___-Quantifiers/:4": "World-8___-Quantifiers/:4", "World-7___-Quantifiers/:5": "World-8___-Quantifiers/:5", "World-7___-Quantifiers/:6": "World-8___-Quantifiers/:6", "World-7___-Quantifiers/:7": "World-8___-Quantifiers/:7", "World-7___-Quantifiers/:8": "World-8___-Quantifiers/:8", "World-7___-Quantifiers/:9": "World-8___-Quantifiers/:9", "World-7___-Quantifiers/:10": "World-8___-Quantifiers/:10", "World-7___-Quantifiers/:11": "World-8___-Quantifiers/:11", "World-7___-Quantifiers/:12": "World-8___-Quantifiers/:12", "World-7___-Quantifiers/:13": "World-8___-Quantifiers/:13", "World-7___-Quantifiers/:14": "World-8___-Quantifiers/:14", "World-7___-Quantifiers/:15": "World-8___-Quantifiers/:15", "World-7___-Quantifiers/:16": "World-8___-Quantifiers/:16", "World-7___-Quantifiers/:17": "World-8___-Quantifiers/:17", "World-7___-Quantifiers/:18": "World-8___-Quantifiers/:18", "World-7___-Quantifiers/:19": "World-8___-Quantifiers/:19", "World-7___-Quantifiers/:20": "World-8___-Quantifiers/:20", "World-7___-Quantifiers/:21": "World-8___-Quantifiers/:21", "World-7___-Quantifiers/:22": "World-8___-Quantifiers/:22", "World-8___-Puzzles/:0": "World-9___-Puzzles/:0", "World-8___-Puzzles/:1": "World-9___-Puzzles/:1", "World-8___-Puzzles/:2": "World-9___-Puzzles/:2", "World-9___-Induction/:0": "World-10___-Induction/:0", "World-9___-Induction/:1": "World-10___-Induction/:1", "World-9___-Induction/:2": "World-10___-Induction/:2", "World-9___-Induction/:3": "World-10___-Induction/:3", "World-9___-Induction/:4": "World-10___-Induction/:4", "World-9___-Induction/:5": "World-10___-Induction/:5"}
   const MOVED_PAGES4 = {"World-7___-Quantifiers": "World-8___-Quantifiers", "World-8___-Puzzles": "World-9___-Puzzles", "World-9___-Induction": "World-10___-Induction"}
+  // Then (layout 5) level 2.16 (`P → P → P`, a case of 2.14) went away: null drops what was kept for it.
+  const MOVED5 = {"World-2___-Implication/:15": null, "World-2___-Implication/:16": "World-2___-Implication/:15", "World-2___-Implication/:17": "World-2___-Implication/:16", "World-2___-Implication/:18": "World-2___-Implication/:17", "World-2___-Implication/:19": "World-2___-Implication/:18", "World-2___-Implication/:20": "World-2___-Implication/:19", "World-2___-Implication/:21": "World-2___-Implication/:20", "World-2___-Implication/:22": "World-2___-Implication/:21"}
   function moveProgress() {
     let layout = null
     try { layout = localStorage.getItem('ipm-verso:layout') } catch {}
-    if (!['2', '3', '4'].includes(layout)) movePlaces(MOVED, MOVED_PAGES, '2')
-    if (!['3', '4'].includes(layout)) movePlaces(MOVED3, MOVED_PAGES3, '3')
-    if (layout !== '4') movePlaces(MOVED4, MOVED_PAGES4, '4')
+    if (!['2', '3', '4', '5'].includes(layout)) movePlaces(MOVED, MOVED_PAGES, '2')
+    if (!['3', '4', '5'].includes(layout)) movePlaces(MOVED3, MOVED_PAGES3, '3')
+    if (!['4', '5'].includes(layout)) movePlaces(MOVED4, MOVED_PAGES4, '4')
+    if (layout !== '5') movePlaces(MOVED5, {}, '5')
   }
-  // Moves what the browser keeps under the places of `moved` (world page/:level → new place) and the
-  // last page of `pages`. The lemmas and the current level of each world are made anew.
+  // Moves what the browser keeps under the places of `moved` (world page/:level → new place, or null:
+  // away) and the last page of `pages`. The lemmas and the current level of each world are made anew.
   function movePlaces(MOVED, MOVED_PAGES, layout) {
     try {
       const place = /((?:Session|World)-\d+___-[^/]+)\/:(\d+)/
@@ -2713,6 +2791,7 @@
         if (k === 'ipm-verso:lemmas' || /\/:current$/.test(k)) { localStorage.removeItem(k); continue }
         const m = place.exec(k)
         const to = m && MOVED[`${m[1]}/:${m[2]}`]
+        if (m && to === null) { localStorage.removeItem(k); continue }  // (only a level dropped)
         if (to) moves.push([k, k.replace(m[0], to), m[1].startsWith('World')])
       }
       // first all values, then the old keys away, then the new ones (an old place may be a new one)

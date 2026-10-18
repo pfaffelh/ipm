@@ -263,20 +263,6 @@ example (P Q : Prop) : P → Q → Q := fun _ q => q
 ```
 ::::
 
-::::task (rules := "conjI, conjE, impI, impE") (assumptions := "") (conclusions := "P → P → P")
-:::en
-From the Lean course, sheet 01-a. Two →I blocks; which hypothesis do you use?
-:::
-
-:::de
-Aus dem Lean-Kurs, Blatt 01-a. Zwei →I-Blöcke; welche Annahme verwendest du?
-:::
-
-```lean -show
-example (P : Prop) : P → P → P := fun p _ => p
-```
-::::
-
 ::::task (rules := "conjI, conjE, impI, impE") (assumptions := "") (conclusions := "P → (P → Q) → Q")
 :::en
 Modus ponens as a statement of its own.

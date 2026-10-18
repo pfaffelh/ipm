@@ -41,14 +41,13 @@ Columns: level, statement, rules its Lean proof uses (roughly), lemma (L) / tip.
 | 2.13 | `(A → B) ∧ (A → C) ⊢ A → B ∧ C` | conjE, conjI, impI |  |
 | 2.14 | ` ⊢ P → Q → P` | impI |  |
 | 2.15 | ` ⊢ P → Q → Q` | impI |  |
-| 2.16 | ` ⊢ P → P → P` | impI |  |
-| 2.17 | ` ⊢ P → (P → Q) → Q` | impI |  |
-| 2.18 | `P → Q → R, Q ⊢ P → R` | impI |  |
-| 2.19 | ` ⊢ (P → Q) → (Q → R) → P → R` | impI |  |
-| 2.20 | ` ⊢ (P → Q → R) → (P → Q) → P → R` | impI |  |
-| 2.21 | `P → Q, Q → T, Q → R, R → S, T → P, R → T ⊢ T → R` | impI |  |
-| 2.22 | `P → Q → R → S ⊢ P ∧ Q ∧ R → S` | conjE, impI |  |
-| 2.23 | `A → A → B, (A → B) → A ⊢ B` | impI |  |
+| 2.16 | ` ⊢ P → (P → Q) → Q` | impI |  |
+| 2.17 | `P → Q → R, Q ⊢ P → R` | impI |  |
+| 2.18 | ` ⊢ (P → Q) → (Q → R) → P → R` | impI |  |
+| 2.19 | ` ⊢ (P → Q → R) → (P → Q) → P → R` | impI |  |
+| 2.20 | `P → Q, Q → T, Q → R, R → S, T → P, R → T ⊢ T → R` | impI |  |
+| 2.21 | `P → Q → R → S ⊢ P ∧ Q ∧ R → S` | conjE, impI |  |
+| 2.22 | `A → A → B, (A → B) → A ⊢ B` | impI |  |
 
 ## World 3: Disjunction
 
@@ -202,7 +201,7 @@ Columns: level, statement, rules its Lean proof uses (roughly), lemma (L) / tip.
 
 | | statement | rules used | gives |
 |---|---|---|---|
-| 9.1 | ` ⊢ ∃ x, P x → ∀ y, P y` | TND, conjI, falseE, impI |  |
+| 9.1 | ` ⊢ ∃ x, P x → ∀ y, P y` | TND, conjI, falseE, impI | tip |
 | 9.2 | `∀ x, (R x → ⊥) → R (f x) ⊢ ∃ x, R x ∧ R (f (f x))` | TND, conjI, falseE, impI |  |
 | 9.3 | `A ↔ (A → ⊥) ∧ (B → ⊥) ⊢ (A → ⊥) ∧ B` | TND, conjE, conjI, falseE, iffE1, iffE2, impI |  |
 

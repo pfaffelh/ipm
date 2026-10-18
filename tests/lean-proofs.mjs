@@ -76,7 +76,7 @@ await link(inp(rule(t, 4), 1), local(rule(t, 0)))
 await done('S2 T13', t)
 
 // A → A → B, (A → B) → A ⊢ B: the →I block is used twice
-t = page.locator('.ipm-task').nth(22)
+t = page.locator('.ipm-task').nth(21)
 await add(t, '→I'); await add(t, '→E'); await add(t, '→E'); await add(t, '→E'); await add(t, '→E')
 await link(inp(rule(t, 0)), out(rule(t, 1)))
 await link(inp(rule(t, 1), 0), out(rule(t, 2)))

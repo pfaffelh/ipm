@@ -32,6 +32,28 @@ The drinker paradox: in every pub there is someone such that, if they drink (`P`
 Das Trinker-Paradox: In jeder Kneipe gibt es jemanden, für den gilt: Wenn er trinkt (`P`), trinken alle. Klassisch, mit TND.
 :::
 
+:::tip (lang := "en")
+A plan. Use TND on `∀ y, P y`, “everybody drinks”, and look at the two cases.
+
+* *Everybody drinks:* then anyone will do. In ∃I leave the object open (in Lean `use default`, an
+  arbitrary object); `P x → ∀ y, P y` holds because `∀ y, P y` does.
+* *Not everybody drinks:* prove it by contradiction (RAA): assume there is no such `x`, and show
+  `∀ y, P y`, which contradicts the case. For an arbitrary `c₁` (∀I), again by contradiction: if
+  `P c₁` failed, `c₁` itself would be such an `x` (from `P c₁` anything follows by ⊥E), and you assumed
+  there is none.
+:::
+
+:::tip (lang := "de")
+Ein Plan. Verwende TND für `∀ y, P y`, „alle trinken“, und betrachte die beiden Fälle.
+
+* *Alle trinken:* Dann passt jeder. Lass bei ∃I das Objekt offen (in Lean `use default`, ein
+  beliebiges Objekt); `P x → ∀ y, P y` gilt, weil `∀ y, P y` gilt.
+* *Nicht alle trinken:* Beweis durch Widerspruch (RAA): Nimm an, es gibt kein solches `x`, und zeige
+  `∀ y, P y`, was dem Fall widerspricht. Für ein beliebiges `c₁` (∀I) wieder durch Widerspruch: Gälte
+  `P c₁` nicht, dann wäre `c₁` selbst so ein `x` (aus `P c₁` folgt dann alles mit ⊥E), und du hast
+  angenommen, dass es keines gibt.
+:::
+
 ```lean -show
 example (α : Type) [Inhabited α] (P : α → Prop) : ∃ x, P x → ∀ y, P y :=
   (Classical.em (∀ y, P y)).elim (fun hall => ⟨default, fun _ => hall⟩)
