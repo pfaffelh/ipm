@@ -9,6 +9,7 @@ import Ipm.Sessions.Iff
 import Ipm.Sessions.Quantifiers
 import Ipm.Sessions.Puzzles
 import Ipm.Sessions.Induction
+import Ipm.Trainer
 
 open Verso.Genre Manual
 open Ipm
@@ -99,3 +100,5 @@ gespeichert.
 {include 1 Ipm.Sessions.Puzzles}
 
 {include 1 Ipm.Sessions.Induction}
+
+{include 1 Ipm.Trainer}

@@ -25,6 +25,7 @@
   document.documentElement.classList.toggle('ipm-de', LANG === 'de')
   document.documentElement.lang = LANG
   const DE = {
+    '🎯 Tactic trainer': '🎯 Taktik-Trainer',
     '∧-introduction': '∧-Einführung', '∧-elimination': '∧-Beseitigung',
     '→-introduction': '→-Einführung', '→-elimination': '→-Beseitigung',
     '∨-introduction (left)': '∨-Einführung (links)', '∨-introduction (right)': '∨-Einführung (rechts)',
@@ -38,6 +39,7 @@
     
     'The proof in Lean': 'Der Beweis in Lean', 'Try it in Lean ↗': 'In Lean ausprobieren ↗',
     'goals accomplished 🎉': 'goals accomplished 🎉',
+    'Now choose a tactic': 'Jetzt eine Taktik wählen',
     'Now tap a glowing green dot, or add a block with ＋': 'Jetzt einen grün leuchtenden Punkt antippen oder mit ＋ einen Baustein hinzufügen',
     'Now tap a glowing green circle, or add a block with ＋': 'Jetzt einen grün leuchtenden Kreis antippen oder mit ＋ einen Baustein hinzufügen',
     '1 red circle left — tap one': 'Noch 1 roter Kreis — tippe ihn an',
@@ -66,6 +68,7 @@
   }
   // Headings of the site, which come from Verso.
   const DE_TITLES = {
+    'Tactic Trainer': 'Taktik-Trainer',
     'The Incredible Proof Machine in Lean': 'Die Incredible Proof Machine in Lean',
     'World 1: Conjunction': 'Welt 1: Konjunktion', 'World 2: Implication': 'Welt 2: Implikation',
     'World 3: Disjunction': 'Welt 3: Disjunktion', 'World 4: Falsity and Negation': 'Welt 4: Falsum und Negation',
@@ -155,7 +158,7 @@
     SETTINGS.inOrder = localStorage.getItem('ipm-verso:in-order') !== 'off'
     UNLOCKED = new Set(JSON.parse(localStorage.getItem('ipm-verso:unlocked')) ?? [])
   } catch {}
-  const tacticAllowed = key => SETTINGS.tactics === 'all' || (SETTINGS.tactics === 'earned' && UNLOCKED.has(key))
+  const allowedTactic = key => SETTINGS.tactics === 'all' || (SETTINGS.tactics === 'earned' && UNLOCKED.has(key))
   function saveSettings() {
     try {
       localStorage.setItem('ipm-verso:tactics', SETTINGS.tactics)
@@ -243,6 +246,8 @@
 
   // The type of objects in Lean: α, or Nat for statements about natural numbers.
   let leanDomain = 'α'
+  // While a Lean type is written: what an eigenvariable outside its block is written as (`default`).
+  let eigOutside = null
 
   // Names of bound variables of rule blocks carry the block (`x#b3`), so that they never clash; they
   // are shown without it.
@@ -294,7 +299,8 @@
     t = resolve(t, s)
     switch (t.t) {
       case 'bv': return names[t.n] ?? baseName(t.n)
-      case 'con': case 'eig': return t.n
+      case 'con': return t.n
+      case 'eig': return eigOutside?.(t.n) ?? t.n
       case 'meta': return '?' + metaNumber(t.id.split('.').pop())
       case 'fn': {
         const txt = t.n === 'succ' ? `${showTerm(t.args[0], s, false, names)} + 1`
@@ -587,7 +593,11 @@
       // Objects chosen with a tactic (specialize h₁ a, use a) are fixed from the start.
       let s = Object.assign({}, ...this.blocks.map(b => b.fix ?? {}))
       const status = {}
-      let todo = [...this.connections], progress = true
+      // A line that closes a circle (a block that would help to prove itself) is never part of a
+      // proof, however it came in (the interface does not draw one).
+      for (const c of this.connections)
+        if (!isLocal(this.block(c.from.block), c.from.port) && (c.from.block === c.to.block || this.createsCycle(c.from.block, c.to.block))) status[c.id] = 'cycle'
+      let todo = this.connections.filter(c => !status[c.id]), progress = true
       eigScope = null
       for (;;) {
         progress = false
@@ -681,7 +691,7 @@
         const inside = new Set(), hyps = []
         const visit = (x, k) => {
           for (const c of this.connections) {
-            if (c.to.block !== x.id || c.to.port !== k || status[c.id] === 'fail') continue
+            if (c.to.block !== x.id || c.to.port !== k || ['fail', 'cycle'].includes(status[c.id])) continue
             const src = this.block(c.from.block)
             if (src.kind === 'assumption' || isLocal(src, c.from.port)) hyps.push([src, c.from.port])
             else if (!inside.has(src.id)) { inside.add(src.id); src.inputs.forEach((_, j) => visit(src, j)) }
@@ -714,6 +724,21 @@
   // A part of the graph that is used twice appears twice in the term.
   const sub = n => String(n).replace(/\d/g, d => '₀₁₂₃₄₅₆₇₈₉'[d])
 
+  // Names of what one has, as in Lean: the assumptions h₁, h₂, …, then, in the order of the blocks,
+  // the local hypotheses, the two parts that `obtain` gives (∧E) and what a step on a blue dot gives
+  // (`have h₃ := h₁ ?_`); what ∀E gives keeps the name of what it specializes (`specialize h₁ a`). Returns the names by `block.port`, and how many there are.
+  function hypNames(p) {
+    const names = {}
+    let n = 0
+    for (const b of p.blocks) if (b.kind === 'assumption') names[`${b.id}.0`] = 'h' + sub(++n)
+    for (const b of p.blocks) if (b.kind === 'rule') b.outputs.forEach((_, j) => { if (isLocal(b, j) || b.rule === 'conjE' || (b.named && !RULES[b.rule].local && b.rule !== 'allE')) names[`${b.id}.${j}`] = 'h' + sub(++n) })
+    for (const b of p.blocks) if (b.kind === 'rule' && b.rule === 'allE') {
+      const c = p.connections.find(c => c.to.block === b.id && c.to.port === 0)
+      names[`${b.id}.0`] = (c && names[`${c.from.block}.${c.from.port}`]) ?? 'h'
+    }
+    return { names, count: n }
+  }
+
   // Returns the parts of the proof, one per goal, and the lemmas it uses.
   function leanParts(proof, analysis) {
     const p = proof, s = analysis.s, uses = new Set()
@@ -737,54 +762,74 @@
     leanDomain = nat ? 'Nat' : 'α'
     const D = leanDomain
     const lean = f => show(f, s, 0, true)
+    // `f` in Lean with what is still undetermined filled in: True for a statement, `default` for an
+    // object (a proof is a proof of the statement with any of them).
+    const closedNow = f => {
+      const s2 = { ...s }
+      const fill = g => {
+        g = norm(g, s2)
+        if (g.t === 'meta') { if (g.term) needDefault = true; s2[g.id] = g.term ? { t: 'con', n: 'default' } : { t: 'top' }; return }
+        parts(g).forEach(fill)
+      }
+      for (let k = 0; k < 5 && undetermined(f, s2); k++) fill(f)
+      eigOutside = n => (boundEig.has(n) ? null : (needDefault = true, 'default'))
+      try { return show(f, s2, 0, true) } finally { eigOutside = null }
+    }
+    // The major premise of an elimination, with its type if Lean could not find it: ⟨a, b⟩.1 or
+    // Or.elim (Or.inl a) … do not elaborate, (⟨a, b⟩ : A ∧ B).1 does.
+    const head = t => (t.k === 'app' ? head(t.f) : t)
+    const typed = (t, f) => (['pair', 'fun'].includes(t.k) || (t.k === 'app' && ['Or.inl', 'Or.inr', 'Iff.intro', 'False.elim',
+      'Classical.byContradiction', 'Or.elim', 'Exists.elim'].includes(head(t).n)) ? { k: 'typed', a: t, f } : t)
     // A term in the proof: an object of α; an undetermined one is `default`.
+    const boundEig = new Set()
     const leanTerm = (t, atomic) => {
       t = resolve(t, s)
-      if (t.t === 'meta') { needDefault = true; return 'default' }
+      // undetermined, or an eigenvariable outside its block (where it stands for any object)
+      if (t.t === 'meta' || (t.t === 'eig' && !boundEig.has(t.n))) { needDefault = true; return 'default' }
       if (t.t === 'fn') {
         const txt = t.n === 'succ' ? `${leanTerm(t.args[0], false)} + 1` : [t.n, ...t.args.map(a => leanTerm(a, true))].join(' ')
         return atomic ? `(${txt})` : txt
       }
       return baseName(t.n)
     }
-    // Local hypotheses are named h₃, h₄, … after the assumptions, in the order of their blocks (so that
-    // the tactic buttons can name them too).
+    // Local hypotheses are named h₃, h₄, … after the assumptions, in the order of their blocks, as the
+    // tactic buttons name them (`hypNames`).
     const hyp = (b, j) => locals[`${b.id}.${j}`]
     const app = (f, ...args) => args.reduce((t, a) => ({ k: 'app', f: t, a }), { k: 'var', n: f })
     assumptions.forEach((b, k) => { names[b.id] = 'h' + sub(k + 1) })
-    let nLocal = assumptions.length
-    for (const b of p.blocks) if (b.kind === 'rule') b.outputs.forEach((_, j) => { if (isLocal(b, j)) locals[`${b.id}.${j}`] = 'h' + sub(++nLocal) })
+    { const all = hypNames(p).names; for (const b of p.blocks) if (b.kind === 'rule') b.outputs.forEach((_, j) => { if (isLocal(b, j)) locals[`${b.id}.${j}`] = all[`${b.id}.${j}`] }) }
     // Terms: {k: 'var', n} | {k: 'sorry'} | {k: 'app', f, a} | {k: 'fun', x, body} | {k: 'pair', a, b} | {k: 'proj', a, i}
     const input = (b, i, depth) => {
-      const c = p.connections.find(c => c.to.block === b.id && c.to.port === i && analysis.status[c.id] !== 'fail')
+      const c = p.connections.find(c => c.to.block === b.id && c.to.port === i && !['fail', 'cycle'].includes(analysis.status[c.id]))
       return c && depth < 60 ? output(p.block(c.from.block), c.from.port, depth + 1) : { k: 'sorry' }
     }
     const output = (b, j, depth) => {
       if (b.kind === 'assumption') return { k: 'var', n: names[b.id] }
       if (isLocal(b, j)) return { k: 'var', n: hyp(b, j) }
       const arg = i => input(b, i, depth)
+      const major = i => typed(arg(i), b.inputs[i])
       switch (b.rule) {
         case 'conjI': return { k: 'pair', a: arg(0), b: arg(1) }
-        case 'conjE': return { k: 'proj', a: arg(0), i: j + 1 }
-        case 'impE': return { k: 'app', f: arg(0), a: arg(1) }
+        case 'conjE': return { k: 'proj', a: major(0), i: j + 1 }
+        case 'impE': return { k: 'app', f: major(0), a: arg(1) }
         case 'impI': { const x = hyp(b, 1); return { k: 'fun', x, body: arg(0) } }
         case 'disjI1': return app('Or.inl', arg(0))
         case 'disjI2': return app('Or.inr', arg(0))
         case 'disjE': {
-          const h = arg(0), x = hyp(b, 1), y = hyp(b, 2)
+          const h = major(0), x = hyp(b, 1), y = hyp(b, 2)
           return app('Or.elim', h, { k: 'fun', x, body: arg(1) }, { k: 'fun', x: y, body: arg(2) })
         }
         case 'falseE': return app('False.elim', arg(0))
-        case 'TND': return app('Classical.em', { k: 'var', n: '_' })
+        case 'TND': return app('Classical.em', { k: 'type', f: { t: 'meta', id: `${b.id}.A` } })
         case 'raa': { const x = hyp(b, 1); return app('Classical.byContradiction', { k: 'fun', x, body: arg(0) }) }
         case 'iffI': return app('Iff.intro', arg(0), arg(1))
-        case 'iffE1': return app('Iff.mp', arg(0), arg(1))
-        case 'iffE2': return app('Iff.mpr', arg(0), arg(1))
+        case 'iffE1': return app('Iff.mp', major(0), arg(1))
+        case 'iffE2': return app('Iff.mpr', major(0), arg(1))
         case 'trueI': return { k: 'var', n: 'trivial' }
         case 'allI': return { k: 'fun', x: b.eig, body: arg(0) }
-        case 'allE': return { k: 'app', f: arg(0), a: { k: 'term', t: termMeta(b.id) } }
+        case 'allE': return { k: 'app', f: major(0), a: { k: 'term', t: termMeta(b.id) } }
         case 'exI': return { k: 'pair', a: { k: 'term', t: termMeta(b.id) }, b: arg(0) }
-        case 'exE': return app('Exists.elim', arg(0), { k: 'fun', x: b.eig, body: { k: 'fun', x: hyp(b, 1), body: arg(1) } })
+        case 'exE': return app('Exists.elim', major(0), { k: 'fun', x: b.eig, body: { k: 'fun', x: hyp(b, 1), body: arg(1) } })
         case 'ind': {
           // Nat.rec needs the motive: the body of ∀ n, … as a function.
           const all = norm(b.outputs[0], s)
@@ -804,7 +849,7 @@
       return { k: 'sorry' }
     }
     // Printing, with as few parentheses as Lean needs.
-    const atomic = t => ['var', 'sorry', 'pair', 'proj'].includes(t.k) || (t.k === 'term' && resolve(t.t, s).t !== 'fn')
+    const atomic = t => ['var', 'sorry', 'pair', 'proj', 'typed', 'type'].includes(t.k) || (t.k === 'term' && resolve(t.t, s).t !== 'fn')
     // In a complete proof, unused names are written `_`, as Lean asks for.
     const used = new Set()
     const useTerm = t => { t = resolve(t, s); if (t.t === 'eig') used.add(t.n); parts(t).forEach(useTerm) }
@@ -822,11 +867,18 @@
         case 'sorry': return 'sorry'
         case 'pair': return `⟨${pr(t.a)}, ${pr(t.b)}⟩`
         case 'proj': return `${atomic(t.a) ? pr(t.a) : `(${pr(t.a)})`}.${t.i}`
+        case 'typed': return `(${pr(t.a)} : ${closedNow(t.f)})`
+        case 'type': { const a = closedNow(t.f); return /\s/.test(a) ? `(${a})` : a }
         case 'app': return `${t.f.k === 'fun' ? `(${pr(t.f)})` : pr(t.f)} ${atomic(t.a) ? pr(t.a) : `(${pr(t.a)})`}`
         case 'fun': {  // fun x => fun y => … is written fun x y => …
-          const xs = []
-          for (; t.k === 'fun'; t = t.body) xs.push(named(t.x) ? t.x : '_')
-          return `fun ${xs.join(' ')} => ${pr(t)}`
+          const xs = [], eigs = []
+          for (; t.k === 'fun'; t = t.body) {
+            xs.push(named(t.x) ? t.x : '_')
+            if (/^c[₀-₉]+$/.test(t.x) && !boundEig.has(t.x)) { boundEig.add(t.x); eigs.push(t.x) }
+          }
+          const body = pr(t)
+          eigs.forEach(x => boundEig.delete(x))
+          return `fun ${xs.join(' ')} => ${body}`
         }
       }
     }
@@ -1074,6 +1126,9 @@
       this.assumptions = JSON.parse(root.dataset.assumptions)
       this.conclusions = JSON.parse(root.dataset.conclusions)
       this.rules = JSON.parse(root.dataset.rules)
+      // A level of the tactic trainer: one plays only with tactics (no blocks to add, no lines to draw).
+      this.tacticsOnly = root.dataset.tactics === 'true'
+      root.classList.toggle('ipm-tactics-only', this.tacticsOnly)
       this.proof = new Proof(this.assumptions, this.conclusions)
       this.undoStack = []
       try {
@@ -1098,7 +1153,9 @@
       this.unlocks = JSON.parse(root.dataset.unlocks ?? '[]')
       this.unlockNote = el('div', 'ipm-unlock')
       this.info = el('div', 'ipm-info')
-      this.info.append(this.status, this.unlockNote)
+      // a selected goal with what one has there, as Lean shows it: h₁ : A ∨ B, h₂ : A ⊢ B ∨ A
+      this.context = el('div', 'ipm-context')
+      this.info.append(this.context, this.status, this.unlockNote)
       this.sheet = el('div', 'ipm-sheet')
       this.sheet.hidden = true
       // The trash can appears while a rule block is dragged; dropping the block on it removes it.
@@ -1158,11 +1215,12 @@
       const pressed = () => leanButton.setAttribute('aria-pressed', String(this.lean.open))
       this.lean.addEventListener('toggle', pressed)
       pressed()
-      tools.append(this.menu, undo, reset, tidy, leanButton)
+      tools.append(...(this.tacticsOnly ? [] : [this.menu]), undo, reset, tidy, leanButton)
       this.refreshLemmas()
       window.addEventListener('ipm-lemmas', () => this.refreshLemmas())
       this.play = el('div', 'ipm-play')
-      this.play.append(this.palette, this.splitter(), this.canvas)
+      if (this.tacticsOnly) this.play.append(this.canvas)
+      else this.play.append(this.palette, this.splitter(), this.canvas)
       root.querySelector('.ipm-board').append(this.play, this.info, this.lean, this.sheet, tools, this.trash)
       this.render()
     }
@@ -1497,12 +1555,12 @@
           this.hideSheet()
           this.render()
         })
-        if (this.selectedConn === c.id && (st === 'fail' || st === 'escape')) {
+        if (this.selectedConn === c.id && (st === 'fail' || st === 'escape' || st === 'cycle')) {
           // A line with ☠ or ⚠: the explanation and ✕ in a box right beside it (drawn over the blocks).
           g.classList.add('ipm-conn-selected')
           const out = p.block(c.from.block).outputs[c.from.port], inp = p.block(c.to.block).inputs[c.to.port]
-          bubble = { c, m: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, text: st === 'fail'
-            ? tr('{x} does not fit {y}', { x: show(out, s), y: show(inp, s) })
+          bubble = { c, m: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, text: st === 'cycle' ? tr('That would go round in a circle.')
+            : st === 'fail' ? tr('{x} does not fit {y}', { x: show(out, s), y: show(inp, s) })
             : tr('A local hypothesis may only be used inside its box.') }
         } else if (this.selectedConn === c.id) {
           g.classList.add('ipm-conn-selected')
@@ -1515,7 +1573,7 @@
           })
           g.append(x)
         }
-        if (st === 'fail') {
+        if (st === 'fail' || st === 'cycle') {
           const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
           const skull = svg('text', { x: m.x, y: m.y + 7, class: 'ipm-skull', 'text-anchor': 'middle' }, '☠')
           skull.addEventListener('click', ev => { ev.stopPropagation(); this.selectConn(c) })
@@ -1531,6 +1589,9 @@
       }
       // blocks
       const sel = this.selected
+      // a selected goal: what one has there (the rest is dimmed), shown in a line as in Lean
+      const usable = sel?.kind === 'in' ? this.usableAt(sel) : null
+      const hypNamesNow = usable ? hypNames(p).names : {}
       for (const b of p.blocks) {
         const proved = b.kind === 'conclusion' && !this.analysis.openInputs.some(o => o.block === b.id)
         const portClass = (kind, i) => {
@@ -1539,10 +1600,11 @@
             const open = this.analysis.openInputs.some(o => o.block === b.id && o.port === i)
             return (open ? 'ipm-open ' : '') +
               (sel?.kind === 'in' && sel.block === b.id && sel.port === i ? 'ipm-selected ' : '') +
-              (sel?.kind === 'out' && open && this.fits(sel, at) ? 'ipm-candidate' : '')
+              (sel?.kind === 'out' && open && !this.tacticsOnly && this.fits(sel, at) ? 'ipm-candidate' : '')
           }
           return (sel?.kind === 'out' && sel.block === b.id && sel.port === i ? 'ipm-selected ' : '') +
-            (sel?.kind === 'in' && this.fits(at, sel) ? 'ipm-candidate' : '')
+            (usable && hypNamesNow[`${b.id}.${i}`] && !usable[`${b.id}.${i}`] ? 'ipm-out-of-scope ' : '') +
+            (sel?.kind === 'in' && !this.tacticsOnly && this.fits(at, sel) ? 'ipm-candidate' : '')
         }
         const g = drawBlock(b, pos[b.id], s, proved ? 'ipm-proved' : '', portClass)
         // An eigenvariable that escapes: a ⚠ at the block, which explains itself when tapped.
@@ -1585,7 +1647,17 @@
       this.leanLink.href = 'https://live.lean-lang.org/#code=' + encodeURIComponent(code)
       this.leanLink.hidden = !qed
       const n = this.analysis.openInputs.length
+      this.context.replaceChildren()
+      if (this.selected?.kind === 'in' && !qed) {
+        const at = this.selected, s = this.analysis.s
+        for (const [k, name] of Object.entries(this.usableAt(at))) {
+          const [id, port] = k.split('.')
+          this.context.append(el('span', 'ipm-ctx-hyp', `${name} : ${show(this.proof.block(id).outputs[Number(port)], s)}`))
+        }
+        this.context.append(el('span', 'ipm-ctx-goal', `⊢ ${show(this.proof.block(at.block).inputs[at.port], s)}`))
+      }
       this.status.textContent = tr(qed ? 'goals accomplished 🎉' :
+        this.selected && this.tacticsOnly ? 'Now choose a tactic' :
         this.selected?.kind === 'in' ? 'Now tap a glowing green dot, or add a block with ＋' :
         this.selected?.kind === 'out' ? 'Now tap a glowing green circle, or add a block with ＋' :
         n === 1 ? '1 red circle left — tap one' : '{n} red circles left — tap one', { n })
@@ -1702,31 +1774,32 @@
     // the →I block (`intro`), for an assumption `A ∧ B` the ∧E block (`obtain`), and so on.
     steps() {
       const sel = this.selected
-      if (!sel || SETTINGS.tactics === 'off') return []
+      if (!sel || (SETTINGS.tactics === 'off' && !this.tacticsOnly)) return []
+      const tacticAllowed = key => this.tacticsOnly || allowedTactic(key)
       const b = this.proof.block(sel.block)
-      const f = resolve(sel.kind === 'in' ? b.inputs[sel.port] : b.outputs[sel.port], this.analysis.s)
+      // (norm: also below ∀I, where the statement is the body with c₁ for the variable)
+      const f = norm(sel.kind === 'in' ? b.inputs[sel.port] : b.outputs[sel.port], this.analysis.s)
       // The Lean command, with the names as in the Lean proof: assumptions h₁, h₂, …, local
       // hypotheses on from there (a new one gets the next name); `h` for what has no name.
-      const assumptions = this.proof.blocks.filter(x => x.kind === 'assumption')
-      const nLocal = this.proof.blocks.reduce((n, x) => n + (x.kind === 'rule' ? x.outputs.filter((_, j) => isLocal(x, j)).length : 0), 0)
-      const fresh = (k = 1) => 'h' + sub(assumptions.length + nLocal + k)
-      const localNames = {}
-      { let n = assumptions.length; for (const x of this.proof.blocks) if (x.kind === 'rule') x.outputs.forEach((_, j) => { if (isLocal(x, j)) localNames[`${x.id}.${j}`] = 'h' + sub(++n) }) }
-      const h = b.kind === 'assumption' ? 'h' + sub(assumptions.indexOf(b) + 1) : localNames[`${b.id}.${sel.port}`] ?? 'h'
+      const { names, count } = hypNames(this.proof)
+      const fresh = (k = 1) => 'h' + sub(count + k)
+      const h = names[`${b.id}.${sel.port}`] ?? 'h'
       // the objects one may name: constants of the task, and eigenvariables of blocks on the board
       const objects = new Set()
       const collect = g => { if (g.t === 'con' && g.n !== '0') objects.add(g.n); parts(g).forEach(collect) }
       for (const x of this.proof.blocks) if (x.kind !== 'rule') [...x.inputs, ...x.outputs].forEach(collect)
-      for (const x of this.proof.blocks) if (x.eig) objects.add(x.eig)
+      // (an eigenvariable only inside its block: the input of ∀I, the case of ∃E and induction)
+      for (const x of this.proof.blocks)
+        if (x.eig && sel.kind === 'in' && this.within(sel, x.id, x.rule === 'allI' ? 0 : 1)) objects.add(x.eig)
       const objs = [...objects].slice(0, 4)
       // [rule, Lean command, tactic (which must be allowed)]
       const goal = { imp: [['impI', `intro ${fresh()}`, 'intro']], and: [['conjI', 'constructor', 'constructor']],
         iff: [['iffI', 'constructor', 'constructor']], or: [['disjI1', 'left', 'left'], ['disjI2', 'right', 'right']],
-        top: [['trueI', 'trivial', 'trivial']], all: [['allI', 'intro c', 'intro'], ['ind', 'intro n; induction n', 'induction']],
+        top: [['trueI', 'trivial', 'trivial']], all: [['allI', `intro c${sub(1 + this.proof.blocks.filter(x => x.eig).length)}`, 'intro'], ['ind', 'intro n; induction n', 'induction']],
         ex: [['exI', 'use _', 'use']] }
-      const have = { and: [['conjE', `obtain ⟨ha, hb⟩ := ${h}`, 'obtain']], or: [['disjE', `obtain (${fresh()} | ${fresh(2)}) := ${h}`, 'obtain']],
-        imp: [['impE', `apply ${h}`, 'apply']], bot: [['falseE', `exact ${h}.elim`, 'exfalso']],
-        iff: [['iffE1', `apply ${h}.mp`, 'mp'], ['iffE2', `apply ${h}.mpr`, 'mpr']],
+      const have = { and: [['conjE', `obtain ⟨${fresh()}, ${fresh(2)}⟩ := ${h}`, 'obtain']], or: [['disjE', `obtain (${fresh()} | ${fresh(2)}) := ${h}`, 'obtain']],
+        imp: [['impE', `have ${fresh()} := ${h} ?_`, 'apply']], bot: [['falseE', `have ${fresh()} := ${h}.elim`, 'exfalso']],
+        iff: [['iffE1', `have ${fresh()} := ${h}.mp ?_`, 'mp'], ['iffE2', `have ${fresh()} := ${h}.mpr ?_`, 'mpr']],
         all: [], ex: [['exE', `obtain ⟨c${sub(1 + this.proof.blocks.filter(x => x.eig).length)}, ${fresh()}⟩ := ${h}`, 'obtain']] }
       if (sel.kind === 'in' && !this.analysis.openInputs.some(o => o.block === sel.block && o.port === sel.port)) return []
       const steps = ((sel.kind === 'in' ? goal : have)[f.t] ?? []).filter(([rule, , key]) => this.rules.includes(rule) && tacticAllowed(key))
@@ -1740,22 +1813,48 @@
       if (sel.kind !== 'in' && f.t === 'all') withObject('allE', 'specialize', o => `specialize ${h} ${o}`)
       if (sel.kind === 'in' && f.t === 'ex') withObject('exI', 'use', o => `use ${o}`)
       if (sel.kind !== 'in') return steps
-      // For a goal also: `exact h₁` for an assumption that fits it, and `apply h₁` for an assumption
-      // h₁ : A → B whose B fits it (a →E block, which leaves A to prove).
+      // For a goal also: `exact h` for what one has (an assumption, a local hypothesis in whose box the
+      // goal is, a part from `obtain`) that fits it, and `apply h` for an h : A → B whose B fits it
+      // (a →E block, which leaves A to prove). Each is tried on a copy of the proof first.
       const exact = [], apply = []
-      assumptions.forEach((a, k) => {
-        const o = { block: a.id, port: 0 }, name = 'h' + sub(k + 1), g = norm(a.outputs[0], this.analysis.s)
-        if (this.fits(o, sel) && tacticAllowed('exact')) exact.push({ text: `exact ${name}`, act: () => this.link(o, sel) })
-        else if (g.t === 'imp' && this.rules.includes('impE') && tacticAllowed('apply') && unify(g.b, f, this.analysis.s))
-          apply.push({ rule: 'impE', text: `→E · apply ${name}`, act: () => {
-            this.selected = null
-            this.change(() => {
-              const nb = this.proof.addRule('impE')
-              this.proof.connect({ block: nb.id, port: 0 }, { block: sel.block, port: sel.port })
-              this.proof.connect(o, { block: nb.id, port: 0 })
-            })
-          } })
-      })
+      const goalTo = { block: sel.block, port: sel.port }
+      for (const [at, name] of Object.entries(this.usableAt(sel))) {
+        const [id, port] = at.split('.'), o = { block: id, port: Number(port) }, x = this.proof.block(id)
+        if (!x || (!isLocal(x, o.port) && (o.block === sel.block || this.proof.createsCycle(o.block, sel.block)))) continue
+        const g = norm(x.outputs[o.port], this.analysis.s)
+        if (tacticAllowed('exact') && unify(x.outputs[o.port], f, this.analysis.s) && this.tryOut(q => q.connect(o, goalTo))) {
+          exact.push({ text: `exact ${name}`, act: () => this.link(o, sel) })
+          continue
+        }
+        // A chain of blocks from `o` to the goal: `rules` one after the other, each taking the one
+        // before at its input 0 (h : A → B → C with goal C: two →E blocks; `A` and `B` are left to prove).
+        const chain = (rule, text, rules) => {
+          const build = q => {
+            let from = o
+            for (const r of rules) { const nb = q.addRule(r); q.connect(from, { block: nb.id, port: 0 }); from = { block: nb.id, port: 0 } }
+            q.connect(from, goalTo)
+          }
+          if (this.tryOut(build)) apply.push({ rule, text, act: () => { this.selected = null; this.change(() => build(this.proof)) } })
+        }
+        // h : A → B → C or ∀ x, P x → Q x: as many →E and ∀E blocks as it takes to reach the goal
+        if ((g.t === 'imp' || g.t === 'all') && tacticAllowed('apply')) {
+          const seq = []
+          for (let t = g; seq.length < 4; ) {
+            if (t.t === 'imp' && this.rules.includes('impE')) { seq.push('impE'); t = norm(t.b, this.analysis.s) }
+            else if (t.t === 'all' && this.rules.includes('allE')) { seq.push('allE'); t = norm(t.a, this.analysis.s) }
+            else break
+            const n = apply.length
+            chain(seq[0], `${RULES[seq[0]].label} · apply ${name}`, [...seq])
+            if (apply.length > n) break
+          }
+        }
+        if (g.t === 'iff') {
+          if (this.rules.includes('iffE1') && tacticAllowed('mp') && unify(g.b, f, this.analysis.s)) chain('iffE1', `↔E₁ · apply ${name}.mp`, ['iffE1'])
+          if (this.rules.includes('iffE2') && tacticAllowed('mpr') && unify(g.a, f, this.analysis.s)) chain('iffE2', `↔E₂ · apply ${name}.mpr`, ['iffE2'])
+        }
+        if (g.t === 'bot' && f.t !== 'bot' && this.rules.includes('falseE') && tacticAllowed('exfalso'))
+          chain('falseE', `⊥E · exact ${name}.elim`, ['falseE'])
+      }
       // For any goal: exfalso (prove ⊥ instead), by_contra (assume the opposite), by_cases (two cases)
       const any = []
       if (f.t !== 'bot' && this.rules.includes('falseE') && tacticAllowed('exfalso'))
@@ -1774,10 +1873,68 @@
       return [...exact, ...steps, ...apply, ...any]
     }
 
+    // What one has at the input `at` ({block, port}), as Lean shows it beside a goal: each named thing
+    // (assumption, local hypothesis, part from `obtain`, …) unless it rests on a local hypothesis in
+    // whose box the input is not. Returns the names by `block.port`.
+    usableAt(at) {
+      const p = this.proof
+      const leadsInto = (x, k) => this.within(at, x, k)
+      // the local hypotheses an output rests on
+      // the local hypotheses an output rests on
+      const rests = (o, seen = new Set()) => {
+        const b = p.block(o.block)
+        if (isLocal(b, o.port)) return [[b.id, consumer(b, o.port)]]
+        if (seen.has(b.id)) return []
+        seen.add(b.id)
+        return p.connections.filter(c => c.to.block === b.id).flatMap(c => rests(c.from, seen))
+      }
+      const { names } = hypNames(p), out = {}
+      for (const [k, name] of Object.entries(names)) {
+        const [id, port] = k.split('.')
+        if (!p.block(id)) continue
+        if (rests({ block: id, port: Number(port) }).every(([x, j]) => leadsInto(x, j))) out[k] = name
+      }
+      return out
+    }
+
+    // Whether the input `at` lies in the box of block x's input k (where x's local hypothesis or
+    // eigenvariable may be used): it leads into that input, and on no way to a goal past it (an
+    // output may be used more than once).
+    within(at, x, k) {
+      const p = this.proof
+      if (at.block === x && at.port === k) return true
+      const seen = new Set(), stack = [at.block]
+      let into = false
+      while (stack.length) {
+        const b = stack.pop()
+        if (seen.has(b)) continue
+        seen.add(b)
+        if (p.block(b).kind === 'conclusion') return false
+        for (const c of p.connections) {
+          if (c.from.block !== b || isLocal(p.block(b), c.from.port)) continue
+          if (c.to.block === x && c.to.port === k) { into = true; continue }
+          stack.push(c.to.block)
+        }
+      }
+      return into
+    }
+
+    // Whether the lines that `connect` draws (on a copy of the proof) fit, and no local hypothesis escapes.
+    tryOut(connect) {
+      const q = new Proof([], [])
+      q.restore(this.proof.snapshot())
+      const before = new Set(q.connections.map(c => c.id)), eig = Object.keys(this.analysis.eigen).length
+      connect(q)
+      const a = q.analyze()
+      return q.connections.every(c => before.has(c.id) || ['ok', 'pending'].includes(a.status[c.id])) &&
+        Object.keys(a.eigen).length <= eig
+    }
+
     // by_cases: a case distinction (∨E) on A ∨ ¬A (TND) for the selected goal; A is the chosen
     // proposition (or left open).
     takeCases(prop = null) {
       const sel = this.selected
+      if (!sel) return  // a button left over from an earlier picture
       this.selected = null
       this.change(() => {
         const cases = this.proof.addRule('disjE'), tnd = this.proof.addRule('TND')
@@ -1790,13 +1947,25 @@
     // Puts the block of a step in and connects it to the selected port.
     takeStep(rule, object = null) {
       const sel = this.selected
+      if (!sel) return  // a button left over from an earlier picture
       this.selected = null
       this.change(() => {
         const nb = this.proof.addRule(rule)
         // the object of ∀E or ∃I, named in the tactic
         if (object) nb.fix = { [`${nb.id}.B`]: /^c[₀-₉]+$/.test(object) ? { t: 'eig', n: object } : { t: 'con', n: object } }
         if (sel.kind === 'in') this.proof.connect({ block: nb.id, port: 0 }, { block: sel.block, port: sel.port })
-        else this.proof.connect({ block: sel.block, port: sel.port }, { block: nb.id, port: 0 })
+        else {
+          this.proof.connect({ block: sel.block, port: sel.port }, { block: nb.id, port: 0 })
+          nb.named = true
+          // ∨E and ∃E (obtain) prove the goal by cases: as in Lean, the first open goal where what is
+          // taken apart may be used
+          if (RULES[rule].local) {
+            this.analysis = this.proof.analyze()
+            const key = `${sel.block}.${sel.port}`
+            const goal = this.analysis.openInputs.find(o => o.block !== nb.id && !this.proof.createsCycle(nb.id, o.block) && this.usableAt(o)[key])
+            if (goal) this.proof.connect({ block: nb.id, port: 0 }, goal)
+          }
+        }
       })
     }
 
@@ -1838,7 +2007,7 @@
     tapInput(b, i) {
       this.selectedConn = null
       const sel = this.selected
-      if (sel?.kind === 'out') return this.link(sel, { block: b.id, port: i })
+      if (sel?.kind === 'out' && !this.tacticsOnly) return this.link(sel, { block: b.id, port: i })
       if (sel?.kind === 'in' && sel.block === b.id && sel.port === i) return this.closeSheet()
       this.selected = { kind: 'in', block: b.id, port: i }
       this.render()
@@ -1848,7 +2017,7 @@
     tapOutput(b, j) {
       this.selectedConn = null
       const sel = this.selected
-      if (sel?.kind === 'in') return this.link({ block: b.id, port: j }, sel)
+      if (sel?.kind === 'in' && !this.tacticsOnly) return this.link({ block: b.id, port: j }, sel)
       if (sel?.kind === 'out' && sel.block === b.id && sel.port === j) return this.closeSheet()
       this.selected = { kind: 'out', block: b.id, port: j }
       this.render()
@@ -1858,11 +2027,13 @@
     // A rule block: completes a pending selection with its fitting port, or offers to remove it.
     tapBlock(b) {
       const sel = this.selected
-      if (sel?.kind === 'in') {
+      if (sel && this.tacticsOnly) return this.closeSheet()
+      if (sel?.kind === 'in' && b.outputs.length) {
         const j = b.outputs.findIndex((_, j) => this.fits({ block: b.id, port: j }, sel))
         return this.link({ block: b.id, port: Math.max(j, 0) }, sel)
       }
-      if (sel?.kind === 'out') {
+      // (a block without inputs, like ⊤I, takes no line)
+      if (sel?.kind === 'out' && b.inputs.length) {
         const open = this.analysis.openInputs.filter(o => o.block === b.id)
         const target = open.find(o => this.fits(sel, o)) ?? open[0] ?? { block: b.id, port: 0 }
         return this.link(sel, target)
@@ -2031,6 +2202,13 @@
     }
     const box = el('div', 'ipm-worlds')
     box.append(el('div', 'ipm-worlds-title', tr('Worlds')), map)
+    // the tactic trainer, beside the way through the worlds
+    const train = toc.querySelector('a[href*="Tactic-Trainer"]')
+    if (train) {
+      const t = el('a', 'ipm-map-trainer' + (location.pathname.includes('Tactic-Trainer') ? ' ipm-map-here' : ''), tr('🎯 Tactic trainer'))
+      t.href = train.getAttribute('href')
+      box.append(t)
+    }
     toc.querySelector('.first')?.prepend(box) ?? toc.prepend(box)
     toc.classList.add('ipm-has-map')
   }
@@ -2051,6 +2229,12 @@
       const again = el('a', 'ipm-start-again', tr('or start from the beginning'))
       again.href = first.getAttribute('href')
       box.append(again)
+    }
+    const train = document.querySelector('#toc a[href*="Tactic-Trainer"], main a[href*="Tactic-Trainer"]')
+    if (train) {
+      const t = el('a', 'ipm-start-trainer', tr('🎯 Tactic trainer'))
+      t.href = train.getAttribute('href')
+      box.append(t)
     }
     h1.after(box)
   }
@@ -2100,6 +2284,7 @@
     registerLemmas()
     const tasks = [...document.querySelectorAll('.ipm-task')].map((root, i) => new Task(root, i))
     tasks.forEach((t, i) => t.root.prepend(el('div', 'ipm-task-label', tr('Level {i} of {n}', { i: i + 1, n: tasks.length }))))
+    window.ipmTasks = tasks  // for the tests
     if (!tasks.length) { startButton(); return }
     const stage = el('div', 'ipm-stage')
     tasks[0].root.before(stage)

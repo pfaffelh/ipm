@@ -40,10 +40,10 @@ def items (s : String) : Array String :=
 
 -- A task: assumptions, conclusions and the rules available, for `ipm.js`.
 -- `lemma`: whether the task, once solved, is offered as a lemma in later tasks; `unlocks`: the
--- tactics that solving it unlocks.
-block_extension Block.task (assumptions conclusions rules : Array String) (lemma : Bool) (unlocks : Array String) where
+-- tactics that solving it unlocks; `tactics`: a level of the tactic trainer, played with tactics only.
+block_extension Block.task (assumptions conclusions rules : Array String) (lemma : Bool) (unlocks : Array String) (tactics : Bool) where
   data := Json.mkObj [("assumptions", toJson assumptions), ("conclusions", toJson conclusions),
-    ("rules", toJson rules), ("lemma", toJson lemma), ("unlocks", toJson unlocks)]
+    ("rules", toJson rules), ("lemma", toJson lemma), ("unlocks", toJson unlocks), ("tactics", toJson tactics)]
   traverse _ _ _ := pure none
   extraJs := {JS.mk ipmJs}
   extraCss := {CSS.mk ipmCss}
@@ -51,7 +51,8 @@ block_extension Block.task (assumptions conclusions rules : Array String) (lemma
     let get (k : String) := (data.getObjVal? k).toOption.getD (Json.arr #[])
     pure <| .tag "div" #[("class", "ipm-task"), ("data-assumptions", (get "assumptions").compress),
         ("data-conclusions", (get "conclusions").compress), ("data-rules", (get "rules").compress),
-        ("data-lemma", (data.getObjValD "lemma").compress), ("data-unlocks", (get "unlocks").compress)] <|
+        ("data-lemma", (data.getObjValD "lemma").compress), ("data-unlocks", (get "unlocks").compress),
+        ("data-tactics", (data.getObjValD "tactics").compress)] <|
       .seq #[← content.mapM goB, .tag "div" #[("class", "ipm-board")] .empty]
   toTeX := none
 
@@ -61,11 +62,12 @@ structure TaskConfig where
   rules : String
   lemma : Bool
   unlocks : String
+  tactics : Bool
 
 instance : FromArgs TaskConfig DocElabM where
   fromArgs := TaskConfig.mk <$> .namedD `assumptions .string "" <*> .named `conclusions .string false <*>
     .namedD `rules .string "conjI, conjE, impI, impE" <*> .namedD `lemma .bool false <*>
-    .namedD `unlocks .string ""
+    .namedD `unlocks .string "" <*> .namedD `tactics .bool false
 
 /-- A proof graph task; see the module documentation. -/
 @[directive]
@@ -73,7 +75,7 @@ def task : DirectiveExpanderOf TaskConfig
   | cfg, contents => do
     let blocks ← contents.mapM elabBlock
     ``(Verso.Doc.Block.other
-        (Block.task $(quote (items cfg.assumptions)) $(quote (items cfg.conclusions)) $(quote (items cfg.rules)) $(quote cfg.lemma) $(quote (items cfg.unlocks)))
+        (Block.task $(quote (items cfg.assumptions)) $(quote (items cfg.conclusions)) $(quote (items cfg.rules)) $(quote cfg.lemma) $(quote (items cfg.unlocks)) $(quote cfg.tactics))
         #[$blocks,*])
 
 -- Text in one language: `:::en` and `:::de` blocks; `ipm.js` shows the language chosen in the header.

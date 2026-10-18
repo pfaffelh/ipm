@@ -482,3 +482,14 @@ main section:has(> ol.section-toc) { display: none; }
   .ipm-stage .ipm-current .ipm-lean[open] .ipm-lean-code { max-height: none; }
 }
 .ipm-settings { max-height: calc(100vh - var(--verso-header-height, 3rem) - 24px); overflow: auto; }
+
+/* the tactic trainer: links on the start page and below the world map */
+.ipm-start-trainer { display: inline-block; margin-top: 0.8rem; font-size: 1.1em; }
+.ipm-map-trainer { display: block; margin: 0.6rem 0 0 0.4rem; font-family: var(--verso-structure-font-family, sans-serif); }
+.ipm-map-trainer.ipm-map-here { font-weight: bold; }
+
+/* a selected goal: what one has there, as in Lean; the rest is dimmed in the picture */
+.ipm-context { display: flex; flex-wrap: wrap; gap: 0.2em 1.1em; font-family: var(--verso-code-font-family, monospace); font-size: 0.9em; }
+.ipm-context:empty { display: none; }
+.ipm-ctx-goal { font-weight: bold; }
+.ipm-port.ipm-out-of-scope { opacity: 0.2; }

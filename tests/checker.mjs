@@ -48,6 +48,12 @@ run('(∃ x, P x) → ∀ x, P x (wrong)', [], ['(∃ x, P x) → ∀ x, P x'], 
   const impI = p.addRule('impI').id, allI = p.addRule('allI').id, exE = p.addRule('exE').id
   L(p, impI, 0, h.goal(), 0); L(p, allI, 0, impI, 0); L(p, exE, 0, allI, 0); L(p, impI, 1, exE, 0); L(p, exE, 1, exE, 1)
 })
+// A circle (which the interface does not draw, but a bug once did): A ∨ B ⊢ A with ∨E proving its own
+// first case. The checker must not accept it.
+run('circle through a case of ∨E (wrong)', ['A ∨ B'], ['A'], (p, h) => {
+  const e = p.addRule('disjE').id, ex = p.addRule('falseE').id
+  L(p, h.hyp(), 0, e, 0); L(p, e, 0, h.goal(), 0); L(p, e, 0, e, 1); L(p, e, 0, e, 2)
+})
 // Proof by contradiction: (A → ⊥) → ⊥ ⊢ A
 const raa = run('by contradiction', ['(A → ⊥) → ⊥'], ['A'], (p, h) => {
   const r = p.addRule('raa').id, e = p.addRule('impE').id
