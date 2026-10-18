@@ -493,3 +493,7 @@ main section:has(> ol.section-toc) { display: none; }
 .ipm-context:empty { display: none; }
 .ipm-ctx-goal { font-weight: bold; }
 .ipm-port.ipm-out-of-scope { opacity: 0.2; }
+/* the names that the tactics use, beside the blue dots */
+.ipm-hyp-name { font-family: var(--verso-code-font-family, monospace); font-size: 13px; font-weight: bold; fill: #2f5a96;
+  paint-order: stroke; stroke: white; stroke-width: 4px; pointer-events: none; }
+.ipm-hyp-name.ipm-out-of-scope { opacity: 0.25; }

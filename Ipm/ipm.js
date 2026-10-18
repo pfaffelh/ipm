@@ -1063,7 +1063,8 @@
 
   // Draws block `b` at `q` = {x, y, w, h}. The same drawing is used on the board and in the list of
   // rules. `portClass(kind, i)` adds classes to the ports; ports carry `data-kind` and `data-i`.
-  function drawBlock(b, q, s, extraClass = '', portClass = () => '') {
+  // `names`: the names of what one has (h₁, h₂, …) by `block.port`, written beside the blue dots.
+  function drawBlock(b, q, s, extraClass = '', portClass = () => '', names = {}) {
     const g = svg('g', { class: `ipm-block ipm-${b.kind} ${extraClass}` })
     g.append(svg('rect', { x: q.x, y: q.y, width: q.w, height: q.h, rx: 8 }))
     if (b.kind === 'rule') {
@@ -1089,6 +1090,9 @@
         const port = svg('g', { class: `ipm-port ipm-${kind} ${local ? 'ipm-local ' : ''}${portClass(kind, i)}`, 'data-kind': kind, 'data-i': i })
         port.append(svg('circle', { cx: xy.x, cy: xy.y, r: 16, class: 'ipm-hit' }), svg('circle', { cx: xy.x, cy: xy.y, r: 6 }))
         g.append(port)
+        const name = kind === 'out' && names[`${b.id}.${i}`]
+        if (name) g.append(svg('text', { x: xy.x + 9, y: xy.y + (local ? -7 : 16),
+          class: 'ipm-hyp-name' + (portClass(kind, i).includes('ipm-out-of-scope') ? ' ipm-out-of-scope' : '') }, name))
       })
     return g
   }
@@ -1589,6 +1593,8 @@
       }
       // blocks
       const sel = this.selected
+      // While tactics are offered, the names they use (h₁, h₂, …) stand beside the blue dots.
+      const shownNames = this.tacticsOnly || allowedTactic('exact') || SETTINGS.tactics === 'all' ? hypNames(p).names : {}
       // a selected goal: what one has there (the rest is dimmed), shown in a line as in Lean
       const usable = sel?.kind === 'in' ? this.usableAt(sel) : null
       const hypNamesNow = usable ? hypNames(p).names : {}
@@ -1606,7 +1612,7 @@
             (usable && hypNamesNow[`${b.id}.${i}`] && !usable[`${b.id}.${i}`] ? 'ipm-out-of-scope ' : '') +
             (sel?.kind === 'in' && !this.tacticsOnly && this.fits(at, sel) ? 'ipm-candidate' : '')
         }
-        const g = drawBlock(b, pos[b.id], s, proved ? 'ipm-proved' : '', portClass)
+        const g = drawBlock(b, pos[b.id], s, proved ? 'ipm-proved' : '', portClass, shownNames)
         // An eigenvariable that escapes: a ⚠ at the block, which explains itself when tapped.
         if (this.analysis.eigen[b.id]) {
           const q = pos[b.id]
