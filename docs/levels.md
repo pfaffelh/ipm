@@ -8,13 +8,13 @@ Columns: level, statement, rules its Lean proof uses (roughly), lemma (L) / tact
 
 | | statement | rules used | gives |
 |---|---|---|---|
-| 1.1 | `A ⊢ A` |  | exact tip |
+| 1.1 | `A ⊢ A` |  | tip |
 | 1.2 | `A, B ⊢ A` |  |  |
 | 1.3 | `A, B ⊢ B, A` | conjI |  |
-| 1.4 | `A, B ⊢ A ∧ B` | conjI | constructor tip |
+| 1.4 | `A, B ⊢ A ∧ B` | conjI | tip |
 | 1.5 | `A ⊢ A ∧ A` | conjI |  |
 | 1.6 | `P, Q, R ⊢ P ∧ Q ∧ R` | conjI |  |
-| 1.7 | `A ∧ B ⊢ A` | conjE | obtain tip |
+| 1.7 | `A ∧ B ⊢ A` | conjE | tip |
 | 1.8 | `A ∧ B ⊢ A, B` | conjE, conjI |  |
 | 1.9 | `A ∧ B ⊢ A ∧ B` |  |  |
 | 1.10 | `A ∧ B ⊢ B ∧ A` | conjE, conjI |  |
@@ -26,13 +26,13 @@ Columns: level, statement, rules its Lean proof uses (roughly), lemma (L) / tact
 
 | | statement | rules used | gives |
 |---|---|---|---|
-| 2.1 | `A, A → B ⊢ B` |  | apply tip |
+| 2.1 | `A, A → B ⊢ B` |  | tip |
 | 2.2 | `A, A → B, B → C ⊢ C` |  |  |
 | 2.3 | `A, A → B, A → C, B → D, C → D ⊢ D` |  |  |
 | 2.4 | `A, A → A ⊢ A` |  |  |
 | 2.5 | `A → B, B → C ⊢ A → C` | impI | L tip |
 | 2.6 | `A → B, A → B → C ⊢ A → C` | impI |  |
-| 2.7 | ` ⊢ A → A` | impI | intro |
+| 2.7 | ` ⊢ A → A` | impI |  |
 | 2.8 | `A → C, B → C, A ∧ B ⊢ C` | conjE |  |
 | 2.9 | `A → C, B → C ⊢ A ∧ B → C` | conjE, impI |  |
 | 2.10 | `B ⊢ A → B` | impI |  |
@@ -55,8 +55,8 @@ Columns: level, statement, rules its Lean proof uses (roughly), lemma (L) / tact
 | | statement | rules used | gives |
 |---|---|---|---|
 | 3.1 | `A, B ⊢ A ∨ B` | disjI1 | tip |
-| 3.2 | `A ⊢ A ∨ B` | disjI1 | left |
-| 3.3 | `B ⊢ A ∨ B` | disjI2 | right |
+| 3.2 | `A ⊢ A ∨ B` | disjI1 |  |
+| 3.3 | `B ⊢ A ∨ B` | disjI2 |  |
 | 3.4 | `A ⊢ A ∨ A` | disjI1 |  |
 | 3.5 | `A ∨ B ⊢ B ∨ A` | disjI1, disjI2, impI | L tip |
 | 3.6 | `A ∨ B ∨ C ⊢ (A ∨ B) ∨ C` | disjI1, disjI2, impI |  |
@@ -79,7 +79,7 @@ Columns: level, statement, rules its Lean proof uses (roughly), lemma (L) / tact
 
 | | statement | rules used | gives |
 |---|---|---|---|
-| 4.1 | `⊥ ⊢ A` | falseE | exfalso tip |
+| 4.1 | `⊥ ⊢ A` | falseE | tip |
 | 4.2 | `⊥ ⊢ A, B` | conjI, falseE |  |
 | 4.3 | `A ⊢ ⊥ ∨ A` | disjI2 |  |
 | 4.4 | `⊥ ∨ A ⊢ A` | falseE, impI |  |
@@ -105,10 +105,10 @@ Columns: level, statement, rules its Lean proof uses (roughly), lemma (L) / tact
 
 | | statement | rules used | gives |
 |---|---|---|---|
-| 5.1 | ` ⊢ A ∨ (A → ⊥)` | TND | by_cases tip |
+| 5.1 | ` ⊢ A ∨ (A → ⊥)` | TND | tip |
 | 5.2 | `(B → ⊥) → A → ⊥ ⊢ A → B` | TND, falseE, impI |  |
 | 5.3 | `A ∧ B → ⊥ ⊢ (A → ⊥) ∨ (B → ⊥)` | TND, conjI, disjI1, disjI2, falseE, impI | L |
-| 5.4 | `(A → ⊥) → ⊥ ⊢ A` | TND, falseE, impI | L by_contra |
+| 5.4 | `(A → ⊥) → ⊥ ⊢ A` | TND, falseE, impI | L |
 | 5.5 | `A → B ⊢ (A → ⊥) ∨ B` | TND, disjI1, disjI2, falseE, impI | L tip |
 | 5.6 | ` ⊢ A ∨ (A → ⊥)` | disjI1, disjI2, impI, raa |  |
 | 5.7 | `A → B, B → C ⊢ (A → ⊥) ∨ C` | TND, disjI1, disjI2, falseE, impI |  |
@@ -126,15 +126,15 @@ Columns: level, statement, rules its Lean proof uses (roughly), lemma (L) / tact
 | | statement | rules used | gives |
 |---|---|---|---|
 | 6.1 | `P → Q, Q → P ⊢ P ↔ Q` | iffI | tip |
-| 6.2 | `P, P ↔ Q ⊢ Q` | iffE1 | mp |
-| 6.3 | `Q, P ↔ Q ⊢ P` | iffE2 | mpr |
+| 6.2 | `P, P ↔ Q ⊢ Q` | iffE1 |  |
+| 6.3 | `Q, P ↔ Q ⊢ P` | iffE2 |  |
 | 6.4 | ` ⊢ P ↔ P` | iffI, impI |  |
 | 6.5 | `P ↔ Q ⊢ Q ↔ P` | iffE1, iffE2, iffI |  |
 | 6.6 | `P ↔ Q, Q ↔ R ⊢ P ↔ R` | iffE1, iffE2, iffI, impI |  |
 | 6.7 | ` ⊢ (P ↔ Q) ↔ (P → Q) ∧ (Q → P)` | conjE, conjI, iffE1, iffE2, iffI, impI |  |
 | 6.8 | `P → Q, Q → T, Q → R, R → S, T → P, R → T ⊢ Q ↔ R` | iffI, impI |  |
 | 6.9 | `P ↔ Q ⊢ P ∧ R ↔ Q ∧ R` | conjE, conjI, iffE1, iffE2, iffI, impI |  |
-| 6.10 | ` ⊢ P → ⊤` | impI, trueI | trivial tip |
+| 6.10 | ` ⊢ P → ⊤` | impI, trueI | tip |
 | 6.11 | ` ⊢ (⊤ → P) ↔ P` | iffI, impI, trueI |  |
 | 6.12 | ` ⊢ (⊤ → ⊥) ↔ ⊥` | iffI, impI, trueI |  |
 | 6.13 | ` ⊢ ⊤ ↔ (⊥ → ⊥)` | iffI, impI, trueI |  |
@@ -156,9 +156,9 @@ Columns: level, statement, rules its Lean proof uses (roughly), lemma (L) / tact
 
 | | statement | rules used | gives |
 |---|---|---|---|
-| 7.1 | `∀ x, P x ⊢ P a` |  | specialize tip |
+| 7.1 | `∀ x, P x ⊢ P a` |  | tip |
 | 7.2 | `∀ x, P x ⊢ P a ∧ P b` | conjI |  |
-| 7.3 | `P a ⊢ ∃ x, P x` | conjI | use tip |
+| 7.3 | `P a ⊢ ∃ x, P x` | conjI | tip |
 | 7.4 | `∀ x, P x ⊢ ∃ x, P x` | conjI |  |
 | 7.5 | `∀ x, A ⊢ A` |  |  |
 | 7.6 | `∃ x, A ⊢ A` | impI | tip |
@@ -192,7 +192,7 @@ Columns: level, statement, rules its Lean proof uses (roughly), lemma (L) / tact
 
 | | statement | rules used | gives |
 |---|---|---|---|
-| 9.1 | `P 0, ∀ n, P n → P (n + 1) ⊢ ∀ n, P n` | impI, ind | induction tip |
+| 9.1 | `P 0, ∀ n, P n → P (n + 1) ⊢ ∀ n, P n` | impI, ind | tip |
 | 9.2 | `∀ n, P n → P (n + 1) ⊢ P 0 → ∀ n, P n` | impI, ind |  |
 | 9.3 | `P (0 + 1), ∀ n, P n → P (n + 1) ⊢ ∀ n, P (n + 1)` | impI, ind |  |
 | 9.4 | `Even 0, ∀ n, Even n → Odd (n + 1), ∀ n, Odd n → Even (n + 1) ⊢ ∀ n, Even n ∨ Odd n` | disjI1, disjI2, impI, ind |  |

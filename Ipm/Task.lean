@@ -131,4 +131,26 @@ def tip : DirectiveExpanderOf TipConfig
     let blocks ← contents.mapM elabBlock
     ``(Verso.Doc.Block.other (Block.tip $(quote cfg.lang) $(quote cfg.rules)) #[$blocks,*])
 
+-- A lexicon: `:::lexicon (kind := "tactics")` or `(kind := "blocks")`; `ipm.js` fills it from its
+-- tables of the tactics and the blocks (the same texts as the tips of the tactic mode).
+block_extension Block.lexicon (kind : String) where
+  data := Json.str kind
+  traverse _ _ _ := pure none
+  extraJs := {JS.mk ipmJs}
+  extraCss := {CSS.mk ipmCss}
+  toHtml := some fun _ _ _ data _ => do
+    pure <| .tag "div" #[("class", "ipm-lexicon"), ("data-kind", data.getStr?.toOption.getD "tactics")] .empty
+  toTeX := none
+
+structure LexiconConfig where
+  kind : String
+
+instance : FromArgs LexiconConfig DocElabM where
+  fromArgs := LexiconConfig.mk <$> .namedD `kind .string "tactics"
+
+/-- A lexicon of the tactics or the blocks; see `Block.lexicon`. -/
+@[directive]
+def lexicon : DirectiveExpanderOf LexiconConfig
+  | cfg, _ => ``(Verso.Doc.Block.other (Block.lexicon $(quote cfg.kind)) #[])
+
 end Ipm

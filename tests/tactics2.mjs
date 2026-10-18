@@ -18,7 +18,7 @@ const proofs = []
 const done = async (name, t) => { const code = await t.locator('.ipm-lean-code').innerText(); console.log(`${name}: ${await t.locator('.ipm-status').innerText()}\n${code}`); proofs.push(code) }
 const open = async (path, n) => {
   await page.goto(base + path)
-  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('ipm-verso:tactics', 'all'); localStorage.setItem('ipm-verso:in-order', 'off') }); await page.reload()
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('ipm-verso:mode', 'tactics'); localStorage.setItem('ipm-verso:in-order', 'off') }); await page.reload()
   return page.locator('.ipm-task').nth(n - 1)
 }
 // 4.1 ⊥ ⊢ A with exfalso

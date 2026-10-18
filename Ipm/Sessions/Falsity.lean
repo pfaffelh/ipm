@@ -33,7 +33,7 @@ etwas Unmögliches“. Lean schreibt dafür `¬A`, und `¬A` ist tatsächlich al
 Um `A → ⊥` zu beweisen, verwendest du also →I, und `A → ⊥` zusammen mit `A` ergibt `⊥` mit →E.
 :::
 
-::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (unlocks := "exfalso") (assumptions := "⊥") (conclusions := "A")
+::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE") (assumptions := "⊥") (conclusions := "A")
 :::en
 From something impossible, anything follows.
 :::

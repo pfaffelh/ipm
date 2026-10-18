@@ -25,7 +25,9 @@
   document.documentElement.classList.toggle('ipm-de', LANG === 'de')
   document.documentElement.lang = LANG
   const DE = {
-    '🎯 Tactic trainer': '🎯 Taktik-Trainer',
+    '🎯 Tactic trainer': '🎯 Taktik-Trainer', '📖 Tactics': '📖 Taktiken', '🧱 Blocks': '🧱 Bausteine',
+    'Blocks': 'Bausteine', 'Tactics': 'Taktiken', 'New tactics': 'Neue Taktiken', 'Tactic: ': 'Taktik: ',
+    '▶ Start in the tactic mode': '▶ Start im Taktik-Modus',
     '∧-introduction': '∧-Einführung', '∧-elimination': '∧-Beseitigung',
     '→-introduction': '→-Einführung', '→-elimination': '→-Beseitigung',
     '∨-introduction (left)': '∨-Einführung (links)', '∨-introduction (right)': '∨-Einführung (rechts)',
@@ -68,7 +70,7 @@
   }
   // Headings of the site, which come from Verso.
   const DE_TITLES = {
-    'Tactic Trainer': 'Taktik-Trainer',
+    'Tactic Trainer': 'Taktik-Trainer', 'Tactic Lexicon': 'Taktik-Lexikon', 'Block Lexicon': 'Baustein-Lexikon',
     'The Incredible Proof Machine in Lean': 'Die Incredible Proof Machine in Lean',
     'World 1: Conjunction': 'Welt 1: Konjunktion', 'World 2: Implication': 'Welt 2: Implikation',
     'World 3: Disjunction': 'Welt 3: Disjunktion', 'World 4: Falsity and Negation': 'Welt 4: Falsum und Negation',
@@ -121,22 +123,12 @@
     close.addEventListener('click', () => { panel.hidden = true })
     const head = el('div', 'ipm-pop-head')
     head.append(el('span', 'ipm-pop-title', tr('Settings')), close)
-    const radio = (value, text) => {
-      const l = el('label', 'ipm-setting')
-      const r = el('input')
-      r.type = 'radio'; r.name = 'ipm-tactics'; r.value = value; r.checked = SETTINGS.tactics === value
-      r.addEventListener('change', () => { SETTINGS.tactics = value; saveSettings() })
-      l.append(r, el('span', '', text))
-      return l
-    }
     const order = el('label', 'ipm-setting')
     const box = el('input')
     box.type = 'checkbox'; box.name = 'ipm-in-order'; box.checked = SETTINGS.inOrder
     box.addEventListener('change', () => { SETTINGS.inOrder = box.checked; saveSettings() })
     order.append(box, el('span', '', tr('Levels in order')))
     panel.append(head,
-      el('div', 'ipm-pop-subtitle', tr('Tactics: buttons with the Lean command that fits a tapped circle or dot')),
-      radio('off', tr('Off')), radio('earned', tr('Earned by solving levels')), radio('all', tr('All')),
       el('div', 'ipm-pop-subtitle', tr('Order')), order,
       el('div', 'ipm-setting-note', tr('A level can be played once the one before it is solved.')))
     button.addEventListener('click', ev => { ev.stopPropagation(); panel.hidden = !panel.hidden })
@@ -146,26 +138,23 @@
     return button
   }
   // Settings, for all tasks, kept in the browser (⚙ in the header).
-  // `tactics`: buttons beside a tapped port with the Lean command that fits (intro h, constructor, …):
-  // 'off', 'earned' (a tactic once a task that unlocks it is solved by hand) or 'all'.
   // `inOrder`: a task can be played once the one before it is solved.
-  const SETTINGS = { tactics: 'earned', inOrder: true }
-  let UNLOCKED = new Set()
-  try {
-    const t = localStorage.getItem('ipm-verso:tactics')
-    if (t === 'on') SETTINGS.tactics = 'all'
-    else if (['off', 'earned', 'all'].includes(t)) SETTINGS.tactics = t
-    SETTINGS.inOrder = localStorage.getItem('ipm-verso:in-order') !== 'off'
-    UNLOCKED = new Set(JSON.parse(localStorage.getItem('ipm-verso:unlocked')) ?? [])
-  } catch {}
-  const allowedTactic = key => SETTINGS.tactics === 'all' || (SETTINGS.tactics === 'earned' && UNLOCKED.has(key))
+  const SETTINGS = { inOrder: true }
+  try { SETTINGS.inOrder = localStorage.getItem('ipm-verso:in-order') !== 'off' } catch {}
   function saveSettings() {
-    try {
-      localStorage.setItem('ipm-verso:tactics', SETTINGS.tactics)
-      localStorage.setItem('ipm-verso:in-order', SETTINGS.inOrder ? 'on' : 'off')
-      localStorage.setItem('ipm-verso:unlocked', JSON.stringify([...UNLOCKED]))
-    } catch {}
+    try { localStorage.setItem('ipm-verso:in-order', SETTINGS.inOrder ? 'on' : 'off') } catch {}
     window.dispatchEvent(new Event('ipm-settings'))
+  }
+  // The way of playing, for all levels, kept in the browser (the switch above each level):
+  // 'blocks', the Proof Machine (blocks and lines), or 'tactics', only the tactic buttons beside a
+  // tapped circle or dot, as in Lean, with a board of its own for goals with other hypotheses. In
+  // both, a level has the same blocks; the tactics are those of its blocks.
+  let MODE = 'blocks'
+  try { if (localStorage.getItem('ipm-verso:mode') === 'tactics') MODE = 'tactics' } catch {}
+  function setMode(m) {
+    MODE = m
+    try { localStorage.setItem('ipm-verso:mode', m) } catch {}
+    window.dispatchEvent(new Event('ipm-mode'))
   }
 
   const tr = (en, vars = {}) => (LANG === 'de' ? DE[en] ?? en : en).replace(/\{(\w+)\}/g, (_, k) => vars[k])
@@ -1142,9 +1131,9 @@
       this.assumptions = JSON.parse(root.dataset.assumptions)
       this.conclusions = JSON.parse(root.dataset.conclusions)
       this.rules = JSON.parse(root.dataset.rules)
-      // A level of the tactic trainer: one plays only with tactics (no blocks to add, no lines to draw).
-      this.tacticsOnly = root.dataset.tactics === 'true'
-      root.classList.toggle('ipm-tactics-only', this.tacticsOnly)
+      // A level of the tactic trainer is always played with tactics (no blocks to add, no lines to draw).
+      this.forceTactics = root.dataset.tactics === 'true'
+      window.addEventListener('ipm-mode', () => { this.selected = null; this.board = null; this.render() })
       this.proof = new Proof(this.assumptions, this.conclusions)
       this.undoStack = []
       try {
@@ -1165,13 +1154,10 @@
       tidy.title = tr('Arrange the blocks automatically again')
       tidy.addEventListener('click', () => { this.change(() => { this.proof.moved = {} }) })
       window.addEventListener('ipm-settings', () => this.render())
-      // The tactics this task unlocks, shown below it while tactics are earned.
-      this.unlocks = JSON.parse(root.dataset.unlocks ?? '[]')
-      this.unlockNote = el('div', 'ipm-unlock')
       this.info = el('div', 'ipm-info')
       // a selected goal with what one has there, as Lean shows it: h₁ : A ∨ B, h₂ : A ⊢ B ∨ A
       this.context = el('div', 'ipm-context')
-      this.info.append(this.context, this.status, this.unlockNote)
+      this.info.append(this.context, this.status)
       this.sheet = el('div', 'ipm-sheet')
       this.sheet.hidden = true
       // The trash can appears while a rule block is dragged; dropping the block on it removes it.
@@ -1231,15 +1217,14 @@
       const pressed = () => leanButton.setAttribute('aria-pressed', String(this.lean.open))
       this.lean.addEventListener('toggle', pressed)
       pressed()
-      tools.append(...(this.tacticsOnly ? [] : [this.menu]), undo, reset, tidy, leanButton)
+      tools.append(this.menu, undo, reset, tidy, leanButton)
       this.refreshLemmas()
       window.addEventListener('ipm-lemmas', () => this.refreshLemmas())
       // the boards (when goals with different hypotheses are open), as tabs above the picture
       this.tabs = el('div', 'ipm-boards')
       this.tabs.hidden = true
       this.play = el('div', 'ipm-play')
-      if (this.tacticsOnly) this.play.append(this.canvas)
-      else this.play.append(this.palette, this.splitter(), this.canvas)
+      this.play.append(this.palette, this.splitter(), this.canvas)
       root.querySelector('.ipm-board').append(this.tabs, this.play, this.info, this.lean, this.sheet, tools, this.trash)
       this.render()
     }
@@ -1512,6 +1497,10 @@
       })
     }
 
+    // In the tactic mode (or on a level of the tactic trainer): only tactic buttons.
+    get tacticsOnly() { return this.forceTactics || MODE === 'tactics' }
+    set tacticsOnly(v) { this.forceTactics = v }
+
     // ------------------------------------------------------------ boards
 
     // Where a block or a goal lies: in the box of a local hypothesis, a scope `X.k` (block X and its
@@ -1579,7 +1568,8 @@
         else boards.push('', ...used)
       }
       this.boards = boards
-      const off = (() => { try { return localStorage.getItem('ipm-verso:boards') === 'off' } catch { return false } })()
+      // (boards only in the tactic mode; the Proof Machine shows one picture)
+      const off = !this.tacticsOnly || (() => { try { return localStorage.getItem('ipm-verso:boards') === 'off' } catch { return false } })()
       if (off || this.board === '*') return { proof: p, boards, whole: true }
       if (!boards.includes(this.board)) this.board = boards[0]
       const S = this.board, split = boards.length > 1
@@ -1678,6 +1668,7 @@
 
     render() {
       const p = this.proof
+      this.root.classList.toggle('ipm-tactics-only', this.tacticsOnly)
       this.analysis = p.analyze()
       const bv = this.boardView()
       this.boardInfo = bv
@@ -1777,7 +1768,7 @@
       // blocks
       const sel = this.selected
       // While tactics are offered, the names they use (h₁, h₂, …) stand beside the blue dots.
-      const realNames = this.tacticsOnly || allowedTactic('exact') || SETTINGS.tactics === 'all' ? hypNames(p).names : {}
+      const realNames = this.tacticsOnly ? hypNames(p).names : {}
       const shownNames = { ...realNames }
       for (const b of vp.blocks) if (b.real && realNames[`${b.real.block}.${b.real.port}`]) shownNames[`${b.id}.0`] = realNames[`${b.real.block}.${b.real.port}`]
       // a selected goal: what one has there (the rest is dimmed), shown in a line as in Lean
@@ -1869,19 +1860,7 @@
         this.selected?.kind === 'out' ? 'Now tap a glowing green circle, or add a block with ＋' :
         n === 1 ? '1 red circle left — tap one' : '{n} red circles left — tap one', { n })
       try { localStorage.setItem(this.key, JSON.stringify({ proof: this.proof.snapshot(), solved: qed })) } catch {}
-      if (qed) { this.saveLemma(); this.unlock(); this.onSolved?.() }
-      this.unlockNote.hidden = !(SETTINGS.tactics === 'earned' && this.unlocks.length)
-      const ts = this.unlocks.join(', ')
-      this.unlockNote.textContent = this.unlocks.every(k => UNLOCKED.has(k))
-        ? tr('🔓 Unlocked: the tactic {t}', { t: ts }) : tr('🔒 Solve this level to unlock the tactic {t}.', { t: ts })
-    }
-
-    // Solving the task unlocks its tactics.
-    unlock() {
-      const fresh = this.unlocks.filter(k => !UNLOCKED.has(k))
-      if (!fresh.length) return
-      fresh.forEach(k => UNLOCKED.add(k))
-      saveSettings()
+      if (qed) { this.saveLemma(); this.onSolved?.() }
     }
 
     // ------------------------------------------------------------ lemmas
@@ -1981,8 +1960,9 @@
     // the →I block (`intro`), for an assumption `A ∧ B` the ∧E block (`obtain`), and so on.
     steps() {
       const sel = this.selected
-      if (!sel || (SETTINGS.tactics === 'off' && !this.tacticsOnly)) return []
-      const tacticAllowed = key => this.tacticsOnly || allowedTactic(key)
+      // (the tactics of the level's blocks; in the Proof Machine none)
+      if (!sel || !this.tacticsOnly) return []
+      const tacticAllowed = () => true
       const b = this.proof.block(sel.block)
       // (norm: also below ∀I, where the statement is the body with c₁ for the variable)
       const f = norm(sel.kind === 'in' ? b.inputs[sel.port] : b.outputs[sel.port], this.analysis.s)
@@ -2417,10 +2397,11 @@
     const box = el('div', 'ipm-worlds')
     box.append(el('div', 'ipm-worlds-title', tr('Worlds')), map)
     // the tactic trainer, beside the way through the worlds
-    const train = toc.querySelector('a[href*="Tactic-Trainer"]')
-    if (train) {
-      const t = el('a', 'ipm-map-trainer' + (location.pathname.includes('Tactic-Trainer') ? ' ipm-map-here' : ''), tr('🎯 Tactic trainer'))
-      t.href = train.getAttribute('href')
+    for (const [slug, text] of [['Tactic-Trainer', tr('🎯 Tactic trainer')], ['Tactic-Lexicon', tr('📖 Tactics')], ['Block-Lexicon', tr('🧱 Blocks')]]) {
+      const a = toc.querySelector(`a[href*="${slug}/"]`)
+      if (!a) continue
+      const t = el('a', 'ipm-map-trainer' + (location.pathname.includes(`/${slug}/`) ? ' ipm-map-here' : ''), text)
+      t.href = a.getAttribute('href')
       box.append(t)
     }
     toc.querySelector('.first')?.prepend(box) ?? toc.prepend(box)
@@ -2429,6 +2410,7 @@
 
   // The start page: a big button to start (the first session), or to go on where one left off.
   function startButton() {
+    if (document.querySelector('.ipm-lexicon')) return  // only on the start page
     const first = document.querySelector('#toc a[href*="World-1___"], main a[href*="World-1___"]')
     const h1 = document.querySelector('main h1')
     if (!first || !h1) return
@@ -2444,6 +2426,12 @@
       again.href = first.getAttribute('href')
       box.append(again)
     }
+    // the same, in the tactic mode
+    const tactic = el('a', 'ipm-start-tactics', tr('▶ Start in the tactic mode'))
+    tactic.href = go.href
+    tactic.addEventListener('click', () => setMode('tactics'))
+    go.addEventListener('click', () => setMode('blocks'))
+    box.append(tactic)
     const train = document.querySelector('#toc a[href*="Tactic-Trainer"], main a[href*="Tactic-Trainer"]')
     if (train) {
       const t = el('a', 'ipm-start-trainer', tr('🎯 Tactic trainer'))
@@ -2499,8 +2487,133 @@
     } catch {}
   }
 
+
+  // ---------------------------------------------------------------- the lexicon
+
+  // The tactics, as the tips of the tactic mode and the tactic lexicon show them: the command, the
+  // blocks it puts in (the tip comes where these blocks are introduced), and what it does.
+  const TACTICS = [
+    { id: 'exact', cmd: 'exact h', rules: [],
+      en: 'When the goal is exactly something you have: `h : A` and the goal `A`. The goal is done; on the board, a line from `h` to the goal.',
+      de: 'Wenn das Ziel genau etwas ist, das du hast: `h : A` und das Ziel `A`. Das Ziel ist erledigt; auf dem Spielfeld eine Linie von `h` zum Ziel.' },
+    { id: 'constructor', cmd: 'constructor', rules: ['conjI', 'iffI'],
+      en: 'For a goal `A ∧ B`: two goals, `A` and `B` (∧I). For a goal `A ↔ B`: the goals `A → B` and `B → A` (↔I).',
+      de: 'Für ein Ziel `A ∧ B`: zwei Ziele, `A` und `B` (∧I). Für ein Ziel `A ↔ B`: die Ziele `A → B` und `B → A` (↔I).' },
+    { id: 'obtain-and', cmd: 'obtain ⟨h₂, h₃⟩ := h₁', rules: ['conjE'],
+      en: 'For `h₁ : A ∧ B` (tap its blue dot): its two parts, `h₂ : A` and `h₃ : B` (∧E).',
+      de: 'Für `h₁ : A ∧ B` (tippe seinen blauen Punkt an): seine beiden Teile, `h₂ : A` und `h₃ : B` (∧E).' },
+    { id: 'apply', cmd: 'apply h', rules: ['impE'],
+      en: 'For `h : A → B` and the goal `B`: the goal becomes `A` (→E). With more premises, `h : A → B → C` and the goal `C`, the goals `A` and `B`; also through `∀`.',
+      de: 'Für `h : A → B` und das Ziel `B`: Das Ziel wird `A` (→E). Mit mehr Voraussetzungen, `h : A → B → C` und dem Ziel `C`, die Ziele `A` und `B`; auch durch `∀` hindurch.' },
+    { id: 'intro', cmd: 'intro h', rules: ['impI'],
+      en: 'For a goal `A → B`: you get `h : A`, and the goal becomes `B` (→I). `h` holds only for this goal.',
+      de: 'Für ein Ziel `A → B`: Du bekommst `h : A`, und das Ziel wird `B` (→I). `h` gilt nur für dieses Ziel.' },
+    { id: 'left-right', cmd: 'left / right', rules: ['disjI1', 'disjI2'],
+      en: 'For a goal `A ∨ B`: `left` makes it `A` (∨I₁), `right` makes it `B` (∨I₂). Choose the side you can prove.',
+      de: 'Für ein Ziel `A ∨ B`: `left` macht daraus `A` (∨I₁), `right` macht `B` (∨I₂). Wähle die Seite, die du beweisen kannst.' },
+    { id: 'obtain-or', cmd: 'obtain (h₂ | h₃) := h₁', rules: ['disjE'],
+      en: 'For `h₁ : A ∨ B`: two cases, one with `h₂ : A`, one with `h₃ : B`, each with the goal as before (∨E). Each case gets a board of its own.',
+      de: 'Für `h₁ : A ∨ B`: zwei Fälle, einer mit `h₂ : A`, einer mit `h₃ : B`, jeder mit dem Ziel wie vorher (∨E). Jeder Fall bekommt ein eigenes Spielfeld.' },
+    { id: 'exfalso', cmd: 'exfalso', rules: ['falseE'],
+      en: 'For any goal: from `⊥` anything follows, so the goal becomes `⊥` (⊥E). For `h : ⊥`, `exact h.elim` does it at once.',
+      de: 'Für jedes Ziel: Aus `⊥` folgt alles, also wird das Ziel `⊥` (⊥E). Für `h : ⊥` erledigt `exact h.elim` das sofort.' },
+    { id: 'by_cases', cmd: 'by_cases h : A', rules: ['TND'],
+      en: 'Two cases: one with `h : A`, one with `h : A → ⊥`, each with the goal as before (TND with ∨E). Classical.',
+      de: 'Zwei Fälle: einer mit `h : A`, einer mit `h : A → ⊥`, jeder mit dem Ziel wie vorher (TND mit ∨E). Klassisch.' },
+    { id: 'by_contra', cmd: 'by_contra h', rules: ['raa'],
+      en: 'For a goal `A`: you get `h : A → ⊥` (the opposite), and the goal becomes `⊥` (RAA). Classical; in Lean from Mathlib.',
+      de: 'Für ein Ziel `A`: Du bekommst `h : A → ⊥` (das Gegenteil), und das Ziel wird `⊥` (RAA). Klassisch; in Lean aus Mathlib.' },
+    { id: 'mp', cmd: 'apply h.mp / h.mpr', rules: ['iffE1', 'iffE2'],
+      en: 'For `h : A ↔ B`: with the goal `B`, `apply h.mp` makes it `A` (↔E₁); with the goal `A`, `apply h.mpr` makes it `B` (↔E₂).',
+      de: 'Für `h : A ↔ B`: beim Ziel `B` macht `apply h.mp` daraus `A` (↔E₁); beim Ziel `A` macht `apply h.mpr` daraus `B` (↔E₂).' },
+    { id: 'trivial', cmd: 'trivial', rules: ['trueI'],
+      en: 'For the goal `⊤`: done (⊤I).',
+      de: 'Für das Ziel `⊤`: erledigt (⊤I).' },
+    { id: 'intro-all', cmd: 'intro c₁', rules: ['allI'],
+      en: 'For a goal `∀ x, P x`: an object `c₁` about which nothing is known, and the goal becomes `P c₁` (∀I).',
+      de: 'Für ein Ziel `∀ x, P x`: ein Objekt `c₁`, über das nichts bekannt ist, und das Ziel wird `P c₁` (∀I).' },
+    { id: 'specialize', cmd: 'specialize h a', rules: ['allE'],
+      en: 'For `h : ∀ x, P x`: `h` becomes `P a`, for an object `a` (∀E). `apply h` goes through `∀` too.',
+      de: 'Für `h : ∀ x, P x`: `h` wird `P a`, für ein Objekt `a` (∀E). Auch `apply h` geht durch `∀` hindurch.' },
+    { id: 'use', cmd: 'use a', rules: ['exI'],
+      en: 'For a goal `∃ x, P x`: the goal becomes `P a`, for an object `a` you choose (∃I).',
+      de: 'Für ein Ziel `∃ x, P x`: Das Ziel wird `P a`, für ein Objekt `a`, das du wählst (∃I).' },
+    { id: 'obtain-ex', cmd: 'obtain ⟨c₁, h₂⟩ := h₁', rules: ['exE'],
+      en: 'For `h₁ : ∃ x, P x`: an object `c₁` with `h₂ : P c₁` (∃E). Nothing else is known about `c₁`.',
+      de: 'Für `h₁ : ∃ x, P x`: ein Objekt `c₁` mit `h₂ : P c₁` (∃E). Sonst ist über `c₁` nichts bekannt.' },
+    { id: 'induction', cmd: 'intro n; induction n', rules: ['ind'],
+      en: 'For a goal `∀ n, P n`: two goals, `P 0`, and `P (c₁ + 1)` with `h : P c₁` (induction).',
+      de: 'Für ein Ziel `∀ n, P n`: zwei Ziele, `P 0`, und `P (c₁ + 1)` mit `h : P c₁` (Induktion).' },
+  ]
+
+  // The blocks, as the block lexicon shows them.
+  const BLOCKS = {
+    conjI: { en: 'From `A` and `B`, `A ∧ B`.', de: 'Aus `A` und `B` folgt `A ∧ B`.' },
+    conjE: { en: 'From `A ∧ B`, both `A` and `B`.', de: 'Aus `A ∧ B` folgen `A` und `B`.' },
+    impI: { en: 'To prove `A → B`, prove `B` with the local hypothesis `A`, which holds only for this.', de: 'Um `A → B` zu beweisen, beweise `B` mit der lokalen Annahme `A`, die nur dafür gilt.' },
+    impE: { en: 'From `A → B` and `A`, `B` (modus ponens).', de: 'Aus `A → B` und `A` folgt `B` (Modus ponens).' },
+    disjI1: { en: 'From `A`, `A ∨ B`.', de: 'Aus `A` folgt `A ∨ B`.' },
+    disjI2: { en: 'From `B`, `A ∨ B`.', de: 'Aus `B` folgt `A ∨ B`.' },
+    disjE: { en: 'From `A ∨ B` and a proof of `C` in each case, once with the local hypothesis `A`, once with `B`: `C`.', de: 'Aus `A ∨ B` und einem Beweis von `C` in jedem Fall, einmal mit der lokalen Annahme `A`, einmal mit `B`: `C`.' },
+    falseE: { en: 'From `⊥`, anything (ex falso quodlibet).', de: 'Aus `⊥` folgt alles (ex falso quodlibet).' },
+    TND: { en: '`A ∨ (A → ⊥)`, for any `A`: tertium non datur. Classical.', de: '`A ∨ (A → ⊥)`, für jedes `A`: tertium non datur. Klassisch.' },
+    raa: { en: 'From `⊥` with the local hypothesis `A → ⊥`: `A`. Proof by contradiction; classical.', de: 'Aus `⊥` mit der lokalen Annahme `A → ⊥`: `A`. Widerspruchsbeweis; klassisch.' },
+    iffI: { en: 'From `A → B` and `B → A`, `A ↔ B`.', de: 'Aus `A → B` und `B → A` folgt `A ↔ B`.' },
+    iffE1: { en: 'From `A ↔ B` and `A`, `B`.', de: 'Aus `A ↔ B` und `A` folgt `B`.' },
+    iffE2: { en: 'From `A ↔ B` and `B`, `A`.', de: 'Aus `A ↔ B` und `B` folgt `A`.' },
+    trueI: { en: '`⊤`, without anything.', de: '`⊤`, ohne alles.' },
+    allI: { en: 'To prove `∀ x, P x`, prove `P c₁` for an object `c₁` about which nothing is known (it may not occur in what the proof assumes).', de: 'Um `∀ x, P x` zu beweisen, beweise `P c₁` für ein Objekt `c₁`, über das nichts bekannt ist (es darf in dem, was der Beweis annimmt, nicht vorkommen).' },
+    allE: { en: 'From `∀ x, P x`, `P a` for any object `a`.', de: 'Aus `∀ x, P x` folgt `P a` für jedes Objekt `a`.' },
+    exI: { en: 'From `P a`, `∃ x, P x`.', de: 'Aus `P a` folgt `∃ x, P x`.' },
+    exE: { en: 'From `∃ x, P x` and a proof of `C` with an object `c₁` and the local hypothesis `P c₁` (`c₁` not in `C`): `C`.', de: 'Aus `∃ x, P x` und einem Beweis von `C` mit einem Objekt `c₁` und der lokalen Annahme `P c₁` (`c₁` nicht in `C`): `C`.' },
+    ind: { en: 'From `P 0`, and `P (c₁ + 1)` proved with the local hypothesis `P c₁`: `∀ n, P n`.', de: 'Aus `P 0` und `P (c₁ + 1)`, bewiesen mit der lokalen Annahme `P c₁`: `∀ n, P n`.' },
+  }
+
+  // Text with `code` in it, as nodes.
+  function inlineCode(text) {
+    const box = el('span')
+    text.split(/(`[^`]*`)/).forEach(part => box.append(part.startsWith('`') ? el('code', '', part.slice(1, -1)) : part))
+    return box
+  }
+
+  // One tactic: its command, the blocks it puts in, and what it does.
+  function tacticEntry(t) {
+    const box = el('div', 'ipm-lexicon-entry')
+    box.append(el('div', 'ipm-lexicon-cmd', t.cmd))
+    if (t.rules.length) {
+      const row = el('div', 'ipm-tip-blocks')
+      for (const r of t.rules) { const fig = el('div', 'ipm-tip-block'); fig.append(rulePicture(r), el('div', 'ipm-menu-caption', RULES[r].label)); row.append(fig) }
+      box.append(row)
+    }
+    box.append(el('p', 'ipm-lexicon-text', ''))
+    box.lastChild.append(inlineCode(LANG === 'de' ? t.de : t.en))
+    return box
+  }
+
+  // The tactics introduced with these blocks (and `exact` with the first).
+  const tacticsFor = rules => TACTICS.filter(t => t.rules.some(r => rules.includes(r)) || (t.id === 'exact' && rules.length))
+
+  // A lexicon page: `:::lexicon (kind := "tactics")` or `"blocks"`.
+  function lexicon() {
+    for (const box of document.querySelectorAll('.ipm-lexicon')) {
+      if (box.dataset.kind === 'tactics') box.append(...TACTICS.map(tacticEntry))
+      else for (const [r, d] of Object.entries(BLOCKS)) {
+        const e = el('div', 'ipm-lexicon-entry')
+        const fig = el('div', 'ipm-tip-block')
+        fig.append(rulePicture(r), el('div', 'ipm-menu-caption', `${RULES[r].label} · ${tr(RULES[r].name)}`))
+        const text = el('p', 'ipm-lexicon-text')
+        text.append(inlineCode(LANG === 'de' ? d.de : d.en))
+        const tac = TACTICS.filter(t => t.rules.includes(r)).map(t => t.cmd)
+        if (tac.length) { const n = el('p', 'ipm-lexicon-tactic'); n.append(tr('Tactic: '), el('code', '', tac.join(', '))); e.append(fig, text, n) }
+        else e.append(fig, text)
+        box.append(e)
+      }
+    }
+  }
+
   function init() {
     moveProgress()
+    lexicon()
     setTimeout(worldMap)  // after translatePage, so that the names are in the language chosen
     try { const w = localStorage.getItem('ipm-verso:palette-width'); if (w) document.documentElement.style.setProperty('--ipm-palette-width', w) } catch {}
     translatePage()
@@ -2518,7 +2631,20 @@
     const h1 = stage.parentElement?.querySelector('h1')
     const title = el('div', 'ipm-stage-title', (h1?.textContent ?? '').replace('🔗', '').trim())
     if (h1) h1.hidden = true
-    top.append(title, dots)
+    // the mode, for all levels: blocks (the Proof Machine) or tactics (not on the tactic trainer's levels)
+    const modeSwitch = el('div', 'ipm-mode-switch')
+    const modeButtons = [['blocks', tr('Blocks')], ['tactics', tr('Tactics')]].map(([m, text]) => {
+      const b = el('button', '', text)
+      b.type = 'button'
+      b.addEventListener('click', () => { if (MODE !== m) { setMode(m); fillAbout(); showTip(current) } })
+      modeSwitch.append(b)
+      return [m, b]
+    })
+    const markMode = () => modeButtons.forEach(([m, b]) => { b.classList.toggle('ipm-mode-current', MODE === m); b.setAttribute('aria-pressed', String(MODE === m)) })
+    markMode()
+    window.addEventListener('ipm-mode', markMode)
+    modeSwitch.hidden = tasks.every(t => t.forceTactics)
+    top.append(title, modeSwitch, dots)
     stage.append(top, ...tasks.map(t => t.root), foot)
     document.documentElement.classList.add('ipm-playing')
     // The text before the tasks (the rules of the session) folds away above them; open at first.
@@ -2566,22 +2692,36 @@
       aboutButtons.forEach(b => b.setAttribute('aria-pressed', String(open)))
       tasks[current].render()
     }
+    // the blocks a level's tips introduce, and in the tactic mode their tactics
+    const tipRules = k => [...new Set([...tasks[k].root.querySelectorAll(':scope > .ipm-tip')]
+      .flatMap(n => (n.dataset.rules ?? '').split(',').map(x => x.trim()).filter(x => RULES[x])))]
+    const tacticTips = k => tacticsFor(tipRules(k))
     const fillAbout = () => {
-      const own = [...levelText(current), ...tipBlocks(current), ...tipNodes(current)]
+      const tactics = MODE === 'tactics' && !tasks[current].forceTactics ? tacticTips(current).map(tacticEntry) : []
+      const own = [...levelText(current), ...tactics, ...tipBlocks(current), ...tipNodes(current)]
       aboutBody.replaceChildren(...own, ...(hasRules ? [el('div', 'ipm-rules-head', tr('This world')), ...clone()] : []))
     }
     // The tip of a level, once: in a box over the stage, closed with "Got it".
     const seenKey = k => `${tasks[k].key}:tip`
+    const tacticSeen = id => { try { return localStorage.getItem(`ipm-verso:tactic-tip:${id}`) === '1' } catch { return false } }
     const showTip = k => {
       if (tasks[k].root.inert) return
-      const tip = [...tipBlocks(k), ...tipNodes(k), ...(k === 0 && hasRules ? clone() : [])]
-      const nodes = tip.length ? [...levelText(k), ...tip] : []
-      let seen = false
-      try { seen = localStorage.getItem(seenKey(k)) === '1' } catch {}
+      let nodes, seen = false, mark
+      if (MODE === 'tactics' && !tasks[k].forceTactics) {
+        // the tactic mode: the tactics this level introduces, each once (wherever it comes first)
+        const fresh = tacticTips(k).filter(t => !tacticSeen(t.id))
+        nodes = fresh.length ? [el('div', 'ipm-tip-sub', tr('New tactics')), ...fresh.map(tacticEntry)] : []
+        mark = () => fresh.forEach(t => { try { localStorage.setItem(`ipm-verso:tactic-tip:${t.id}`, '1') } catch {} })
+      } else {
+        const tip = [...tipBlocks(k), ...tipNodes(k), ...(k === 0 && hasRules ? clone() : [])]
+        nodes = tip.length ? [...levelText(k), ...tip] : []
+        try { seen = localStorage.getItem(seenKey(k)) === '1' } catch {}
+        mark = () => { try { localStorage.setItem(seenKey(k), '1') } catch {} }
+      }
       if (!nodes.length || seen || document.querySelector('.ipm-tip-overlay')) return
       const overlay = el('div', 'ipm-tip-overlay'), card = el('div', 'ipm-tip-card'), ok = el('button', 'ipm-tip-ok', tr('Got it'))
       ok.type = 'button'
-      const close = () => { try { localStorage.setItem(seenKey(k), '1') } catch {}; overlay.remove() }
+      const close = () => { mark(); overlay.remove() }
       ok.addEventListener('click', close)
       overlay.addEventListener('click', ev => { if (ev.target === overlay) close() })
       card.append(el('div', 'ipm-tip-head', '💡 ' + tr('Tip')), ...nodes, ok)
