@@ -2073,7 +2073,10 @@
         this.selected?.kind === 'out' ? 'Now tap a glowing green circle, or add a block with ＋' :
         n === 1 ? '1 red circle left — tap one' : '{n} red circles left — tap one', { n })
       try { localStorage.setItem(this.key, JSON.stringify({ proof: this.proof.snapshot(), solved: qed })) } catch {}
-      if (qed) { this.saveLemma(); this.onSolved?.() }
+      if (qed) this.saveLemma()
+      // each time it becomes solved (also again, after Undo or in the other mode): the levels after it may open
+      if (qed && !this.wasSolved) this.onSolved?.()
+      this.wasSolved = qed
     }
 
     // ------------------------------------------------------------ lemmas
@@ -3141,12 +3144,9 @@
     }
     tasks.forEach(t => {
       t.onSolved = () => {
-        if (t.reported) return
-        t.reported = true
         setTimeout(update, 300)
         worldMap()  // the count of the world
       }
-      if (t.root.classList.contains('ipm-solved')) t.reported = true
     })
     update()
     window.addEventListener('ipm-settings', update)
