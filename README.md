@@ -42,7 +42,8 @@ classics: tertium non datur from proof by contradiction, `→` over `∨`, the d
   picture stays as it is while one plays: no block moves; a new block goes to a free place, above the
   goal it proves, and the scale stays, unless the picture has to grow (Tidy up lays out everything
   anew). The goals are numbered as in Lean (①, ② beside the red circles, in a list below the board
-  and on the tabs), and there is always a current goal: after each step the first one, its number large and faint
+  and on the tabs; a goal done stays in the list, green, and a tap shows how it was proved), and
+  there is always a current goal: after each step the first one, its number large and faint
   behind the picture; when a goal is done the picture stays a second before the next one. Changes
   of the picture are smooth: a block glides to its new place in a second, a new one fades in (not
   with reduced motion). The

@@ -45,7 +45,7 @@
     'Arrange the blocks automatically again': 'Die Blöcke wieder automatisch anordnen',
     'The proof in Lean': 'Der Beweis in Lean', 'Try it in Lean ↗': 'In Lean ausprobieren ↗',
     'goals accomplished 🎉': 'goals accomplished 🎉',
-    'Now choose a tactic': 'Jetzt eine Taktik wählen', 'Goals:': 'Ziele:', '✓ Goal done': '✓ Ziel erledigt', 'Close': 'Schließen', 'block lexicon': 'Baustein-Lexikon', 'Also new: {x}. All blocks are in the ': 'Außerdem neu: {x}. Alle Bausteine stehen im ', 'Goal:': 'Ziel:',
+    'Now choose a tactic': 'Jetzt eine Taktik wählen', 'Goals:': 'Ziele:', '✓ This goal is done: here is how. Tap an open goal to go on.': '✓ Dieses Ziel ist erledigt: So wurde es bewiesen. Tippe ein offenes Ziel an, um weiterzumachen.', '✓ Goal done': '✓ Ziel erledigt', 'Close': 'Schließen', 'block lexicon': 'Baustein-Lexikon', 'Also new: {x}. All blocks are in the ': 'Außerdem neu: {x}. Alle Bausteine stehen im ', 'Goal:': 'Ziel:',
     '✓ Goal done — on to the next one, choose a tactic': '✓ Ziel erledigt — weiter mit dem nächsten, wähle eine Taktik',
     'Goal {k} of {m}: choose a tactic': 'Ziel {k} von {m}: wähle eine Taktik', 'Whole proof': 'Ganzer Beweis',
     'Now tap a glowing green dot, or add a block with ＋': 'Jetzt einen grün leuchtenden Punkt antippen oder mit ＋ einen Baustein hinzufügen',
@@ -1456,6 +1456,7 @@
     }
 
     change(act) {
+      this.viewing = null
       this.undoStack.push(this.proof.snapshot())
       act()
       this.selected = null
@@ -1859,7 +1860,7 @@
       const off = !this.tacticsOnly || (() => { try { return localStorage.getItem('ipm-verso:boards') === 'off' } catch { return false } })()
       if (this.board === '*' && boards.length < 2) this.board = null
       if (off || this.board === '*') return { proof: p, boards, whole: true, scope: sc, off }
-      if (this.holding && this.board != null && this.board !== '*' && !boards.includes(this.board) &&
+      if ((this.holding || this.viewing) && this.board != null && this.board !== '*' && !boards.includes(this.board) &&
         (this.board === '' || p.block(this.board.split('.')[0]))) boards.push(this.board)  // (a moment longer)
       if (!boards.includes(this.board)) this.board = boards[0]
       const S = this.board, split = boards.length > 1
@@ -1976,6 +1977,43 @@
       return order
     }
 
+    // The list of goals: the open ones (as `goalOrder`), and in their places the goals that were in
+    // the list and are done now (`this.listed`), so that one can look back at how they were proved:
+    // the outermost one (goal ① stays goal ①, done, also when it was taken apart first).
+    goalsShown(order) {
+      const p = this.proof, open = new Set(order.map(o => `${o.block}.${o.port}`))
+      const below = (id, i, f) => {  // the inputs of the proof of input i of block id
+        const seen = new Set(), out = []
+        const go = (b, k) => {
+          const c = p.connections.find(c => c.to.block === b && c.to.port === k)
+          // (a local hypothesis is not part of the proof of the goal: its line is not followed)
+          if (!c || isLocal(p.block(c.from.block), c.from.port) || seen.has(c.from.block)) return
+          seen.add(c.from.block)
+          p.block(c.from.block)?.inputs.forEach((_, j) => { out.push(`${c.from.block}.${j}`); go(c.from.block, j) })
+        }
+        go(id, i)
+        return out
+      }
+      const solved = (id, i) => {
+        const key = `${id}.${i}`
+        if (!this.listed?.has(key) || open.has(key) || !p.connections.some(c => c.to.block === id && c.to.port === i)) return false
+        return !below(id, i).some(k => open.has(k))
+      }
+      const list = [], seen = new Set()
+      const visit = id => {
+        if (seen.has(id)) return
+        seen.add(id)
+        p.block(id).inputs.forEach((_, i) => {
+          if (open.has(`${id}.${i}`)) list.push({ block: id, port: i })
+          else if (solved(id, i)) list.push({ block: id, port: i, done: true })  // (and not its parts)
+          else for (const c of p.connections) if (c.to.block === id && c.to.port === i) visit(c.from.block)
+        })
+      }
+      for (const b of p.blocks) if (b.kind === 'conclusion') visit(b.id)
+      for (const o of order) if (!list.some(x => x.block === o.block && x.port === o.port)) list.push(o)
+      return list
+    }
+
     render() {
       const p = this.proof
       const before = this.screenPlaces()  // (for the smooth move to the new picture)
@@ -1987,6 +2025,9 @@
       // view); after a board was chosen (a tab), the first goal on it.
       const order = this.goalOrder()
       this.goalNo = this.tacticsOnly && order.length > 1 ? Object.fromEntries(order.map((o, k) => [`${o.block}.${o.port}`, k + 1])) : {}
+      if (this.listedOf !== p) { this.listed = new Set(); this.listedOf = p }
+      if (this.tacticsOnly && order.length > 1) for (const o of order) this.listed.add(`${o.block}.${o.port}`)
+      if (this.viewing && !p.block(this.viewing.split('.')[0])) this.viewing = null
       const fewer = this.tacticsOnly && this.openBefore !== undefined && order.length < this.openBefore && order.length > 0
       this.openBefore = order.length
       // A goal done: the picture stays a moment (its board green, "✓ Goal done"), then the next goal.
@@ -1995,7 +2036,7 @@
         clearTimeout(this.holdTimer)
         this.holdTimer = setTimeout(() => { this.holding = false; this.nextPending = true; this.render() }, holdTime())
       }
-      if (this.tacticsOnly && !this.holding && !this.root.inert && order.length && !this.selectedConn &&
+      if (this.tacticsOnly && !this.holding && !this.viewing && !this.root.inert && order.length && !this.selectedConn &&
         (!this.selected || (this.selected.kind === 'in' && !order.some(o => o.block === this.selected.block && o.port === this.selected.port)))) {
         const sc = this.scopeOf()
         const o = (this.boardChosen && order.find(o => sc.goalScope(o) === this.board)) || order[0]
@@ -2139,7 +2180,7 @@
           if (kind === 'in' && bv.elsewhere?.[`${b.id}.${i}`]) return 'ipm-elsewhere'
           if (kind === 'in') {
             const open = this.analysis.openInputs.some(o => o.block === at.block && o.port === at.port)
-            return (open ? 'ipm-open ' : '') +
+            return (open ? 'ipm-open ' : '') + (this.viewing === `${at.block}.${at.port}` ? 'ipm-goal-shown ' : '') +
               (sel?.kind === 'in' && sel.block === at.block && sel.port === at.port ? 'ipm-selected ' + (this.nextGoal ? 'ipm-goal-next ' : '') : '') +
               (sel?.kind === 'out' && open && !this.tacticsOnly && this.fits(sel, at) ? 'ipm-candidate' : '')
           }
@@ -2218,22 +2259,28 @@
       // the goals, as Lean lists them; a tap makes one the current goal (on its board)
       // (in the Lean tactic mode always, also for one goal, so that the board keeps its height)
       this.goalList.replaceChildren()
-      if (this.tacticsOnly && order.length) {
-        this.goalList.append(el('span', 'ipm-goals-title', tr(order.length > 1 ? 'Goals:' : 'Goal:')))
-        for (const o of order) {
-          const k = this.goalNo[`${o.block}.${o.port}`], cur = this.selected?.kind === 'in' && this.selected.block === o.block && this.selected.port === o.port
-          const t = el('button', 'ipm-goal-item' + (cur ? ' ipm-goal-current' : ''), `${k ? goalMark(k) + ' ' : ''}⊢ ${show(this.proof.block(o.block).inputs[o.port], this.analysis.s)}`)
+      const list = this.tacticsOnly ? this.goalsShown(order) : []
+      if (list.length) {
+        this.goalList.append(el('span', 'ipm-goals-title', tr(list.length > 1 ? 'Goals:' : 'Goal:')))
+        for (const o of list) {
+          const key = `${o.block}.${o.port}`, k = this.goalNo[key]
+          const cur = o.done ? this.viewing === key : !this.viewing && this.selected?.kind === 'in' && this.selected.block === o.block && this.selected.port === o.port
+          const t = el('button', 'ipm-goal-item' + (o.done ? ' ipm-goal-done' : '') + (cur ? ' ipm-goal-current' : ''),
+            `${o.done ? '✓ ' : k ? goalMark(k) + ' ' : ''}⊢ ${show(this.proof.block(o.block).inputs[o.port], this.analysis.s)}`)
           t.type = 'button'
+          // a goal done: its board, to see how it was proved; an open one: the current goal
           t.addEventListener('click', () => {
-            if (!bv.whole && bv.boards.length > 1) { this.board = bv.scope.goalScope(o); this.boardChosen = true }
-            this.selected = { kind: 'in', block: o.block, port: o.port }; this.nextGoal = false; this.render()
+            this.board = bv.scope?.goalScope(o) ?? this.board; this.boardChosen = true
+            if (o.done) { this.viewing = key; this.selected = null } else { this.viewing = null; this.selected = { kind: 'in', block: o.block, port: o.port } }
+            this.nextGoal = false; this.render()
           })
           this.goalList.append(t)
         }
       }
       this.context.replaceChildren()
-      if (this.selected?.kind === 'in' && !qed) {
-        const at = this.selected, s = this.analysis.s
+      const viewed = this.viewing ? { block: this.viewing.split('.')[0], port: Number(this.viewing.split('.')[1]) } : null
+      if (viewed || (this.selected?.kind === 'in' && !qed)) {
+        const at = viewed ?? this.selected, s = this.analysis.s
         for (const [k, name] of Object.entries(this.usableAt(at))) {
           const [id, port] = k.split('.')
           this.context.append(el('span', 'ipm-ctx-hyp', `${name} : ${show(this.proof.block(id).outputs[Number(port)], s)}`))
@@ -2242,6 +2289,7 @@
       }
       this.status.textContent = tr(qed ? 'goals accomplished 🎉' :
         this.holding ? '✓ Goal done' :
+        this.viewing ? '✓ This goal is done: here is how. Tap an open goal to go on.' :
         this.selected && this.tacticsOnly && this.nextGoal ? '✓ Goal done — on to the next one, choose a tactic' :
         this.selected?.kind === 'in' && this.tacticsOnly && this.goalNo[`${this.selected.block}.${this.selected.port}`] ? 'Goal {k} of {m}: choose a tactic' :
         this.selected && this.tacticsOnly ? 'Now choose a tactic' :
@@ -2640,6 +2688,7 @@
       this.selectedConn = null
       this.nextGoal = false
       this.moreOpen = false
+      this.viewing = null
       const sel = this.selected
       if (sel?.kind === 'out' && !this.tacticsOnly) return this.link(sel, { block: b.id, port: i })
       if (sel?.kind === 'in' && sel.block === b.id && sel.port === i) return this.closeSheet()
