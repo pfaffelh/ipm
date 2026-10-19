@@ -163,6 +163,11 @@
   }
 
   // ①, ②, … for the goals of the Lean tactic mode
+  // whether changes of the picture are animated (not with reduced motion; the tests set 'ipm-verso:anim' to 0)
+  const animate = () => {
+    try { if (localStorage.getItem('ipm-verso:anim') === '0') return false } catch {}
+    return !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  }
   // how long the picture stays when a goal is done (the tests set 'ipm-verso:hold' to 0)
   const holdTime = () => { try { return Number(localStorage.getItem('ipm-verso:hold') ?? 1000) } catch { return 1000 } }
   const goalMark = k => (k >= 1 && k <= 20 ? String.fromCodePoint(0x2460 + k - 1) : `(${k})`)
@@ -1741,6 +1746,48 @@
     get tacticsOnly() { return this.forceTactics || MODE === 'tactics' }
     set tacticsOnly(v) { this.forceTactics = v }  // (the tests set it)
 
+    // ------------------------------------------------------------ smooth changes
+
+    // Where the blocks are on the screen (by id), before the picture is drawn anew.
+    screenPlaces() {
+      if (!this.svgRoot?.isConnected || !animate()) return null
+      const out = {}
+      for (const g of this.svgRoot.querySelectorAll('.ipm-block[data-id]')) {
+        const r = g.querySelector('rect')?.getBoundingClientRect()
+        if (!r || !r.width) continue
+        out[g.dataset.id] = { x: r.left, y: r.top }
+        // (what stands on a board for a block, `p:X.k`, and the block X: one glides from the other)
+        const real = /^p:([^.]+)\./.exec(g.dataset.id)?.[1]
+        if (real && !out[real]) out[real] = out[g.dataset.id]
+      }
+      return out
+    }
+
+    // The new picture: a block that was there glides from where it was (in a second), a new one
+    // fades in; the lines, drawn where the blocks end up, fade in once the blocks are there.
+    glide(before) {
+      if (!before || !Object.keys(before).length) return
+      const k = this.svgRoot.getScreenCTM()?.a || 1
+      const moved = [], fresh = []
+      for (const g of this.svgRoot.querySelectorAll('.ipm-block[data-id]')) {
+        const old = before[g.dataset.id] ?? before[/^p:([^.]+)\./.exec(g.dataset.id)?.[1]] ??
+          Object.entries(before).find(([id]) => id.startsWith(`p:${g.dataset.id}.`))?.[1]
+        const r = g.querySelector('rect')?.getBoundingClientRect()
+        if (!r || !r.width) continue
+        if (!old) { fresh.push(g); continue }
+        const dx = (old.x - r.left) / k, dy = (old.y - r.top) / k
+        if (Math.abs(dx) + Math.abs(dy) > 1) { g.style.transform = `translate(${dx}px, ${dy}px)`; moved.push(g) }
+      }
+      if (!moved.length && !fresh.length) return
+      for (const g of fresh) g.style.opacity = '0'
+      const lines = moved.length ? [...this.svgRoot.querySelectorAll('.ipm-conn')] : []
+      for (const l of lines) l.style.opacity = '0'
+      this.svgRoot.getBoundingClientRect()  // (the start, before the transitions)
+      for (const g of moved) { g.style.transition = 'transform 1s ease-in-out'; g.style.transform = '' }
+      for (const g of fresh) { g.style.transition = 'opacity 0.6s ease-in'; g.style.opacity = '' }
+      for (const l of lines) { l.style.transition = 'opacity 0.35s ease-in 0.85s'; l.style.opacity = '' }
+    }
+
     // ------------------------------------------------------------ boards
 
     // Where a block or a goal lies: in the box of a local hypothesis, a scope `X.k` (block X and its
@@ -1931,6 +1978,7 @@
 
     render() {
       const p = this.proof
+      const before = this.screenPlaces()  // (for the smooth move to the new picture)
       if (this.selected && !p.block(this.selected.block)) this.selected = null  // (a block gone, by Undo)
       this.root.classList.toggle('ipm-tactics-only', this.tacticsOnly)
       this.analysis = p.analyze()
@@ -2155,6 +2203,7 @@
         }
       })
       this.canvas.replaceChildren(root)
+      this.glide(before)
       const qed = this.analysis.qed
       // done: the whole proof, or on a board of the Lean tactic mode its own goals
       const boardDone = qed || (!bv.whole && bv.boards.length > 1 &&

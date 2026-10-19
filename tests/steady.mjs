@@ -15,7 +15,7 @@ const places = () => page.evaluate(() => {
   return out
 })
 const play = async (path, steps) => {
-  await page.goto(base); await page.evaluate(() => { localStorage.clear(); localStorage.setItem('ipm-verso:mode', 'tactics'); localStorage.setItem('ipm-verso:in-order', 'off'); localStorage.setItem('ipm-verso:tactic-mode', '1') })
+  await page.goto(base); await page.evaluate(() => { localStorage.clear(); localStorage.setItem('ipm-verso:mode', 'tactics'); localStorage.setItem('ipm-verso:in-order', 'off'); localStorage.setItem('ipm-verso:tactic-mode', '1'); localStorage.setItem('ipm-verso:anim', '0') })
   await page.goto(base + path); await page.reload(); await page.waitForTimeout(500)
   let moved = 0, total = 0
   for (const [where, want] of steps) {

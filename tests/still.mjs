@@ -41,7 +41,7 @@ let ok = 0, total = 0, same = 0, quiet = 0, bad = 0
 for (const lv of levels.filter(l => !only.length || only.includes(l.name))) {
   const [w, n] = lv.name.split('.').map(Number)
   await page.goto(base + pages[w] + '#level-' + n)
-  await page.evaluate(() => { localStorage.setItem('ipm-verso:in-order', 'off'); localStorage.setItem('ipm-verso:mode', 'tactics') }); await page.reload(); await page.waitForTimeout(300); await page.evaluate(() => document.querySelectorAll('.ipm-tip-overlay').forEach(o => o.remove()))
+  await page.evaluate(() => { localStorage.setItem('ipm-verso:in-order', 'off'); localStorage.setItem('ipm-verso:mode', 'tactics'); localStorage.setItem('ipm-verso:anim', '0') }); await page.reload(); await page.waitForTimeout(300); await page.evaluate(() => document.querySelectorAll('.ipm-tip-overlay').forEach(o => o.remove()))
   const r = await page.evaluate(([i, steps]) => {
     const t = window.ipmTasks[i], render = t.render
     t.tacticsOnly = true

@@ -7,7 +7,7 @@ page.on('pageerror', e => console.log('PAGEERROR', e.message))
 const wait = ms => page.waitForTimeout(ms)
 const click = async l => { await l.dispatchEvent('click'); await wait(200) }
 const ok = async () => { for (let i = 0; i < 5 && await page.locator('.ipm-tip-overlay').count(); i++) await click(page.locator('.ipm-tip-overlay button').last()) }
-await page.goto(base + 'World-2___-Implication/'); await page.evaluate(() => { localStorage.clear(); localStorage.setItem('ipm-verso:mode', 'tactics'); localStorage.setItem('ipm-verso:in-order', 'off') })
+await page.goto(base + 'World-2___-Implication/'); await page.evaluate(() => { localStorage.clear(); localStorage.setItem('ipm-verso:mode', 'tactics'); localStorage.setItem('ipm-verso:in-order', 'off'); localStorage.setItem('ipm-verso:anim', '0') })
 await page.goto(base + 'World-2___-Implication/#level-22'); await page.reload(); await wait(600); await ok()
 const t = page.locator('.ipm-task.ipm-current')
 const step = async x => { await click(t.locator('.ipm-step').filter({ hasText: x }).first()); await ok() }
