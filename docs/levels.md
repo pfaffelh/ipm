@@ -201,7 +201,7 @@ Columns: level, statement, rules its Lean proof uses (roughly), lemma (L) / tip.
 
 | | statement | rules used | gives |
 |---|---|---|---|
-| 9.1 | ` ⊢ ∃ x, P x → ∀ y, P y` | TND, conjI, falseE, impI | tip |
+| 9.1 | ` ⊢ ∃ x, P x → ∀ y, P y` | TND, conjI, falseE, impI |  |
 | 9.2 | `∀ x, (R x → ⊥) → R (f x) ⊢ ∃ x, R x ∧ R (f (f x))` | TND, conjI, falseE, impI |  |
 | 9.3 | `A ↔ (A → ⊥) ∧ (B → ⊥) ⊢ (A → ⊥) ∧ B` | TND, conjE, conjI, falseE, iffE1, iffE2, impI |  |
 
