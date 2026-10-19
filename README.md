@@ -77,7 +77,9 @@ classics: tertium non datur from proof by contradiction, `→` over `∨`, the d
 * The worlds are a map (instead of the list in the table of contents; ☰ on phones): a circle per
   world with its levels solved, lines from the worlds it builds on.
 * On phones the tool bar is one row at the bottom (a symbol over a short word), and Tips
-  and Lean are sheets over the board, which scroll.
+  and Lean are sheets over the board, which scroll. A tip box keeps ✕ and “Got it” in view and
+  scrolls its text; on a short screen (a phone on its side) the page scrolls. `tests/small.mjs`
+  checks this on every level in five screen sizes.
 * Tasks come one after another; the ones not yet playable are shown greyed out (⚙ in the header
   switches this off).
 * Solved tasks marked `(lemma := true)` become lemmas, offered only in the tasks after them (no circles): in the menu of ＋, “Lemmas from solved levels” offers each solved task as a

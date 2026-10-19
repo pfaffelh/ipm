@@ -45,7 +45,7 @@
     'Arrange the blocks automatically again': 'Die Blöcke wieder automatisch anordnen',
     'The proof in Lean': 'Der Beweis in Lean', 'Try it in Lean ↗': 'In Lean ausprobieren ↗',
     'goals accomplished 🎉': 'goals accomplished 🎉',
-    'Now choose a tactic': 'Jetzt eine Taktik wählen', 'Goals:': 'Ziele:', 'Goal:': 'Ziel:',
+    'Now choose a tactic': 'Jetzt eine Taktik wählen', 'Goals:': 'Ziele:', 'Close': 'Schließen', 'block lexicon': 'Baustein-Lexikon', 'Also new: {x}. All blocks are in the ': 'Außerdem neu: {x}. Alle Bausteine stehen im ', 'Goal:': 'Ziel:',
     '✓ Goal done — on to the next one, choose a tactic': '✓ Ziel erledigt — weiter mit dem nächsten, wähle eine Taktik',
     'Goal {k} of {m}: choose a tactic': 'Ziel {k} von {m}: wähle eine Taktik', 'Whole proof': 'Ganzer Beweis',
     'Now tap a glowing green dot, or add a block with ＋': 'Jetzt einen grün leuchtenden Punkt antippen oder mit ＋ einen Baustein hinzufügen',
@@ -1959,7 +1959,11 @@
       let scale = Math.min(cw > 700 ? 1.4 : 1, cw / natural[2], ch ? ch / natural[3] : Infinity)
       // In the Lean tactic mode the scale stays (the picture does not jump), unless it no longer fits.
       const kept = this.tacticsOnly && this.placesOf === this.proof ? this.places?.[`#scale:${this.board ?? ''}`] : null
-      if (kept && kept.cw === cw) scale = kept.scale  // (the width of the board, not its height, which the lines below it change)
+      // (the same width of the board; its height changes a little with the lines around it, a lot only
+      // while the page is laid out or the phone is turned: then the scale is new)
+      if (kept && kept.cw === cw && Math.abs(kept.ch - ch) <= 60) scale = kept.scale
+      // before the first step: a picture laid out for another size of the board is laid out anew
+      else if (kept && !this.proof.blocks.some(b => b.kind === 'rule')) { this.places = {}; this.placesOf = this.proof }
       this.canvasH = ch ? ch / scale - 2 : 0  // (for the first places of the blocks)
       let { pos, view } = this.layout({ w: cw / scale - 2, h: ch ? ch / scale - 2 : 0 })
       if (this.tacticsOnly && (view[2] * scale > cw + 2 || (ch && view[3] * scale > ch + 2))) {
@@ -3138,6 +3142,26 @@
     const tipRules = k => [...new Set([...tasks[k].root.querySelectorAll(':scope > .ipm-tip')]
       .flatMap(n => (n.dataset.rules ?? '').split(',').map(x => x.trim()).filter(x => RULES[x])))]
     const tacticTips = k => tacticsFor(tasks[k].rules)
+    // A tip in a box over the stage: a head with ✕ and a foot with "Got it" always in view, the text
+    // between them scrolls (on a small screen a tip may be longer than the screen). The box closes
+    // with ✕, "Got it", a tap beside it, or Escape; `done` runs then.
+    const tipBox = (head, nodes, done) => {
+      const overlay = el('div', 'ipm-tip-overlay'), card = el('div', 'ipm-tip-card')
+      const top = el('div', 'ipm-tip-top'), x = el('button', 'ipm-tip-x', '✕'), body = el('div', 'ipm-tip-body'), ok = el('button', 'ipm-tip-ok', tr('Got it'))
+      x.type = 'button'; ok.type = 'button'; x.setAttribute('aria-label', tr('Close'))
+      const close = () => { done(); overlay.remove(); document.removeEventListener('keydown', esc) }
+      const esc = ev => { if (ev.key === 'Escape') close() }
+      x.addEventListener('click', close); ok.addEventListener('click', close)
+      overlay.addEventListener('click', ev => { if (ev.target === overlay) close() })
+      document.addEventListener('keydown', esc)
+      top.append(el('div', 'ipm-tip-head', '💡 ' + head), x)
+      body.append(...nodes)
+      card.append(top, body, ok)
+      overlay.append(card)
+      document.body.append(overlay)
+      ok.focus({ preventScroll: true })
+      body.scrollTop = 0  // (a long tip starts at its top)
+    }
     const fillAbout = () => {
       const tactics = MODE === 'tactics' && !tasks[current].forceTactics ? tacticTips(current).map(t => tacticEntry(t, tasks[current].rules)) : []
       const own = [...levelText(current), ...tactics, ...tipBlocks(current), ...tipNodes(current)]
@@ -3152,14 +3176,7 @@
         const fresh = TACTICS.filter(x => ids.includes(x.id) && !seenTip(`tactic-tip:${x.id}`))
         if (!fresh.length) return
         fresh.forEach(x => markTip(`tactic-tip:${x.id}`))
-        const overlay = el('div', 'ipm-tip-overlay'), card = el('div', 'ipm-tip-card'), ok = el('button', 'ipm-tip-ok', tr('Got it'))
-        ok.type = 'button'
-        ok.addEventListener('click', () => overlay.remove())
-        overlay.addEventListener('click', ev => { if (ev.target === overlay) overlay.remove() })
-        card.append(el('div', 'ipm-tip-head', '💡 ' + tr('New tactic')), ...fresh.map(x => tacticEntry(x, t.rules)), ok)
-        overlay.append(card)
-        document.body.append(overlay)
-        ok.focus({ preventScroll: true })
+        tipBox(tr('New tactic'), fresh.map(x => tacticEntry(x, t.rules)), () => {})
       }
     })
     const showTip = k => {
@@ -3176,21 +3193,20 @@
         const tip = own ? [...tipBlocks(k), ...tipNodes(k), ...(k === 0 && hasRules ? clone() : [])] : []
         const covered = own ? tipRules(k) : []
         const missed = tasks[k].forceTactics ? [] : tasks[k].rules.filter(r => BLOCKS[r] && !covered.includes(r) && !seenTip(`block-tip:${r}`))
+        // (at most three of them in full, the others in a line with a link to the block lexicon)
+        const more = missed.length > 3 ? el('p', 'ipm-tip-more') : null
+        if (more) {
+          more.append(tr('Also new: {x}. All blocks are in the ', { x: missed.slice(3).map(r => RULES[r].label).join(', ') }))
+          const a = el('a', '', tr('block lexicon'))
+          a.href = document.querySelector('#toc a[href*="Block-Lexicon"]')?.getAttribute('href') ?? '../Block-Lexicon/'
+          more.append(a, '.')
+        }
         nodes = [...(tip.length ? [...levelText(k), ...tip] : []),
-          ...(missed.length ? [el('div', 'ipm-tip-sub', tr('Blocks you have not met yet')), ...missed.map(blockEntry)] : [])]
+          ...(missed.length ? [el('div', 'ipm-tip-sub', tr('Blocks you have not met yet')), ...missed.slice(0, 3).map(blockEntry), ...(more ? [more] : [])] : [])]
         mark = () => { markTip(seenKey(k).replace('ipm-verso:', '')); [...covered, ...missed].forEach(r => markTip(`block-tip:${r}`)) }
       }
       if (!nodes.length || document.querySelector('.ipm-tip-overlay')) return
-      const overlay = el('div', 'ipm-tip-overlay'), card = el('div', 'ipm-tip-card'), ok = el('button', 'ipm-tip-ok', tr('Got it'))
-      ok.type = 'button'
-      const close = () => { mark(); overlay.remove() }
-      ok.addEventListener('click', close)
-      overlay.addEventListener('click', ev => { if (ev.target === overlay) close() })
-      card.append(el('div', 'ipm-tip-head', '💡 ' + tr('Tip')), ...nodes, ok)
-      overlay.append(card)
-      document.body.append(overlay)
-      ok.focus({ preventScroll: true })  // a long tip starts at its top, with the blocks
-      card.scrollTop = 0
+      tipBox(tr('Tip'), nodes, mark)
     }
     let current = 0
     const key = `ipm-verso:${location.pathname}:current`

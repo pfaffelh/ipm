@@ -214,7 +214,7 @@
 #search-wrapper { display: none !important; }
 
 /* On phones the site title is shortened to "The IPM in Lean". */
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 700px), screen and (max-height: 500px) {
   header .header-title h1 { font-size: 0; }
   header .header-title h1::after { content: "The IPM in Lean"; font-size: 1.45rem; }
 }
@@ -226,7 +226,9 @@
 :root.ipm-de .ipm-lang-de { display: block; }
 :root.ipm-de .ipm-lang-en { display: none; }
 :root.ipm-de .ipm-task.ipm-locked .ipm-task-label::after { content: " 🔒 löse erst das Level davor"; }
-@media screen and (max-width: 700px) { :root.ipm-de header .header-title h1::after { content: "Die IPM in Lean"; } }
+@media screen and (max-width: 700px), screen and (max-height: 500px) { :root.ipm-de header .header-title h1::after { content: "Die IPM in Lean"; } }
+/* (a very narrow phone: the short title smaller, beside the language switch) */
+@media screen and (max-width: 360px) { header .header-title h1::after { font-size: 1.1rem; } }
 .ipm-lang-switch { display: flex; gap: 0.1em; margin: 0 0.8em 0 0.5em; align-self: center; }
 .ipm-lang-switch button {
   font: inherit; font-family: var(--verso-structure-font-family, sans-serif); font-size: 0.85em; padding: 0.25em 0.45em; border: 1px solid #b8c4d4; background: white;
@@ -290,13 +292,13 @@
 .ipm-stage .ipm-task.ipm-locked .ipm-task-label { display: block; font-size: 0; }
 .ipm-stage .ipm-task.ipm-locked .ipm-task-label::after { font-size: 0.8rem; content: "🔒 solve the previous level first"; }
 :root.ipm-de .ipm-stage .ipm-task.ipm-locked .ipm-task-label::after { content: "🔒 löse erst das Level davor"; }
-.ipm-dots { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.ipm-dots { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; justify-content: flex-end; flex: 1 1 9rem; }
 .ipm-dot { width: 14px; height: 14px; padding: 0; border-radius: 50%; border: 1.5px solid #8a9bb3; background: white; cursor: pointer; }
 .ipm-dot-next { animation: ipm-pulse 1.2s ease-in-out infinite; border-color: #3b6db3; }
 .ipm-dot-solved { background: #3c9a5f; border-color: #3c9a5f; }
 .ipm-dot-locked { border-style: dashed; opacity: 0.6; }
 .ipm-dot-current { outline: 2px solid #3b6db3; outline-offset: 1px; }
-@media (max-width: 600px) { .ipm-dot { width: 12px; height: 12px; } }
+@media (max-width: 600px), (max-height: 500px) { .ipm-dot { width: 12px; height: 12px; } }
 
 /* Below the board: the status, then the tool bar (＋ first). */
 .ipm-info { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2em 0.8em; margin-top: 0.3em; min-height: 1.3em; }
@@ -311,7 +313,7 @@
 
 /* The rules of the session, folded away above the tasks. */
 .ipm-intro-body { max-height: 32vh; overflow: auto; }
-@media (max-width: 600px) {
+@media (max-width: 600px), (max-height: 500px) {
   .ipm-add { padding: 0.4em 0.9em; font-size: 1.2em; }
   .ipm-add-text { display: none; }
   .ipm-undo { font-size: 0; } .ipm-undo::before { content: "↶"; font-size: 1.1rem; }
@@ -334,23 +336,31 @@
 /* The foot of the stage (empty: hidden) */
 .ipm-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3em 0.8em; padding-top: 0.5em; border-top: 1px solid #e0e5ec; margin-top: 0.5em; }
 /* Above the task, on the right: the dots of the tasks. */
-.ipm-top { display: flex; justify-content: space-between; align-items: center; gap: 0.6em; padding-bottom: 0.4em; }
+/* (on a narrow screen the dots go to a line of their own, rather than into a column) */
+.ipm-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.3em 0.6em; padding-bottom: 0.4em; }
 .ipm-stage-title { font-family: var(--verso-structure-font-family, sans-serif); font-weight: bold; font-size: 1.15em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* A session page is only the header and the stage: it does not scroll. */
-html.ipm-playing, html.ipm-playing body { overflow: hidden; }
+/* (on a short screen, a phone on its side, the page scrolls: the stage is higher than what is left) */
+@media (min-height: 501px) { html.ipm-playing, html.ipm-playing body { overflow: hidden; } }
 html.ipm-playing main, html.ipm-playing .content-wrapper, html.ipm-playing section { padding-top: 0; padding-bottom: 0; margin-top: 0; }
 .ipm-foot:empty { display: none; }
 
 /* Tips: hidden in the level; shown once in a box, and under Tips. */
-.ipm-task .ipm-tip { display: none; }
-.ipm-tip-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(20, 30, 50, 0.35); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.ipm-task .ipm-tip, :root.ipm-de .ipm-task .ipm-tip { display: none; }  /* (also over the German text shown) */
+.ipm-tip-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(20, 30, 50, 0.35); display: flex; align-items: center; justify-content: center; padding: 12px; box-sizing: border-box; }
+/* head (with ✕) and foot ("Got it") stay in view; the text between them scrolls */
 .ipm-tip-card {
-  background: white; border-radius: 12px; padding: 1em 1.2em; max-width: 34rem; width: 100%; max-height: 80vh; overflow: auto;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); box-sizing: border-box;
+  background: white; border-radius: 12px; padding: 0.8em 1.2em; max-width: 34rem; width: 100%; max-height: min(85vh, calc(100dvh - 24px));
+  display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); box-sizing: border-box;
 }
-.ipm-tip-head { font-weight: bold; color: #3b6db3; font-family: var(--verso-structure-font-family, sans-serif); margin-bottom: 0.3em; }
+.ipm-tip-top { display: flex; align-items: center; gap: 0.5em; flex: none; }
+.ipm-tip-head { font-weight: bold; color: #3b6db3; font-family: var(--verso-structure-font-family, sans-serif); flex: 1; }
+.ipm-tip-x { flex: none; font: inherit; font-size: 1.1em; width: 44px; height: 44px; margin-right: -0.6em; border: none; border-radius: 22px; background: none; color: #555; cursor: pointer; }
+.ipm-tip-x:hover { background: #eef2f8; }
+.ipm-tip-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.ipm-tip-more { font-size: 0.95em; }
 .ipm-tip-ok {
-  display: block; margin: 0.8em 0 0 auto; font: inherit; font-family: var(--verso-structure-font-family, sans-serif); font-weight: bold; color: white; background: #3b6db3; border: none;
+  flex: none; display: block; margin: 0.6em 0 0 auto; font: inherit; font-family: var(--verso-structure-font-family, sans-serif); font-weight: bold; color: white; background: #3b6db3; border: none;
   border-radius: 22px; padding: 0.55em 1.4em; min-height: 44px; cursor: pointer;
 }
 .ipm-rules-head { font-weight: bold; margin-top: 0.6em; color: #555; font-family: var(--verso-structure-font-family, sans-serif); }
@@ -396,7 +406,7 @@ html.ipm-playing main, html.ipm-playing .content-wrapper, html.ipm-playing secti
 .ipm-about { border: 1px solid #c9d3e0; border-radius: 8px; background: #fafbfd; padding: 0.3em 0.8em; margin-top: 0.3em; }
 .ipm-about[hidden] { display: none; }
 .ipm-about .ipm-intro-body { max-height: 34vh; overflow: auto; }
-@media (max-width: 600px) {
+@media (max-width: 600px), (max-height: 500px) {
   .ipm-bar .ipm-button, .ipm-bar .ipm-add { padding: 0.4em 0.6em; font-size: 0.9em; }
   .ipm-bar .ipm-undo { font-size: 0; } .ipm-bar .ipm-undo::before { content: "↶"; font-size: 1.1rem; }
 }
@@ -434,7 +444,7 @@ main section:has(> ol.section-toc) { display: none; }
 /* The tool bar: words on large screens, a symbol over a short word on phones (one row, at the bottom). */
 .ipm-bar .ipm-ico, .ipm-bar .ipm-short { display: none; }
 .ipm-bar .ipm-add .ipm-ico { display: inline; }
-@media (max-width: 600px) {
+@media (max-width: 600px), (max-height: 500px) {
   .ipm-stage .ipm-bar { flex-wrap: nowrap; gap: 3px; padding-bottom: env(safe-area-inset-bottom); }
   .ipm-stage .ipm-bar .ipm-button, .ipm-stage .ipm-bar .ipm-add {
     flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -521,6 +531,6 @@ main section:has(> ol.section-toc) { display: none; }
 .ipm-lexicon-map th, .ipm-lexicon-map td { border-bottom: 1px solid #d9e1ec; padding: 0.35rem 0.5rem; text-align: left; vertical-align: top; }
 .ipm-lexicon-map td:first-child { white-space: nowrap; }
 .ipm-lexicon-map td:nth-child(2) { white-space: nowrap; color: #1d3f73; }
-.ipm-tip-sub { font-weight: bold; margin: 0.4rem 0; }
+.ipm-tip-sub { font-weight: bold; margin: 0.4rem 0; font-family: var(--verso-structure-font-family, sans-serif); }
 /* a proof done (in the tactic mode: the goals of this board): the board turns green */
 .ipm-canvas.ipm-board-done { background-color: #e9f7ee; border-color: #8cc4a2; }
