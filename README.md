@@ -42,7 +42,10 @@ classics: tertium non datur from proof by contradiction, `→` over `∨`, the d
   picture stays as it is while one plays: no block moves; a new block goes to a free place, above the
   goal it proves, and the scale stays, unless the picture has to grow (Tidy up lays out everything
   anew). The goals are numbered as in Lean (①, ② beside the red circles, in a list below the board
-  and on the tabs), and there is always a current goal: after each step the first one.
+  and on the tabs), and there is always a current goal: after each step the first one, its number large and faint
+  behind the picture; when a goal is done the picture stays a second before the next one. The
+  tactics that fit the shape of the goal come as buttons; those that fit any goal (`exfalso`,
+  `by_contra`, `by_cases`) wait behind “⋯”.
 * No tip is lost when the mode is switched: a tactic explains itself when first offered, and a level
   in the puzzle mode shows the blocks of its own never met (missed in the Lean tactic mode).
 * A finished proof turns the board green (in the Lean tactic mode each board, once its goals are done);

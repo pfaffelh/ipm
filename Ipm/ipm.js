@@ -45,7 +45,7 @@
     'Arrange the blocks automatically again': 'Die Blöcke wieder automatisch anordnen',
     'The proof in Lean': 'Der Beweis in Lean', 'Try it in Lean ↗': 'In Lean ausprobieren ↗',
     'goals accomplished 🎉': 'goals accomplished 🎉',
-    'Now choose a tactic': 'Jetzt eine Taktik wählen', 'Goals:': 'Ziele:', 'Close': 'Schließen', 'block lexicon': 'Baustein-Lexikon', 'Also new: {x}. All blocks are in the ': 'Außerdem neu: {x}. Alle Bausteine stehen im ', 'Goal:': 'Ziel:',
+    'Now choose a tactic': 'Jetzt eine Taktik wählen', 'Goals:': 'Ziele:', '✓ Goal done': '✓ Ziel erledigt', 'Close': 'Schließen', 'block lexicon': 'Baustein-Lexikon', 'Also new: {x}. All blocks are in the ': 'Außerdem neu: {x}. Alle Bausteine stehen im ', 'Goal:': 'Ziel:',
     '✓ Goal done — on to the next one, choose a tactic': '✓ Ziel erledigt — weiter mit dem nächsten, wähle eine Taktik',
     'Goal {k} of {m}: choose a tactic': 'Ziel {k} von {m}: wähle eine Taktik', 'Whole proof': 'Ganzer Beweis',
     'Now tap a glowing green dot, or add a block with ＋': 'Jetzt einen grün leuchtenden Punkt antippen oder mit ＋ einen Baustein hinzufügen',
@@ -163,6 +163,8 @@
   }
 
   // ①, ②, … for the goals of the Lean tactic mode
+  // how long the picture stays when a goal is done (the tests set 'ipm-verso:hold' to 0)
+  const holdTime = () => { try { return Number(localStorage.getItem('ipm-verso:hold') ?? 1000) } catch { return 1000 } }
   const goalMark = k => (k >= 1 && k <= 20 ? String.fromCodePoint(0x2460 + k - 1) : `(${k})`)
 
   const tr = (en, vars = {}) => (LANG === 'de' ? DE[en] ?? en : en).replace(/\{(\w+)\}/g, (_, k) => vars[k])
@@ -1459,6 +1461,7 @@
     undo() {
       const snap = this.undoStack.pop()
       if (!snap) return
+      this.holding = false; clearTimeout(this.holdTimer)
       this.proof.restore(snap)  // (the blocks that stay keep their places)
       this.selected = null
       this.closeSheet(false)
@@ -1809,6 +1812,8 @@
       const off = !this.tacticsOnly || (() => { try { return localStorage.getItem('ipm-verso:boards') === 'off' } catch { return false } })()
       if (this.board === '*' && boards.length < 2) this.board = null
       if (off || this.board === '*') return { proof: p, boards, whole: true, scope: sc, off }
+      if (this.holding && this.board != null && this.board !== '*' && !boards.includes(this.board) &&
+        (this.board === '' || p.block(this.board.split('.')[0]))) boards.push(this.board)  // (a moment longer)
       if (!boards.includes(this.board)) this.board = boards[0]
       const S = this.board, split = boards.length > 1
       const chainSet = new Set(sc.chain(S))
@@ -1926,6 +1931,7 @@
 
     render() {
       const p = this.proof
+      if (this.selected && !p.block(this.selected.block)) this.selected = null  // (a block gone, by Undo)
       this.root.classList.toggle('ipm-tactics-only', this.tacticsOnly)
       this.analysis = p.analyze()
       // In the Lean tactic mode the goals are numbered in the order of the Lean proof (①, ②, …), and
@@ -1935,14 +1941,22 @@
       this.goalNo = this.tacticsOnly && order.length > 1 ? Object.fromEntries(order.map((o, k) => [`${o.block}.${o.port}`, k + 1])) : {}
       const fewer = this.tacticsOnly && this.openBefore !== undefined && order.length < this.openBefore && order.length > 0
       this.openBefore = order.length
-      if (this.tacticsOnly && !this.root.inert && order.length && !this.selectedConn &&
+      // A goal done: the picture stays a moment (its board green, "✓ Goal done"), then the next goal.
+      if (fewer && !this.root.inert && !this.selected) {
+        this.holding = true
+        clearTimeout(this.holdTimer)
+        this.holdTimer = setTimeout(() => { this.holding = false; this.nextPending = true; this.render() }, holdTime())
+      }
+      if (this.tacticsOnly && !this.holding && !this.root.inert && order.length && !this.selectedConn &&
         (!this.selected || (this.selected.kind === 'in' && !order.some(o => o.block === this.selected.block && o.port === this.selected.port)))) {
         const sc = this.scopeOf()
         const o = (this.boardChosen && order.find(o => sc.goalScope(o) === this.board)) || order[0]
         if (this.board !== '*') this.board = sc.goalScope(o)
         this.selected = { kind: 'in', block: o.block, port: o.port }
-        this.nextGoal = fewer
+        this.nextGoal = fewer || this.nextPending
+        this.moreOpen = false
       }
+      this.nextPending = false
       this.boardChosen = false
       const bv = this.boardView()
       this.boardInfo = bv
@@ -1974,6 +1988,13 @@
       this.view = { proof: vp, box: view }
       const s = this.analysis.s
       const root = svg('svg', { viewBox: view.join(' '), class: 'ipm-svg' })
+      // the number of the current goal (two goals or more), large and faint behind the picture
+      const goalNow = this.selected?.kind === 'in' && this.goalNo[`${this.selected.block}.${this.selected.port}`]
+      if (goalNow) {
+        const mark = svg('text', { x: view[0] + view[2] / 2, y: view[1] + view[3] / 2, class: 'ipm-watermark', 'text-anchor': 'middle', 'dominant-baseline': 'central' }, goalMark(goalNow))
+        mark.style.fontSize = `${Math.round(Math.min(view[2], view[3]) * 0.75)}px`
+        root.append(mark)
+      }
       // Natural size: the picture's own units, at most the width of the page.
       root.style.width = `${Math.round(view[2] * scale)}px`
       root.style.maxWidth = 'none'
@@ -2171,6 +2192,7 @@
         this.context.append(el('span', 'ipm-ctx-goal', `⊢ ${show(this.proof.block(at.block).inputs[at.port], s)}`))
       }
       this.status.textContent = tr(qed ? 'goals accomplished 🎉' :
+        this.holding ? '✓ Goal done' :
         this.selected && this.tacticsOnly && this.nextGoal ? '✓ Goal done — on to the next one, choose a tactic' :
         this.selected?.kind === 'in' && this.tacticsOnly && this.goalNo[`${this.selected.block}.${this.selected.port}`] ? 'Goal {k} of {m}: choose a tactic' :
         this.selected && this.tacticsOnly ? 'Now choose a tactic' :
@@ -2502,37 +2524,55 @@
     drawSteps(root, pos, view) {
       const steps = this.steps()
       if (!steps.length) return
+      // The tactics that fit the shape of the goal (or of what one has) come first; those that fit any
+      // goal (exfalso, by_contra, by_cases) wait behind "⋯", if there are others and more than one.
+      const cmd = p => p.text.split(' · ').pop()
+      const generic = p => /^(exfalso|by_contra |by_cases )/.test(cmd(p))
+      const primary = steps.filter(p => !generic(p)), more = steps.filter(generic)
+      const folded = primary.length > 0 && more.length > 1 && !this.moreOpen
+      const shown = folded ? [...primary, { text: '⋯', more: true, act: () => { this.moreOpen = true; this.render() } }] : steps
       if (!this.forceTactics) {
-        const fresh = [...new Set(steps.map(st => tacticOf(st.text, st.rule)))].filter(id => id && !seenTip(`tactic-tip:${id}`))
+        const fresh = [...new Set(shown.filter(st => !st.more).map(st => tacticOf(st.text, st.rule)))].filter(id => id && !seenTip(`tactic-tip:${id}`))
         if (fresh.length) setTimeout(() => this.onNewTactics?.(fresh))
       }
       const vs = this.viewPort(this.selected), vb = this.view?.proof?.block(vs.block) ?? this.proof.block(vs.block)
       if (!vb || !pos[vb.id]) return
       const sel = this.selected
       const at = portAt(pos[vb.id], vb, vs.kind, vs.port)
+      // A button: the tactic, and small before it the block it puts in (→E apply h₂).
+      const parts = p => (p.text.includes(' · ') ? p.text.split(' · ') : ['', p.text])
+      const w = p => { const [lab, c] = parts(p); return c.length * 8.2 + (lab ? lab.length * 6.6 + 6 : 0) + 24 }
       // The buttons in rows as wide as the board, above the goal (below a dot), or on the other side
       // where there is no room, and always within the board.
-      const w = t => t.length * 8.2 + 22, gap = 8, rowH = 40, maxW = view[2] - 8
+      const gap = 8, rowH = 40, maxW = view[2] - 8
       const rows = [[]]
-      for (const p of steps) {
-        const row = rows[rows.length - 1], width = row.reduce((s, q) => s + w(q.text) + gap, 0)
-        if (row.length && width + w(p.text) > maxW) rows.push([p]); else row.push(p)
+      for (const p of shown) {
+        const row = rows[rows.length - 1], width = row.reduce((s, q) => s + w(q) + gap, 0)
+        if (row.length && width + w(p) > maxW) rows.push([p]); else row.push(p)
       }
       const height = rows.length * rowH - 8, top = view[1] + 4, bottom = view[1] + view[3] - 4
       const above = at.y - 20 - height, below = at.y + 18
       let y0 = sel.kind === 'in' ? (above >= top ? above : below) : (below + height <= bottom ? below : above)
       y0 = Math.max(top, Math.min(y0, bottom - height))
+      const button = (p, x, y, cls = '') => {
+        const [lab, c] = parts(p)
+        const g = svg('g', { class: `ipm-step${p.more ? ' ipm-step-more' : ''}${cls}`, 'data-rule': p.rule ?? '' })
+        const t = svg('text', { x: x + 12, y: y + 21 })
+        if (lab) t.append(svg('tspan', { class: 'ipm-step-rule' }, lab + ' '))
+        t.append(svg('tspan', { class: 'ipm-step-cmd' }, c))
+        g.append(svg('rect', { x, y, width: w(p), height: 32, rx: 16 }), t)
+        g.addEventListener('click', ev => { ev.stopPropagation(); p.act() })
+        root.append(g)
+      }
       rows.forEach((row, r) => {
-        const total = row.reduce((s, q) => s + w(q.text), 0) + gap * (row.length - 1)
+        const total = row.reduce((s, q) => s + w(q), 0) + gap * (row.length - 1)
         let x = Math.max(view[0] + 4, Math.min(at.x - total / 2, view[0] + view[2] - total - 4))
         const y = y0 + r * rowH
         for (const p of row) {
-          const g = svg('g', { class: 'ipm-step', 'data-rule': p.rule ?? '' })
-          g.append(svg('rect', { x, y, width: w(p.text), height: 32, rx: 16 }),
-            svg('text', { x: x + w(p.text) / 2, y: y + 21, 'text-anchor': 'middle' }, p.text))
-          g.addEventListener('click', ev => { ev.stopPropagation(); p.act() })
-          root.append(g)
-          x += w(p.text) + gap
+          button(p, x, y)
+          // (the folded ones are there, hidden, where "⋯" is)
+          if (p.more) for (const q of more) button(q, x, y, ' ipm-step-folded')
+          x += w(p) + gap
         }
       })
     }
@@ -2550,6 +2590,7 @@
     tapInput(b, i) {
       this.selectedConn = null
       this.nextGoal = false
+      this.moreOpen = false
       const sel = this.selected
       if (sel?.kind === 'out' && !this.tacticsOnly) return this.link(sel, { block: b.id, port: i })
       if (sel?.kind === 'in' && sel.block === b.id && sel.port === i) return this.closeSheet()
@@ -2561,6 +2602,7 @@
     tapOutput(b, j) {
       this.selectedConn = null
       this.nextGoal = false
+      this.moreOpen = false
       const sel = this.selected
       if (sel?.kind === 'in' && !this.tacticsOnly) return this.link({ block: b.id, port: j }, sel)
       if (sel?.kind === 'out' && sel.block === b.id && sel.port === j) return this.closeSheet()

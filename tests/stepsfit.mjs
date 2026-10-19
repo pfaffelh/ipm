@@ -23,7 +23,7 @@ for (const [name, vp] of [['desktop', { width: 1300, height: 850 }], ['phone', {
         const places = [...t.analysis.openInputs.map(o => ({ kind: 'in', ...o })), ...t.proof.blocks.filter(b => b.kind === 'assumption').map(b => ({ kind: 'out', block: b.id, port: 0 }))]
         for (const sel of places) {
           t.selected = sel; t.render()
-          const c = t.canvas.getBoundingClientRect(), steps = [...t.canvas.querySelectorAll('.ipm-step rect')]
+          const c = t.canvas.getBoundingClientRect(), steps = [...t.canvas.querySelectorAll('.ipm-step:not(.ipm-step-folded) rect')]
           const off = steps.filter(e => { const b = e.getBoundingClientRect(); return b.left < c.left - 1 || b.right > c.right + 1 || b.top < c.top - 1 || b.bottom > c.bottom + 1 })
           out.push({ n: steps.length, off: off.length })
         }
