@@ -156,7 +156,10 @@
 .ipm-menu-caption { font-size: 0.8em; color: #555; line-height: 1.2; font-family: var(--verso-code-font-family, monospace); text-align: center; }
 
 /* Dragging a rule from the menu onto the board */
-.ipm-menu-item { touch-action: none; cursor: grab; }
+/* A finger on a block scrolls the list (pan-y); a drag begins after a short hold, and the block
+   then lifts a little. */
+.ipm-menu-item { touch-action: pan-y; cursor: grab; }
+.ipm-menu-item.ipm-menu-held, .ipm-palette-item.ipm-menu-held { transform: scale(1.06); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25); }
 .ipm-ghost { position: fixed; z-index: 40; pointer-events: none; opacity: 0.85; height: 64px; width: auto;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25)); }
 .ipm-ghost text { font-family: var(--verso-code-font-family, monospace); font-size: 14px; }
@@ -382,7 +385,7 @@ html.ipm-playing main, html.ipm-playing .content-wrapper, html.ipm-playing secti
   .ipm-stage .ipm-add { display: none; }
 }
 .ipm-palette-item {
-  padding: 0.1em 0.15em 0.25em; border: 1px solid #b8c4d4; border-radius: 6px; background: white; cursor: grab; touch-action: none;
+  padding: 0.1em 0.15em 0.25em; border: 1px solid #b8c4d4; border-radius: 6px; background: white; cursor: grab; touch-action: pan-y;
   display: flex; flex-direction: column; align-items: center;
 }
 .ipm-palette-item:hover { border-color: #3b6db3; background: #e8f0fb; }

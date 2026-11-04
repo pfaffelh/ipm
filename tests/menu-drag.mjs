@@ -1,5 +1,6 @@
-// Opens the menu with ＋ and drags rule blocks from it onto the board, with the mouse and with a finger;
-// the menu closes again each time.
+// Opens the menu with ＋ and drags rule blocks from it onto the board, with the mouse and with a
+// finger (which first holds the block); the menu closes again each time. A finger that moves at once
+// scrolls the menu instead of taking a block.
 // Usage: BASE=http://localhost:8002/ node menu-drag.mjs
 import { chromium } from 'playwright-core'
 import { allTasks } from './all-tasks.mjs'
@@ -48,10 +49,21 @@ const touch = (type, x, y) => cdp.send('Input.dispatchTouchEvent', { type, touch
 const tapAt = async l => { const p = await center(l); await touch('touchStart', p.x, p.y); await touch('touchEnd'); await page.waitForTimeout(150) }
 await tapAt(t.locator('.ipm-add'))
 console.log('finger: menu open after ＋', await popoverOpen(t))
+// a finger that moves at once scrolls the menu, and takes no block (the bug on phones)
+const popover = t.locator('.ipm-popover')
+const scrolled = () => popover.evaluate(p => p.scrollTop)
+from = await center(t.locator('.ipm-menu-item[title^="→I"]'))
+await touch('touchStart', from.x, from.y)
+for (let k = 1; k <= 10; k++) await touch('touchMove', from.x, from.y - k * 12)
+await touch('touchEnd'); await page.waitForTimeout(300)
+console.log('finger swipe: menu scrolled by', await scrolled(), '| blocks', await blocks(t).count(), '| menu open', await popoverOpen(t))
+await popover.evaluate(p => { p.scrollTop = 0 })
+// a finger that holds the block first drags it onto the board
 from = await center(t.locator('.ipm-menu-item[title^="→I"]'))
 board = await t.locator('.ipm-canvas').boundingBox()
 target = { x: board.x + board.width * 0.6, y: board.y + board.height * 0.45 }
 await touch('touchStart', from.x, from.y)
+await page.waitForTimeout(400)  // the hold, after which the block can be dragged
 for (let k = 1; k <= 12; k++) await touch('touchMove', from.x + (target.x - from.x) * k / 12, from.y + (target.y - from.y) * k / 12)
 await touch('touchEnd'); await page.waitForTimeout(200)
 c = await center(blocks(t).first())
