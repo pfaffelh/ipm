@@ -1390,18 +1390,29 @@
     // as a tap. While dragging, the lines at the block follow it; the new position is kept.
     // A rule is put on the board by dragging it there from the menu: a picture of the block follows
     // the pointer and the block lands where it is dropped. A tap (no movement) adds it as well.
+    // A block of the menu (or of the column left of the board) is added by a tap and can be dragged
+    // onto the board. With a finger the list must still scroll: the blocks allow `pan-y`, so a
+    // finger that moves scrolls the list (the browser then sends `pointercancel` and nothing is
+    // added). A drag with a finger begins after a short hold on the block; from then on `touchmove`
+    // keeps the list from scrolling. With mouse or pen a drag begins at once.
     makeMenuDraggable(item, name, add) {
-      item.addEventListener('touchstart', e => e.preventDefault(), { passive: false })
+      let dragging = false
+      item.addEventListener('touchmove', e => { if (dragging) e.preventDefault() }, { passive: false })
       item.addEventListener('pointerdown', ev => {
         if (ev.button > 0) return
         try { item.setPointerCapture(ev.pointerId) } catch {}
         const start = { x: ev.clientX, y: ev.clientY }
         let ghost = null
+        dragging = ev.pointerType !== 'touch'
+        let hold = null
+        if (!dragging) hold = setTimeout(() => { dragging = true; item.classList.add('ipm-menu-held') }, 300)
+        const done = () => { clearTimeout(hold); dragging = false; item.classList.remove('ipm-menu-held') }
         const overBoard = e => {
           const r = this.canvas.getBoundingClientRect()
           return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom
         }
         const move = e => {
+          if (!dragging) return  // (a finger that moves before the hold: the list scrolls)
           if (!ghost && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 6) return
           if (!ghost) {
             this.popover.classList.add('ipm-pop-dragging')
@@ -1419,7 +1430,9 @@
           item.removeEventListener('pointerup', up)
           item.removeEventListener('pointercancel', up)
           this.canvas.classList.remove('ipm-drop-target')
+          done()
           if (!ghost) {
+            // a tap adds the block (also a slow one, which began a drag that went nowhere)
             if (e.type === 'pointerup') { item.dataset.added = Date.now(); add() }
             return
           }
