@@ -1,17 +1,17 @@
 // Small screens (phones upright and on their side): on every page and every level, a tip box can be
 // closed (✕ and "Got it" in view, the text between them scrolls), the stage can be used (tool bar in
 // view, if need be by scrolling the page, a board of some height), the Tips and Lean panels fit or
-// scroll, and the other pages scroll. In both modes. Usage: BASE=http://localhost:8002/ node small.mjs [WxH …]
+// scroll, and the other pages scroll. Usage: BASE=http://localhost:8002/ node small.mjs [WxH …]
 import { chromium } from 'playwright-core'
 const browser = await chromium.launch({ executablePath: process.env.CHROME ?? '/usr/bin/google-chrome', headless: true })
 const base = process.env.BASE ?? 'http://127.0.0.1:8002/'
 const sizes = (process.argv.slice(2).length ? process.argv.slice(2) : ['320x568', '360x640', '390x844', '640x360', '844x390']).map(s => s.split('x').map(Number))
 const worlds = ['World-1___-Conjunction/', 'World-2___-Implication/', 'World-3___-Disjunction/', 'World-4___-Falsity-and-Negation/', 'World-5___-Classical-Logic/',
-  'World-6___-Equivalence-and-Truth/', 'World-7___-Rewriting/', 'World-8___-Quantifiers/', 'World-9___-Puzzles/', 'World-10___-Induction/', 'Tactic-Trainer/']
+  'World-6___-Equivalence-and-Truth/', 'World-7___-Rewriting/', 'World-8___-Quantifiers/', 'World-9___-Puzzles/', 'World-10___-Induction/']
 let problems = 0
 const problem = (...x) => { problems++; console.log('  PROBLEM', ...x) }
 for (const [w, h] of sizes) {
-  for (const mode of ['blocks', 'tactics']) {
+  {
     const page = await (await browser.newContext({ viewport: { width: w, height: h }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 })).newPage()
     page.on('pageerror', e => problem(`${w}x${h}`, 'PAGEERROR', e.message))
     const inView = r => r && r.top >= -1 && r.bottom <= h + 1 && r.left >= -1 && r.right <= w + 1
@@ -25,13 +25,13 @@ for (const [w, h] of sizes) {
         const body = document.querySelector('.ipm-tip-body')
         return { ok: q('.ipm-tip-ok'), x: q('.ipm-tip-x'), card: q('.ipm-tip-card'), scrolls: body.scrollHeight <= body.clientHeight + 1 || getComputedStyle(body).overflowY === 'auto' }
       })
-      if (!inView(r.ok) || !inView(r.x) || !inView(r.card) || !r.scrolls) problem(`${w}x${h} ${mode} ${where}: tip box`, JSON.stringify(r))
+      if (!inView(r.ok) || !inView(r.x) || !inView(r.card) || !r.scrolls) problem(`${w}x${h} ${where}: tip box`, JSON.stringify(r))
       await page.locator('.ipm-tip-ok').click()
       await page.waitForTimeout(150)
       if (await page.locator('.ipm-tip-overlay').count()) await page.locator('.ipm-tip-ok').click()
       return 1
     }
-    await page.goto(base); await page.evaluate(m => { localStorage.clear(); localStorage.setItem('ipm-verso:mode', m); localStorage.setItem('ipm-verso:in-order', 'off'); localStorage.setItem('ipm-verso:lang', 'de') }, mode)
+    await page.goto(base); await page.evaluate(() => { localStorage.clear(); localStorage.setItem('ipm-verso:in-order', 'off'); localStorage.setItem('ipm-verso:lang', 'de') })
     let tips = 0, levels = 0
     for (const world of worlds) {
       await page.goto(base + world + '#level-1'); await page.waitForTimeout(400)
@@ -42,8 +42,8 @@ for (const [w, h] of sizes) {
         tips += await tip(`${world}#${k}`)
         // the stage: the tool bar in view, the board of some height
         const bar = await rect('.ipm-task.ipm-current .ipm-bar'), board = await rect('.ipm-task.ipm-current .ipm-canvas')
-        if (!inView(bar)) problem(`${w}x${h} ${mode} ${world}#${k}: tool bar not in view`, JSON.stringify(bar))
-        if (!board || board.height < 90 || board.top < 0) problem(`${w}x${h} ${mode} ${world}#${k}: board`, JSON.stringify(board))
+        if (!inView(bar)) problem(`${w}x${h} ${world}#${k}: tool bar not in view`, JSON.stringify(bar))
+        if (!board || board.height < 90 || board.top < 0) problem(`${w}x${h} ${world}#${k}: board`, JSON.stringify(board))
         if (k === 1 || k === n) {
           // Tips and Lean: open, fit or scroll, close again with their button (which stays in view)
           for (const b of ['.ipm-about-button', '.ipm-lean-toggle']) {
@@ -63,20 +63,20 @@ for (const [w, h] of sizes) {
               button.scrollIntoView({ block: 'nearest' })
               return { p, scrolls: scrollers.length > 0, cut, button: button.getBoundingClientRect().toJSON() }
             }, b)
-            if (!r.none && ((!inView(r.p) && !r.scrolls) || r.cut || !inView(r.button))) problem(`${w}x${h} ${mode} ${world}#${k} ${b}`, JSON.stringify(r))
+            if (!r.none && ((!inView(r.p) && !r.scrolls) || r.cut || !inView(r.button))) problem(`${w}x${h} ${world}#${k} ${b}`, JSON.stringify(r))
             if (!r.none) await button.click(); await page.waitForTimeout(150)
           }
         }
       }
     }
     // the other pages scroll to their end
-    for (const p of ['', 'Tactic-Lexicon/', 'Block-Lexicon/']) {
+    for (const p of ['', 'Block-Lexicon/']) {
       await page.goto(base + p); await page.waitForTimeout(400)
       await tip(p || 'start')
       const r = await page.evaluate(() => { const before = document.documentElement.scrollHeight > innerHeight + 2; window.scrollTo(0, 1e6); return { long: before, y: scrollY } })
-      if (r.long && r.y === 0) problem(`${w}x${h} ${mode} ${p || 'start'}: does not scroll`)
+      if (r.long && r.y === 0) problem(`${w}x${h} ${p || 'start'}: does not scroll`)
     }
-    console.log(`${w}x${h} ${mode}: ${levels} levels, ${tips} tip boxes`)
+    console.log(`${w}x${h}: ${levels} levels, ${tips} tip boxes`)
     await page.context().close()
   }
 }

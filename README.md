@@ -12,7 +12,7 @@ of the logic exercises of the [Lean course](https://pfaffelh.github.io/leancours
 rules; equivalence `↔` and truth `⊤`; rewriting with `↔` (`rfl`, `symm`, `rw`); the Proof Machine's quantifier session and its two puzzles,
 with a puzzle by Smullyan; and induction. Beyond the Proof Machine there are some classical
 classics: tertium non datur from proof by contradiction, `→` over `∨`, the duals `¬∃ ↔ ∀¬` and
-`¬∃¬ → ∀`, `¬∀¬ → ∃`, and two about `↔`. `docs/levels.md` lists all levels with what they need and give (lemmas, tactics, tips);
+`¬∃¬ → ∀`, `¬∀¬ → ∃`, and two about `↔`. `docs/levels.md` lists all levels with what they need and give (lemmas, tips);
 `python3 docs/levels.py` writes it and checks that the dependencies fit.
 
 ## How it is played
@@ -24,38 +24,12 @@ classics: tertium non datur from proof by contradiction, `→` over `∨`, the d
   onto the board), and the menu closes again. You then connect the block.
   Unification fills in `?1`, `?2`. Rule blocks you no longer need go into the trash can 🗑, which
   appears while you drag a block.
-* Two modes, switched above each level (the choice is kept; the start page has two buttons alike,
-  one for each): the **puzzle mode**, the Proof Machine (blocks and lines), and the **Lean tactic
-  mode**, where one plays only with tactic buttons. A tapped circle or dot offers the tactics that
-  fit, named as in Lean, with the names of the Lean proof (`intro h₃`, `constructor`,
-  `obtain ⟨h₃, h₄⟩ := h₁`, `apply h₁`, `left`/`right`, `exfalso`, `by_contra h₃`, `by_cases h₃ : A`,
-  `apply h₁.mp`, `trivial`, `rfl`, `symm`, `rw [h₁]`, `rw [← h₁]`, `intro c₁`, `have h₂ := h₁ a`, `use a`, `obtain ⟨c₁, h₂⟩ := h₁`,
-  `intro n; induction n`, and `exact h₁` for what fits); one tap puts the block in, already
-  connected. A level offers the tactics of its blocks, so they come one by one as the blocks do;
-  a tactic's tip appears when its button is offered for the first time. Below the board, the
-  Lean proof is the tactic script one has played (`refine ⟨a, ?_⟩  -- use a` for `use`, whose
-  automation could close a goal early). The names h₁, h₂, …
-  stand beside the blue dots. Goals with different hypotheses (the two cases of `obtain (h₂ | h₃)`)
-  each get a **board** of their own, as tabs above the picture; local hypotheses stand on top as
-  blocks of their own (dashed), so there are no compartments and boxes; “Whole proof” shows the
-  usual picture. Both modes build the same proof, so one can switch in the middle of a level. The
-  picture stays as it is while one plays: no block moves; a new block goes to a free place, above the
-  goal it proves, and the scale stays, unless the picture has to grow (Tidy up lays out everything
-  anew). The goals are numbered as in Lean (①, ② beside the red circles, in a list below the board
-  and on the tabs; a goal done stays in the list, green, and a tap shows how it was proved), and
-  there is always a current goal: after each step the first one, its number large and faint
-  behind the picture; when a goal is done the picture stays a second before the next one. Changes
-  of the picture are smooth: a block glides to its new place in a second, a new one fades in (not
-  with reduced motion). The
-  tactics that fit the shape of the goal come as buttons; those that fit any goal (`exfalso`,
-  `by_contra`, `by_cases`) wait behind “⋯”.
-* No tip is lost when the mode is switched: a tactic explains itself when first offered, and a level
-  in the puzzle mode shows the blocks of its own never met (missed in the Lean tactic mode).
-* A finished proof turns the board green (in the Lean tactic mode each board, once its goals are done);
-  the world map counts at once, and the last level of a world leads on to the next world.
+* Changes of the picture are smooth: a block glides to its new place in a second, a new one fades
+  in (not with reduced motion).
+* A finished proof turns the board green; the world map counts at once, and the last level of a
+  world leads on to the next world.
 * The browser tab shows a block of the game (its input on top, its output below) as its icon.
-* Two lexica, below the world map: the tactics and the blocks, with pictures (the same texts as the
-  tips of the Lean tactic mode).
+* The block lexicon, below the world map: every block with its picture (the same texts as the tips).
 * Proof by contradiction (RAA, from world 5 level 5 on): from `?1 ⇒ ⊥` get `?1`; in Lean
   `Classical.byContradiction`.
 * A line that does not fit gets a ☠, a local hypothesis used outside its box a ⚠; tap them for an
@@ -75,11 +49,10 @@ classics: tertium non datur from proof by contradiction, `→` over `∨`, the d
   (it is under “Tips”), on a large screen the blocks in a column left of the board (the line
   between them can be dragged), and a tool bar below (＋ on phones, Undo, Start over, Tidy up, Lean;
   Tips, Next ›), a dot per level above on the right (← → also go to
-  the previous and next level). “Tips” holds the level's text, its tip and what the level offers
-  (its blocks and tactics). The tip of a level (`:::tip (lang := "en")` in the task; for the first level of a world
+  the previous and next level). “Tips” holds the level's text, its tip and the blocks it offers.
+  The tip of a level (`:::tip (lang := "en")` in the task; for the first level of a world
   its rules) also appears once, when the level is played for the first time. Nothing scrolls while one plays; the
-  level is in the address (`#level-3`). The start page has two big Start (or Continue) buttons alike,
-  one for each mode.
+  level is in the address (`#level-3`). The start page has one big Start (or Continue) button.
 * The worlds are a map (instead of the list in the table of contents; ☰ on phones): a circle per
   world with its levels solved, lines from the worlds it builds on.
 * On phones the tool bar is one row at the bottom (a symbol over a short word), and Tips
@@ -91,11 +64,8 @@ classics: tertium non datur from proof by contradiction, `→` over `∨`, the d
 * Solved tasks marked `(lemma := true)` become lemmas, offered only in the tasks after them (no circles): in the menu of ＋, “Lemmas from solved levels” offers each solved task as a
   block of its own (assumptions as inputs, goals as outputs, `?1`, `?2` for the statements). In the
   Lean proof, a lemma is a `theorem` that the proof applies.
-* Tactic trainer: a page of its own (from the start page and below the world map), ten lessons
-  always played in the Lean tactic mode (`(tactics := true)`), each on one tactic (exact, constructor,
-  obtain, intro, apply, left/right, obtain on ∨, exfalso, by_contra).
-* A tapped goal shows, below the board, what one has there, as Lean shows it
-  (`h₁ : A ∨ B   h₃ : B ⊢ B ∨ A`); what cannot be used there is dimmed.
+* Block lexicon: a page of its own (below the world map), every block with its picture and what it
+  does.
 * Bugs are hunted with fuzzers, with Lean as the referee (`docs/fuzzing.md`).
 * English or German: the switch EN | DE in the header (the choice is kept).
 * Progress is kept in the browser.
@@ -131,9 +101,7 @@ Ipm.lean                 start page
 Ipm/Task.lean            the task directive
 Ipm/ipm.js, Ipm/ipm.css  the proof graph editor
 Ipm/Sessions/*.lean      the worlds
-Ipm/Trainer.lean         the tactic trainer
-Ipm/TacticLexicon.lean,
-Ipm/BlockLexicon.lean    the two lexica
+Ipm/BlockLexicon.lean    the block lexicon
 docs/                    levels.md (written by levels.py), fuzzing.md
 redirects.sh             pages at old addresses
 tests/                   end-to-end tests on a simulated phone (Playwright), fuzzers

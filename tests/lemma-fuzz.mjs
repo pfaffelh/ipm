@@ -1,6 +1,6 @@
-// Lemmas: solves the levels with the proofs of the tactic search (so the lemma levels become lemmas),
-// then in every later level adds lemma blocks and connects at random, also wrongly. Every proof the
-// game accepts goes to Lean, with the theorems of the lemmas it uses.
+// Lemmas: plays solved proofs (files of `[{level, graph}]`, as `fuzz-out/index.json` holds them), so
+// that the lemma levels become lemmas, then in every later level adds lemma blocks and connects at
+// random, also wrongly. Every proof the game accepts goes to Lean, with the theorems of the lemmas it uses.
 // Usage: BASE=… node lemma-fuzz.mjs sol1.json sol2.json [seconds per level] → lemma.lean
 import fs from 'node:fs'
 import { chromium } from 'playwright-core'

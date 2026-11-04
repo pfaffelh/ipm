@@ -7,12 +7,9 @@ in Lean too. Lean is the referee: the fuzzers below collect every proof the game
 | Tool | What it does |
 |---|---|
 | `tests/fuzz.mjs` (node) | Builds random proof graphs for every level, also along ways that must not work: a local hypothesis outside its box, an eigenvariable outside its scope, lines that do not fit, a third of them goal-directed. Writes `fuzz-out/accepted.lean`. |
-| `tests/mutate.mjs` (node) | Starts from correct proofs (`tactics-only.mjs` with `SNAPOUT=…`) and moves lines to other outputs that fit, takes blocks out, forgets fixed objects. Writes `fuzz-out/mutated.lean`. |
-| `tests/tactics-only.mjs` | Solves the levels with the tactic buttons alone (search, as Lean would: at the newest goal, with what one has there). `SNAPOUT=…` keeps the proofs. |
-| `tests/fuzz-tactics.mjs` | Taps random tactic buttons; a button must never draw a line with ☠ or ⚠ or cause an eigenvariable ⚠. Writes `fuzz-out/tactics.lean`. |
-| `tests/tactic-proofs.lean`, `tests/tactic-proofs.mjs` | Lean tactic proofs (checked by Lean) of the levels the search does not find, with the game's names and only tactics the game has as buttons; the script plays each of them in the game with the buttons alone (`LEANOUT=…` for the game's own Lean proofs). With the search, every level can be played with tactics only. |
-| `tests/lemma-fuzz.mjs` | Solves the levels with the proofs of `tactics-only.mjs` (so the lemma levels become lemmas), then adds lemma blocks in later levels and connects at random. Writes `lemma.lean` (check each proof in a `namespace` of its own: they bring the lemma theorems along). |
-| `tests/ui-fuzz.mjs` | Taps at random what a player can tap, in both modes; collects page errors and lines between ports that do not exist. Writes `fuzz-out/ui.lean`. |
+| `tests/mutate.mjs` (node) | Starts from correct proofs and moves lines to other outputs that fit, takes blocks out, forgets fixed objects. Writes `fuzz-out/mutated.lean`. It takes a file of solved graphs (`[{level, graph}]`, e.g. the `accepted` list of `fuzz-out/index.json`). |
+| `tests/lemma-fuzz.mjs` | Plays solved proofs (the same kind of file, two of them), so that the lemma levels become lemmas, then adds lemma blocks in later levels and connects at random. Writes `lemma.lean` (check each proof in a `namespace` of its own: they bring the lemma theorems along). |
+| `tests/ui-fuzz.mjs` | Taps at random what a player can tap; collects page errors and lines between ports that do not exist. Writes `fuzz-out/ui.lean`. |
 
 ```bash
 cd tests && node fuzz.mjs 4 1 && cd .. && lake env lean tests/fuzz-out/accepted.lean
@@ -26,10 +23,6 @@ cd tests && node fuzz.mjs 4 1 && cd .. && lake env lean tests/fuzz-out/accepted.
   could connect ∨E to a goal inside its own case, a circular proof that was accepted.
 * A local hypothesis counted as usable at a goal that leads into its box on one way but to the main
   goal on another (an output used twice); `obtain` then drew ⚠ lines.
-* The tactic buttons tried their lines out without the eigenvariable check (`exact` could close an
-  ∃E with its own hypothesis); `use`/`specialize` offered eigenvariables outside their block.
-* The tactic buttons did not see the statement below ∀I (still a delayed substitution): no
-  `constructor` for `A ∧ P c₁`. `apply h₁` was missing for `h₁ : ∀ x, P x`.
 * Lean output that Lean rejects: `⟨a, b⟩.1`, `Or.elim (Or.inl a) …`, `(fun _ => h) default`
   (detours like ∧I then ∧E: now with the type, `(⟨a, b⟩ : A ∧ B).1`), `Classical.em _` (now with the
   statement), statements still undetermined (now `True`, objects `default`), eigenvariables outside

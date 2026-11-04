@@ -1,5 +1,5 @@
-// Settings (⚙): only "levels in order" (the tactics come with the mode, see modes.mjs). At first a
-// level is locked until the one before it is solved; with the setting off, every level is playable.
+// Settings (⚙): only "levels in order". At first a level is locked until the one before it is
+// solved; with the setting off, every level is playable.
 // Usage: BASE=http://localhost:8002/ node settings.mjs   (SHOTDIR=dir for screenshots)
 import { chromium } from 'playwright-core'
 import { allTasks } from './all-tasks.mjs'
@@ -15,7 +15,7 @@ await page.evaluate(() => localStorage.clear()); await page.reload()
 console.log('locked levels at first:', await locked())
 await page.locator('.ipm-settings-button').click()
 if (process.env.SHOTDIR) await page.screenshot({ path: process.env.SHOTDIR + '/settings-phone.png' })
-console.log('settings:', (await page.locator('.ipm-settings').innerText()).replace(/\s+/g, ' ').trim(), '| tactic choices:', await page.locator('.ipm-settings input[type="radio"]').count())
+console.log('settings:', (await page.locator('.ipm-settings').innerText()).replace(/\s+/g, ' ').trim())
 await page.locator('.ipm-settings input[name="ipm-in-order"]').uncheck()
 await page.waitForTimeout(200)
 await page.reload()

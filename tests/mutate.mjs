@@ -1,4 +1,4 @@
-// A fuzzer that starts from correct proofs (from tactics-only.mjs, SNAPOUT=…) and changes them: a
+// A fuzzer that starts from correct proofs (a file of `[{level, graph}]`) and changes them: a
 // line is moved to another output whose statement fits, whatever box or scope it is in; a block is
 // taken out; lines are added. Every graph the checker still accepts goes to Lean.
 // Usage: node mutate.mjs solutions.json [seconds per level] [seed]  → fuzz-out/mutated.lean

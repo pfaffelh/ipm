@@ -243,13 +243,6 @@
 .ipm-block rect.ipm-compartment { fill: #f6eefa !important; stroke: #c39bd3 !important; stroke-width: 1 !important; }
 .ipm-svg text.ipm-implies, .ipm-rule-picture text.ipm-implies, .ipm-ghost text.ipm-implies { fill: #8e44ad; font-size: 19px !important; font-weight: bold; }
 
-/* Steps beside a selected port (intro, constructor, …) */
-.ipm-step { cursor: pointer; }
-.ipm-step rect { fill: #3b6db3; stroke: white; stroke-width: 2; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)); }
-.ipm-step:hover rect { fill: #2f5a96; }
-.ipm-svg .ipm-step text { fill: white; font-size: 14px !important; font-weight: bold; }
-
-
 /* A connection that cannot be decided yet (quantifiers), and a ⚠ at a block whose eigenvariable escapes */
 .ipm-conn.ipm-pending path:not(.ipm-conn-hit):not(.ipm-conn-halo) { stroke: #999; stroke-dasharray: 3 4; }
 .ipm-svg text.ipm-eigen-warn { font-size: 20px !important; cursor: pointer; pointer-events: auto; }
@@ -319,7 +312,7 @@
   .ipm-undo { font-size: 0; } .ipm-undo::before { content: "↶"; font-size: 1.1rem; }
 }
 
-/* The start page: two buttons alike, one for each mode */
+/* The start page: the button that starts or goes on */
 .ipm-start { display: flex; flex-direction: column; align-items: center; gap: 0.4em; margin: 1.2em 0 1.6em; font-family: var(--verso-structure-font-family, sans-serif); }
 .ipm-start-button {
   display: inline-block; font-size: 1.6em; font-weight: bold; color: white !important; background: #3b6db3; text-decoration: none !important;
@@ -466,85 +459,13 @@ main section:has(> ol.section-toc) { display: none; }
 }
 .ipm-settings { max-height: calc(100vh - var(--verso-header-height, 3rem) - 24px); overflow: auto; }
 
-/* the tactic trainer: links on the start page and below the world map */
-.ipm-start-trainer { display: inline-block; margin-top: 0.8rem; font-size: 1.1em; }
-.ipm-map-trainer { display: block; margin: 0.6rem 0 0 0.4rem; font-family: var(--verso-structure-font-family, sans-serif); }
-.ipm-map-trainer.ipm-map-here { font-weight: bold; }
+/* the block lexicon, below the world map */
+.ipm-map-lexicon { display: block; margin: 0.6rem 0 0 0.4rem; font-family: var(--verso-structure-font-family, sans-serif); }
+.ipm-map-lexicon.ipm-map-here { font-weight: bold; }
 
-/* a selected goal: what one has there, as in Lean; the rest is dimmed in the picture */
-.ipm-context { display: flex; flex-wrap: wrap; gap: 0.2em 1.1em; font-family: var(--verso-code-font-family, monospace); font-size: 0.9em; }
-.ipm-context:empty { display: none; }
-.ipm-ctx-goal { font-weight: bold; }
-/* the goals of the Lean tactic mode, numbered as in Lean; the current one stands out */
-.ipm-goals { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 0.3em 0.5em; margin-bottom: 0.3rem; }
-.ipm-goals:empty { display: none; }
-/* in the Lean tactic mode the lines below the board keep their height: one line each, which scrolls
-   sideways (the board's picture keeps its scale) */
-.ipm-tactics-only .ipm-status { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ipm-tactics-only .ipm-goals, .ipm-tactics-only .ipm-context { flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; height: 1.9em; align-items: center; scrollbar-width: none; }
-.ipm-tactics-only .ipm-goal-item { height: 1.6em; line-height: 1; box-sizing: border-box; }
-/* (no scroll bar, which would come and go and change the height: they are swiped or scrolled) */
-.ipm-boards::-webkit-scrollbar, .ipm-tactics-only .ipm-goals::-webkit-scrollbar, .ipm-tactics-only .ipm-context::-webkit-scrollbar { display: none; }
-.ipm-tactics-only .ipm-goals:empty, .ipm-tactics-only .ipm-context:empty { display: flex; }
-.ipm-tactics-only .ipm-goal-item, .ipm-tactics-only .ipm-context > span { flex: none; }
-.ipm-goals-title { font-family: var(--verso-structure-font-family, sans-serif); font-size: 0.85em; color: #555; }
-.ipm-goal-item { font: inherit; font-family: var(--verso-code-font-family, monospace); font-size: 0.85em; padding: 0.15rem 0.6rem; border: 1px solid #c0392b; border-radius: 12px; background: white; color: #7a2318; cursor: pointer; }
-.ipm-goal-item.ipm-goal-current { background: #c0392b; color: white; }
-/* a goal done: green, and it can be tapped to see how it was proved (its port gets a green ring) */
-.ipm-goal-item.ipm-goal-done { border-color: #2e8b37; color: #1f6b27; }
-.ipm-goal-item.ipm-goal-done.ipm-goal-current { background: #2e8b37; color: white; }
-.ipm-port.ipm-goal-shown circle:not(.ipm-hit) { stroke: #2e8b37; stroke-width: 4; fill: #e7f5e8; }
-.ipm-goal-no { font-size: 15px; font-weight: bold; fill: #c0392b; pointer-events: none; }
-.ipm-svg text.ipm-watermark { fill: #c0392b; opacity: 0.07; font-weight: bold; pointer-events: none; }
-/* the tactic buttons: the tactic, and small before it the block it puts in; "⋯" for the tactics that
-   fit any goal, which are hidden until it is tapped */
-.ipm-svg .ipm-step text .ipm-step-rule { font-size: 11px; font-weight: normal; fill: #d6e2f3; }
-.ipm-step.ipm-step-more rect { fill: white; stroke: #3b6db3; }
-.ipm-svg .ipm-step.ipm-step-more text { fill: #3b6db3; }
-.ipm-step.ipm-step-folded { display: none; }
-/* the next goal, after one is done: it pulses twice */
-.ipm-port.ipm-goal-next { animation: ipm-goal-pulse 0.7s ease-in-out 2; transform-box: fill-box; transform-origin: center; }
-@keyframes ipm-goal-pulse { 50% { transform: scale(1.7); } }
-.ipm-port.ipm-out-of-scope { opacity: 0.2; }
-/* the names that the tactics use, beside the blue dots */
-.ipm-hyp-name { font-family: var(--verso-code-font-family, monospace); font-size: 13px; font-weight: bold; fill: #2f5a96;
-  paint-order: stroke; stroke: white; stroke-width: 4px; pointer-events: none; }
-.ipm-hyp-name.ipm-out-of-scope { opacity: 0.25; }
-
-/* boards: goals with different hypotheses each on a board of their own, as tabs */
-/* (one line, which scrolls sideways: the board keeps its height) */
-.ipm-boards { display: flex; flex-wrap: nowrap; overflow-x: auto; align-items: center; height: 30px; gap: 0.35rem; margin-bottom: 0.35rem; scrollbar-width: none; }
-.ipm-boards > .ipm-board-tab { flex: none; white-space: nowrap; height: 28px; line-height: 1; box-sizing: border-box; }  /* (the same height with ① and without) */
-.ipm-boards[hidden] { display: none; }
-.ipm-board-tab { font-family: var(--verso-code-font-family, monospace); font-size: 0.85em; padding: 0.25rem 0.7rem; border: 1px solid #3b6db3; border-radius: 14px; background: white; color: #1d3f73; cursor: pointer; }
-.ipm-board-tab.ipm-board-current { background: #3b6db3; color: white; }
-.ipm-board-whole { font-family: var(--verso-structure-font-family, sans-serif); margin-left: auto; }
-.ipm-port.ipm-elsewhere circle:not(.ipm-hit) { fill: #e8f0fb; stroke: #3b6db3; }
-.ipm-elsewhere-mark { font-size: 14px; font-weight: bold; fill: #3b6db3; pointer-events: none; }
-/* a local hypothesis on top of a board: it holds only there */
-.ipm-block.ipm-local-hyp rect { stroke-dasharray: 5 3; }
-/* the tactic mode: no blocks to add */
-.ipm-tactics-only .ipm-palette, .ipm-tactics-only .ipm-splitter, .ipm-tactics-only .ipm-menu { display: none !important; }
-
-/* the switch between the two modes, above each level */
-.ipm-mode-switch { display: inline-flex; border: 1px solid #3b6db3; border-radius: 14px; overflow: hidden; margin-left: auto; margin-right: 0.8rem; flex: none; }
-.ipm-mode-switch[hidden] { display: none; }
-.ipm-mode-switch button { font: inherit; font-family: var(--verso-structure-font-family, sans-serif); font-size: 0.85em; padding: 0.2rem 0.7rem; border: none; background: white; color: #1d3f73; cursor: pointer; }
-.ipm-mode-switch button.ipm-mode-current { background: #3b6db3; color: white; }
-/* the two modes, as two buttons alike; the one played last stands out a little */
-.ipm-start-modes { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.8rem; }
-.ipm-start-modes .ipm-start-button { min-width: 15rem; text-align: center; font-size: 1.35em; padding: 0.6em 1.4em; }
-.ipm-start-modes .ipm-start-last { box-shadow: 0 0 0 3px #a9c3e8; }
-/* lexicon and tips of tactics */
+/* the block lexicon and the tips */
 .ipm-lexicon-entry { border-top: 1px solid #d9e1ec; padding: 0.8rem 0; }
-.ipm-lexicon-cmd { font-family: var(--verso-code-font-family, monospace); font-weight: bold; font-size: 1.1em; color: #1d3f73; margin-bottom: 0.3rem; }
-.ipm-lexicon-text, .ipm-lexicon-tactic { margin: 0.3rem 0; }
-/* the table tactic ↔ blocks (scrolls sideways on a narrow phone) */
-.ipm-lexicon[data-kind="map"] { overflow-x: auto; }
-.ipm-lexicon-map { border-collapse: collapse; width: 100%; margin: 0.5rem 0 1.5rem; font-size: 0.92em; }
-.ipm-lexicon-map th, .ipm-lexicon-map td { border-bottom: 1px solid #d9e1ec; padding: 0.35rem 0.5rem; text-align: left; vertical-align: top; }
-.ipm-lexicon-map td:first-child { white-space: nowrap; }
-.ipm-lexicon-map td:nth-child(2) { white-space: nowrap; color: #1d3f73; }
+.ipm-lexicon-text { margin: 0.3rem 0; }
 .ipm-tip-sub { font-weight: bold; margin: 0.4rem 0; font-family: var(--verso-structure-font-family, sans-serif); }
-/* a proof done (in the tactic mode: the goals of this board): the board turns green */
+/* a proof done: the board turns green */
 .ipm-canvas.ipm-board-done { background-color: #e9f7ee; border-color: #8cc4a2; }

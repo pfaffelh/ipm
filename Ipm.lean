@@ -10,8 +10,6 @@ import Ipm.Sessions.Rewriting
 import Ipm.Sessions.Quantifiers
 import Ipm.Sessions.Puzzles
 import Ipm.Sessions.Induction
-import Ipm.Trainer
-import Ipm.TacticLexicon
 import Ipm.BlockLexicon
 
 open Verso.Genre Manual
@@ -44,14 +42,9 @@ proof is a set of lines that lead from the assumptions to the goals, through *ru
   every step), *Tips* (the level's text and tips) and *Next*.
 * The worlds are a map, ten of them (☰ on a phone); the levels of a world are the dots above
   the board. A level that brings something new explains it in a tip, the first time.
-* Two modes, switched above each level: in the *puzzle mode* you build the proof from blocks and
-  lines, as described here; in the *Lean tactic mode* you only tap tactic buttons, as in Lean (for
-  the goal `A → B`: *→I · intro h*), and goals with different hypotheses get boards of their own.
-  Both build the same proof; below the board it is the Lean proof, a term or a tactic script.
 * Some solved levels become *lemmas*: in later levels they appear with the blocks, under “Lemmas
   from solved levels”.
-* After the worlds: the *Tactic trainer*, ten short lessons on one tactic each, and two lexica, of
-  the tactics and of the blocks.
+* After the worlds: the *Block lexicon*, with every block and what it does.
 
 You are done when no red circle is left. Your progress is kept in your browser.
 :::
@@ -78,15 +71,9 @@ aus Linien, die über *Regelblöcke* von den Annahmen zu den Zielen führen.
   jedem Schritt aktualisiert), *Tipps* (der Text des Levels und seine Tipps) und *Weiter*.
 * Die zehn Welten stehen auf einer Karte (☰ auf dem Handy); die Levels einer Welt sind die Punkte
   über dem Spielfeld. Ein Level, das etwas Neues bringt, erklärt es beim ersten Mal in einem Tipp.
-* Zwei Modi, umschaltbar über jedem Level: Im *Puzzle-Modus* baust du den Beweis aus Bausteinen und
-  Linien, wie hier beschrieben; im *Lean-Taktik-Modus* tippst du nur Taktik-Knöpfe an, wie in Lean
-  (für das Ziel `A → B`: *→I · intro h*), und Ziele mit verschiedenen Annahmen bekommen eigene
-  Spielfelder. Beide bauen denselben Beweis; unter dem Spielfeld steht er in Lean, als Term oder als
-  Taktik-Skript.
 * Manche gelösten Levels werden zu *Hilfssätzen*: In späteren Levels stehen sie bei den Bausteinen,
   unter „Hilfssätze aus gelösten Levels“.
-* Nach den Welten: der *Taktik-Trainer*, zehn kurze Lektionen zu je einer Taktik, und zwei Lexika,
-  der Taktiken und der Bausteine.
+* Nach den Welten: das *Baustein-Lexikon*, mit jedem Baustein und dem, was er tut.
 
 Du bist fertig, wenn kein roter Kreis mehr übrig ist. Dein Fortschritt wird in deinem Browser
 gespeichert.
@@ -111,9 +98,5 @@ gespeichert.
 {include 1 Ipm.Sessions.Puzzles}
 
 {include 1 Ipm.Sessions.Induction}
-
-{include 1 Ipm.Trainer}
-
-{include 1 Ipm.TacticLexicon}
 
 {include 1 Ipm.BlockLexicon}
