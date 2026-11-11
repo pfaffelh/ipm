@@ -7,7 +7,7 @@ open Verso.Genre.Manual.InlineLean
 
 /-
 Session 2 of the Incredible Proof Machine (https://incredible.pm, Joachim Breitner, MIT license):
-implication. Lean's conventions: `→` groups to the right, so `A → B → C` is `A → (B → C)`.
+implication. Lean's conventions: `→` groups to the right, so `?1 → ?2 → ?3` is `?1 → (?2 → ?3)`.
 Each task carries a Lean proof, checked when the site is built.
 -/
 
@@ -16,9 +16,9 @@ Each task carries a Lean proof, checked when the site is built.
 :::en
 Two new rules, for implication:
 
-* *→-elimination* (→E) uses `A → B` together with `A` to get `B`.
-* *→-introduction* (→I) proves `A → B`. It gives you a *local hypothesis* `A`: the blue dot with a
-  purple ring on top of the block. Like every blue dot it is something you have, which you may use to prove the block's own input `B`. Everything that uses
+* *→-elimination* (→E) uses `?1 → ?2` together with `?1` to get `?2`.
+* *→-introduction* (→I) proves `?1 → ?2`. It gives you a *local hypothesis* `?1`: the blue dot with a
+  purple ring on top of the block. Like every blue dot it is something you have, which you may use to prove the block's own input `?2`. Everything that uses
   the hypothesis must lead back into that input; a dashed box shows this region. Using the
   hypothesis for anything outside the box is not allowed (⚠).
 :::
@@ -26,10 +26,10 @@ Two new rules, for implication:
 :::de
 Zwei neue Regeln, für die Implikation:
 
-* *→-Beseitigung* (→E) macht aus `A → B` zusammen mit `A` die Aussage `B`.
-* *→-Einführung* (→I) beweist `A → B`. Sie gibt dir eine *lokale Annahme* `A`: den blauen Punkt mit
+* *→-Beseitigung* (→E) macht aus `?1 → ?2` zusammen mit `?1` die Aussage `?2`.
+* *→-Einführung* (→I) beweist `?1 → ?2`. Sie gibt dir eine *lokale Annahme* `?1`: den blauen Punkt mit
   lila Ring oben am Block. Wie jeder blaue Punkt ist sie etwas, das du hast, und du darfst sie
-  verwenden, um den eigenen Eingang `B` des Blocks zu beweisen. Alles, was die Annahme verwendet,
+  verwenden, um den eigenen Eingang `?2` des Blocks zu beweisen. Alles, was die Annahme verwendet,
   muss in diesen Eingang zurückführen; ein gestrichelter Kasten zeigt diesen Bereich. Die Annahme
   außerhalb des Kastens zu verwenden, ist nicht erlaubt (⚠).
 :::

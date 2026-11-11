@@ -7,7 +7,7 @@ open Verso.Genre.Manual.InlineLean
 
 /-
 Session 1 of the Incredible Proof Machine (https://incredible.pm, Joachim Breitner, MIT license),
-with Lean's conventions: `∧` groups to the right, so the Proof Machine's `A∧B∧C` is `(A ∧ B) ∧ C`.
+with Lean's conventions: `∧` groups to the right, so the Proof Machine's `?1∧?2∧?3` is `(?1 ∧ ?2) ∧ ?3`.
 Each task carries a Lean proof, checked when the site is built.
 -/
 
@@ -16,15 +16,15 @@ Each task carries a Lean proof, checked when the site is built.
 :::en
 Two rules, for conjunction (`∧`, “and”):
 
-* *∧-introduction* (∧I) makes `A ∧ B` from `A` and `B`,
-* *∧-elimination* (∧E) takes `A ∧ B` apart into `A` and `B`.
+* *∧-introduction* (∧I) makes `?1 ∧ ?2` from `?1` and `?2`,
+* *∧-elimination* (∧E) takes `?1 ∧ ?2` apart into `?1` and `?2`.
 :::
 
 :::de
 Zwei Regeln für die Konjunktion (`∧`, „und“):
 
-* *∧-Einführung* (∧I) macht aus `A` und `B` die Aussage `A ∧ B`,
-* *∧-Beseitigung* (∧E) zerlegt `A ∧ B` in `A` und `B`.
+* *∧-Einführung* (∧I) macht aus `?1` und `?2` die Aussage `?1 ∧ ?2`,
+* *∧-Beseitigung* (∧E) zerlegt `?1 ∧ ?2` in `?1` und `?2`.
 :::
 
 ::::task (rules := "conjI, conjE") (assumptions := "A") (conclusions := "A")

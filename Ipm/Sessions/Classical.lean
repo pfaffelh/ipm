@@ -17,29 +17,29 @@ the site is built.
 One more rule, which is different from all the others: it has no input.
 
 * *Tertium non datur* (TND, “a third is not given”, the law of the excluded middle): for every
-  statement `A`, you may use `A ∨ (A → ⊥)`, “`A` is true or it is false”.
+  statement `?1`, you may use `?1 ∨ (?1 → ⊥)`, “`?1` is true or it is false”.
 
 With the rules so far, this cannot be proved. Logic without it is called *intuitionistic*, logic
 with it *classical*. In Lean, TND is `Classical.em`; Lean's proofs then use classical logic.
-Usually you use TND together with ∨E: “Either `A` holds, or it does not. In the first case …”
+Usually you use TND together with ∨E: “Either `?1` holds, or it does not. In the first case …”
 
-Later in this world comes a second rule, the proof by contradiction (RAA, in Lean `by_contra`): to
-prove `A`, assume `A → ⊥` and derive `⊥`.
+Later in this world comes a second rule, the proof by contradiction (RAA, in Lean `Classical.byContradiction`): to
+prove `?1`, assume `?1 → ⊥` and derive `⊥`.
 :::
 
 :::de
 Noch eine Regel, die anders ist als alle anderen: Sie hat keinen Eingang.
 
 * *Tertium non datur* (TND, „ein Drittes gibt es nicht“, der Satz vom ausgeschlossenen Dritten):
-  Für jede Aussage `A` darfst du `A ∨ (A → ⊥)` verwenden, „`A` ist wahr oder falsch“.
+  Für jede Aussage `?1` darfst du `?1 ∨ (?1 → ⊥)` verwenden, „`?1` ist wahr oder falsch“.
 
 Mit den bisherigen Regeln lässt sich das nicht beweisen. Logik ohne diese Regel heißt
 *intuitionistisch*, Logik mit ihr *klassisch*. In Lean heißt TND `Classical.em`; Leans Beweise
-verwenden dann klassische Logik. Meist verwendest du TND zusammen mit ∨E: „Entweder gilt `A`, oder
+verwenden dann klassische Logik. Meist verwendest du TND zusammen mit ∨E: „Entweder gilt `?1`, oder
 nicht. Im ersten Fall …“
 
 Später in dieser Welt kommt eine zweite Regel dazu, der Widerspruchsbeweis (RAA, in Lean
-`by_contra`): Um `A` zu beweisen, nimm `A → ⊥` an und leite `⊥` her.
+`Classical.byContradiction`): Um `?1` zu beweisen, nimm `?1 → ⊥` an und leite `⊥` her.
 :::
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND") (conclusions := "A ∨ (A → ⊥)") (assumptions := "")
@@ -116,13 +116,13 @@ Eine Implikation als „oder“.
 
 
 :::tip (lang := "en") (rules := "raa")
-New: a proof by contradiction (RAA, in Lean `by_contra h`). To prove `A`, assume `A → ⊥` (the purple
+New: a proof by contradiction (RAA, in Lean `Classical.byContradiction`). To prove `?1`, assume `?1 → ⊥` (the purple
 hypothesis) and derive `⊥`. It is what you just proved by hand with TND: from `(A → ⊥) → ⊥`
 follows `A`.
 :::
 
 :::tip (lang := "de")
-Neu: ein Widerspruchsbeweis (RAA, in Lean `by_contra h`). Um `A` zu beweisen, nimm `A → ⊥` an (die lila
+Neu: ein Widerspruchsbeweis (RAA, in Lean `Classical.byContradiction`). Um `?1` zu beweisen, nimm `?1 → ⊥` an (die lila
 Annahme) und leite `⊥` her. Das ist, was du gerade von Hand mit TND bewiesen hast: Aus `(A → ⊥) → ⊥`
 folgt `A`.
 :::

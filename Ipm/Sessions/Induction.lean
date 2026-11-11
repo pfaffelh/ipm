@@ -17,7 +17,7 @@ Statements about natural numbers `0, 1, 2, …`, where `n + 1` is the number aft
 
 * *Induction* (Ind): to prove `∀ n, ?1 n`, prove the start `?1 0`, and the step: `?1 (c₁ + 1)`
   from the hypothesis `?1 c₁`, for an arbitrary number `c₁` (an eigenvariable, as in ∀I). In Lean:
-  `Nat.rec`, or the tactic `induction n`.
+  `Nat.rec`.
 
 The levels have no arithmetic: properties like `P`, `Even`, `Odd` are only described by the
 assumptions.
@@ -28,7 +28,7 @@ Aussagen über natürliche Zahlen `0, 1, 2, …`, wobei `n + 1` die Zahl nach `n
 
 * *Induktion* (Ind): Um `∀ n, ?1 n` zu beweisen, beweise den Anfang `?1 0` und den Schritt:
   `?1 (c₁ + 1)` aus der Annahme `?1 c₁`, für eine beliebige Zahl `c₁` (eine Eigenvariable, wie bei
-  ∀I). In Lean: `Nat.rec`, oder die Taktik `induction n`.
+  ∀I). In Lean: `Nat.rec`.
 
 Die Levels enthalten keine Arithmetik: Eigenschaften wie `P`, `Even`, `Odd` sind nur durch die
 Annahmen beschrieben.

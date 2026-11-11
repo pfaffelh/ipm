@@ -7,7 +7,7 @@ open Verso.Genre.Manual.InlineLean
 
 /-
 Session 3 of the Incredible Proof Machine (https://incredible.pm, Joachim Breitner, MIT license):
-disjunction. Lean's conventions: `∨` groups to the right, so `A ∨ B ∨ C` is `A ∨ (B ∨ C)`.
+disjunction. Lean's conventions: `∨` groups to the right, so `?1 ∨ ?2 ∨ ?3` is `?1 ∨ (?2 ∨ ?3)`.
 Each task carries a Lean proof, checked when the site is built.
 -/
 
@@ -16,9 +16,9 @@ Each task carries a Lean proof, checked when the site is built.
 :::en
 Three new rules, for disjunction (`∨`, “or”):
 
-* *∨-introduction* comes in two forms: ∨I₁ makes `A ∨ B` from `A`, ∨I₂ makes `A ∨ B` from `B`.
-* *∨-elimination* (∨E) is a case distinction. From `A ∨ B` you may conclude `C` if you can prove `C`
-  twice: once using the local hypothesis `A`, once using `B`. Each hypothesis (a blue dot with a
+* *∨-introduction* comes in two forms: ∨I₁ makes `?1 ∨ ?2` from `?1`, ∨I₂ makes `?1 ∨ ?2` from `?2`.
+* *∨-elimination* (∨E) is a case distinction. From `?1 ∨ ?2` you may conclude `?3` if you can prove `?3`
+  twice: once using the local hypothesis `?1`, once using `?2`. Each hypothesis (a blue dot with a
   purple ring) sits next to the input it belongs to, and may only be used to prove that input.
 
 In Lean, ∨I₁ and ∨I₂ are `Or.inl` and `Or.inr`, and ∨E is `Or.elim`.
@@ -27,10 +27,10 @@ In Lean, ∨I₁ and ∨I₂ are `Or.inl` and `Or.inr`, and ∨E is `Or.elim`.
 :::de
 Drei neue Regeln, für die Disjunktion (`∨`, „oder“):
 
-* Die *∨-Einführung* gibt es in zwei Formen: ∨I₁ macht aus `A` die Aussage `A ∨ B`, ∨I₂ macht aus
-  `B` die Aussage `A ∨ B`.
-* Die *∨-Beseitigung* (∨E) ist eine Fallunterscheidung. Aus `A ∨ B` darfst du `C` folgern, wenn du
-  `C` zweimal beweisen kannst: einmal mit der lokalen Annahme `A`, einmal mit `B`. Jede Annahme
+* Die *∨-Einführung* gibt es in zwei Formen: ∨I₁ macht aus `?1` die Aussage `?1 ∨ ?2`, ∨I₂ macht aus
+  `?2` die Aussage `?1 ∨ ?2`.
+* Die *∨-Beseitigung* (∨E) ist eine Fallunterscheidung. Aus `?1 ∨ ?2` darfst du `?3` folgern, wenn du
+  `?3` zweimal beweisen kannst: einmal mit der lokalen Annahme `?1`, einmal mit `?2`. Jede Annahme
   (ein blauer Punkt mit lila Ring) sitzt neben dem Eingang, zu dem sie gehört, und darf nur für
   diesen Eingang verwendet werden.
 

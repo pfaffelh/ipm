@@ -14,42 +14,42 @@ Each task carries a Lean proof, checked when the site is built.
 #doc (Manual) "World 7: Rewriting" =>
 
 :::en
-Equivalent statements may replace each other: from `A ↔ B`, a statement with `A` in it is equivalent
-to the same statement with `B` there. In Lean this is `rw`. Four new blocks:
+Equivalent statements may replace each other: from `?1 ↔ ?2`, a statement with `?1` in it is equivalent
+to the same statement with `?2` there. Four new blocks:
 
-* *↔rfl*: `A ↔ A`.
-* *↔sym*: from `A ↔ B`, `B ↔ A`.
-* *rw*: from `A ↔ B` and a statement with `B` (`?3 ?2`), the same statement with `A` (`?3 ?1`). `?3` is
+* *↔rfl*: `?1 ↔ ?1`.
+* *↔sym*: from `?1 ↔ ?2`, `?2 ↔ ?1`.
+* *rw*: from `?1 ↔ ?2` and a statement with `?2` (`?3 ?2`), the same statement with `?1` (`?3 ?1`). `?3` is
   the goal with a hole: the block finds it when you connect it to a goal.
-* *rw←*: the same backwards, from a statement with `A`, the one with `B`.
+* *rw←*: the same backwards, from a statement with `?1`, the one with `?2`.
 :::
 
 :::de
-Äquivalente Aussagen dürfen einander ersetzen: Aus `A ↔ B` folgt, dass eine Aussage mit `A` darin
-äquivalent ist zu derselben Aussage mit `B` an dieser Stelle. In Lean ist das `rw`. Vier neue Bausteine:
+Äquivalente Aussagen dürfen einander ersetzen: Aus `?1 ↔ ?2` folgt, dass eine Aussage mit `?1` darin
+äquivalent ist zu derselben Aussage mit `?2` an dieser Stelle. Vier neue Bausteine:
 
-* *↔rfl*: `A ↔ A`.
-* *↔sym*: aus `A ↔ B` folgt `B ↔ A`.
-* *rw*: aus `A ↔ B` und einer Aussage mit `B` (`?3 ?2`) dieselbe Aussage mit `A` (`?3 ?1`). `?3` ist das
+* *↔rfl*: `?1 ↔ ?1`.
+* *↔sym*: aus `?1 ↔ ?2` folgt `?2 ↔ ?1`.
+* *rw*: aus `?1 ↔ ?2` und einer Aussage mit `?2` (`?3 ?2`) dieselbe Aussage mit `?1` (`?3 ?1`). `?3` ist das
   Ziel mit einem Loch: Der Baustein findet es, wenn du ihn mit einem Ziel verbindest.
-* *rw←*: dasselbe rückwärts, aus einer Aussage mit `A` die mit `B`.
+* *rw←*: dasselbe rückwärts, aus einer Aussage mit `?1` die mit `?2`.
 :::
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI, refl, symm, rw, rwr") (assumptions := "") (conclusions := "A ↔ A")
 :::en
-A statement is equivalent to itself: `rfl`. In world 6 this took ↔I (in Lean `constructor`) and two →I.
+A statement is equivalent to itself: ↔rfl. In world 6 this took ↔I and two →I.
 :::
 
 :::de
-Eine Aussage ist zu sich selbst äquivalent: `rfl`. In Welt 6 brauchte das noch ↔I (in Lean `constructor`) und zwei →I.
+Eine Aussage ist zu sich selbst äquivalent: ↔rfl. In Welt 6 brauchte das noch ↔I und zwei →I.
 :::
 
 :::tip (lang := "en") (rules := "refl")
-*rfl* (↔rfl): `A ↔ A`, for any statement `A`.
+*↔rfl*: `?1 ↔ ?1`, for any statement `?1`. In Lean: `Iff.rfl`.
 :::
 
 :::tip (lang := "de") (rules := "refl")
-*rfl* (↔rfl): `A ↔ A`, für jede Aussage `A`.
+*↔rfl*: `?1 ↔ ?1`, für jede Aussage `?1`. In Lean: `Iff.rfl`.
 :::
 
 ```lean -show
@@ -60,19 +60,19 @@ example (A : Prop) : A ↔ A := by
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI, refl, symm, rw, rwr") (assumptions := "A ↔ B") (conclusions := "B ↔ A")
 :::en
-Turn it round: `symm`.
+Turn it round: ↔sym.
 :::
 
 :::de
-Umdrehen: `symm`.
+Umdrehen: ↔sym.
 :::
 
 :::tip (lang := "en") (rules := "symm")
-*symm* (↔sym): from `A ↔ B`, `B ↔ A`. For a goal `B ↔ A` it leaves the goal `A ↔ B`.
+*↔sym*: from `?1 ↔ ?2`, `?2 ↔ ?1`. In Lean: `Iff.symm`.
 :::
 
 :::tip (lang := "de") (rules := "symm")
-*symm* (↔sym): aus `A ↔ B` folgt `B ↔ A`. Bei einem Ziel `B ↔ A` bleibt das Ziel `A ↔ B`.
+*↔sym*: aus `?1 ↔ ?2` folgt `?2 ↔ ?1`. In Lean: `Iff.symm`.
 :::
 
 ```lean -show
@@ -84,19 +84,19 @@ example (A B : Prop) (h : A ↔ B) : B ↔ A := by
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI, refl, symm, rw, rwr") (assumptions := "A ↔ B; B") (conclusions := "A")
 :::en
-Rewriting: equivalent statements may replace each other. `rw [h₁]` makes the goal `A` into `B`.
+Rewriting: equivalent statements may replace each other. With rw, `A ↔ B` makes the goal `A` into `B`.
 :::
 
 :::de
-Umschreiben: Äquivalente Aussagen dürfen einander ersetzen. `rw [h₁]` macht aus dem Ziel `A` das Ziel `B`.
+Umschreiben: Äquivalente Aussagen dürfen einander ersetzen. Mit rw macht `A ↔ B` aus dem Ziel `A` das Ziel `B`.
 :::
 
 :::tip (lang := "en") (rules := "rw")
-`rw [h]` (rw), for `h : A ↔ B`: in the goal, every `A` becomes `B`. As a block: from `A ↔ B` and the statement with `B` (`?3 ?2`), the statement with `A` (`?3 ?1`); `?3` is the goal with a hole.
+*rw*: from `?1 ↔ ?2` and the statement with `?2` (`?3 ?2`), the statement with `?1` (`?3 ?1`); `?3` is the goal with a hole.
 :::
 
 :::tip (lang := "de") (rules := "rw")
-`rw [h]` (rw), für `h : A ↔ B`: Im Ziel wird jedes `A` zu `B`. Als Baustein: aus `A ↔ B` und der Aussage mit `B` (`?3 ?2`) die Aussage mit `A` (`?3 ?1`); `?3` ist das Ziel mit einem Loch.
+*rw*: aus `?1 ↔ ?2` und der Aussage mit `?2` (`?3 ?2`) die Aussage mit `?1` (`?3 ?1`); `?3` ist das Ziel mit einem Loch.
 :::
 
 ```lean -show
@@ -108,19 +108,19 @@ example (A B : Prop) (h : A ↔ B) (b : B) : A := by
 
 ::::task (rules := "conjI, conjE, impI, impE, disjI1, disjI2, disjE, falseE, TND, raa, iffI, iffE1, iffE2, trueI, refl, symm, rw, rwr") (assumptions := "A ↔ B; A") (conclusions := "B")
 :::en
-Backwards: `rw [← h₁]` makes every `B` into `A`.
+Backwards: With rw←, `A ↔ B` makes the goal `B` into `A`.
 :::
 
 :::de
-Rückwärts: `rw [← h₁]` macht aus jedem `B` ein `A`.
+Rückwärts: Mit rw← macht `A ↔ B` aus dem Ziel `B` das Ziel `A`.
 :::
 
 :::tip (lang := "en") (rules := "rwr")
-`rw [← h]` (rw←), for `h : A ↔ B`: in the goal, every `B` becomes `A`.
+*rw←*: from `?1 ↔ ?2` and the statement with `?1` (`?3 ?1`), the statement with `?2` (`?3 ?2`).
 :::
 
 :::tip (lang := "de") (rules := "rwr")
-`rw [← h]` (rw←), für `h : A ↔ B`: Im Ziel wird jedes `B` zu `A`.
+*rw←*: aus `?1 ↔ ?2` und der Aussage mit `?1` (`?3 ?1`) die Aussage mit `?2` (`?3 ?2`).
 :::
 
 ```lean -show
