@@ -250,7 +250,7 @@
   function show(f, s = {}, ctx = 0, lean = false, names = {}) {
     f = norm(f, s)
     const show_ = (g, s, c, n = names) => show(g, s, c, lean, n)
-    const term = (t, atomic) => showTerm(t, s, atomic, names)
+    const term = (t, atomic) => showTerm(t, s, atomic, names, lean)
     const wrap = (p, txt) => (p < ctx ? `(${txt})` : txt)
     switch (f.t) {
       case 'atom': return f.n
@@ -259,7 +259,7 @@
         : wrap(5, [f.n, ...f.args.map(t => term(t, true))].join(' '))
       case 'bot': return lean ? 'False' : '⊥'
       case 'top': return lean ? 'True' : '⊤'
-      case 'meta': return '?' + metaNumber(f.id.split('.').pop())
+      case 'meta': return placeholder(f.id, lean)
       // An undetermined body applied to a term, as in the Proof Machine: ?1 c
       case 'sub': return wrap(5, `${show_(f.a, s)} ${f.rewrite ? show_(f.by, s, 5) : term(f.by, true)}`)
       case 'not': return wrap(4, '¬' + show_(f.a, s, 4))
@@ -282,23 +282,48 @@
     }
   }
 
-  function showTerm(t, s, atomic = false, names = {}) {
+  function showTerm(t, s, atomic = false, names = {}, lean = false) {
     t = resolve(t, s)
     switch (t.t) {
       case 'bv': return names[t.n] ?? baseName(t.n)
       case 'con': return t.n
       case 'eig': return eigOutside?.(t.n) ?? t.n
-      case 'meta': return '?' + metaNumber(t.id.split('.').pop())
+      case 'meta': return placeholder(t.id, lean)
       case 'fn': {
-        const txt = t.n === 'succ' ? `${showTerm(t.args[0], s, false, names)} + 1`
-          : [t.n, ...t.args.map(a => showTerm(a, s, true, names))].join(' ')
+        const txt = t.n === 'succ' ? `${showTerm(t.args[0], s, false, names, lean)} + 1`
+          : [t.n, ...t.args.map(a => showTerm(a, s, true, names, lean))].join(' ')
         return atomic ? `(${txt})` : txt
       }
     }
   }
 
-  // Rule variables A, B, C, … are shown as ?1, ?2, ?3, … while undetermined.
-  const metaNumber = v => (/^[A-Z]$/.test(v) ? v.charCodeAt(0) - 64 : v)
+  const SVG = 'http://www.w3.org/2000/svg'
+  // Rule variables A, B, C, … are numbered 1, 2, 3, … (those of rw, L, R and the statement P with a
+  // hole, as 1, 2, 3), and shown as boxes of their colour while undetermined (in Lean as ?1, ?2, …).
+  // In strings a box is a character of Unicode's private area (U+E001 for 1, …), which `svg` and `el`
+  // draw as a box (`placeholderNodes`); `?1` in the code of a text is drawn so too (`placeholderText`).
+  const metaNumber = v => ({ L: 1, R: 2, P: 3 })[v] ?? (/^[A-Z]$/.test(v) ? v.charCodeAt(0) - 64 : 1)
+  const placeholder = (id, lean) => {
+    const n = metaNumber(id.split('.').pop())
+    return lean ? '?' + n : String.fromCharCode(0xE000 + n)
+  }
+  const PLACEHOLDER = /([\uE001-\uE0FF])/
+  const PLACEHOLDER_COLOURS = 6
+  const placeholderClass = c => `ipm-ph ipm-ph-${(c.charCodeAt(0) - 0xE001) % PLACEHOLDER_COLOURS + 1}`
+  const placeholderText = text => text.replace(/\?(\d+)/g, (_, n) => String.fromCharCode(0xE000 + Number(n)))
+  // For a tooltip, which has no colours: coloured squares of Unicode.
+  const placeholderPlain = text => text.replace(/[\uE001-\uE0FF]/g, c => [...'🟧🟩🟥🟦🟨🟫'][(c.charCodeAt(0) - 0xE001) % PLACEHOLDER_COLOURS])
+  // The nodes of a text with boxes in it: in SVG a coloured ■, in HTML a box drawn by CSS.
+  function placeholderNodes(text, inSvg) {
+    return text.split(PLACEHOLDER).filter(Boolean).map(part => {
+      if (!PLACEHOLDER.test(part)) return document.createTextNode(part)
+      const e = inSvg ? document.createElementNS(SVG, 'tspan') : document.createElement('span')
+      e.setAttribute('class', placeholderClass(part))
+      e.setAttribute('aria-label', '?' + (part.charCodeAt(0) - 0xE000))
+      if (inSvg) e.textContent = '■'
+      return e
+    })
+  }
 
   function resolve(f, s) {
     while (f.t === 'meta' && s[f.id]) f = s[f.id]
@@ -994,17 +1019,16 @@
 
   // ---------------------------------------------------------------- rendering
 
-  const SVG = 'http://www.w3.org/2000/svg'
   const svg = (tag, attrs = {}, text) => {
     const e = document.createElementNS(SVG, tag)
     for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v)
-    if (text !== undefined) e.textContent = text
+    if (text !== undefined) e.replaceChildren(...placeholderNodes(String(text), true))
     return e
   }
   const el = (tag, cls, text) => {
     const e = document.createElement(tag)
     if (cls) e.className = cls
-    if (text !== undefined) e.textContent = text
+    if (text !== undefined) e.replaceChildren(...placeholderNodes(String(text), false))
     return e
   }
   const charW = 8.4, layerH = 104, portGap = 30
@@ -1283,7 +1307,7 @@
       const b = el('button', cls)
       b.type = 'button'
       b.dataset.rule = name
-      b.title = title
+      b.title = placeholderPlain(title)
       b.append(picture, el('span', 'ipm-menu-caption', caption))
       if (Number(picture.getAttribute('width')) > 220) b.classList.add('ipm-wide')  // two columns
       b.addEventListener('mousedown', ev => ev.preventDefault())
@@ -1893,7 +1917,7 @@
         if (o.section) { body.append(el('div', 'ipm-sheet-section', o.section)); continue }
         const b = el('button', 'ipm-option' + (o.bad ? ' ipm-bad' : '') + (o.picture ? ' ipm-option-picture' : ''))
         b.type = 'button'
-        if (o.picture) { b.append(o.picture); b.title = o.label }
+        if (o.picture) { b.append(o.picture); b.title = placeholderPlain(o.label) }
         else b.append(el('span', 'ipm-option-main', o.label))
         if (o.detail) b.append(el('span', 'ipm-option-detail', o.detail))
         b.addEventListener('click', o.act)
@@ -2152,7 +2176,7 @@
   // Text with `code` in it, as nodes.
   function inlineCode(text) {
     const box = el('span')
-    text.split(/(`[^`]*`)/).forEach(part => box.append(part.startsWith('`') ? el('code', '', part.slice(1, -1)) : part))
+    text.split(/(`[^`]*`)/).forEach(part => box.append(part.startsWith('`') ? el('code', '', placeholderText(part.slice(1, -1))) : part))
     return box
   }
 
@@ -2187,8 +2211,15 @@
     document.head.append(link)
   }
 
+  // `?1`, `?2`, … in the code of the texts of the page: the boxes of the blocks.
+  function placeholdersInTexts() {
+    for (const c of document.querySelectorAll('code'))
+      if (c.children.length === 0 && /\?\d/.test(c.textContent)) c.replaceChildren(...placeholderNodes(placeholderText(c.textContent), false))
+  }
+
   function init() {
     tabIcon()
+    placeholdersInTexts()
     moveProgress()
     lexicon()
     setTimeout(worldMap)  // after translatePage, so that the names are in the language chosen

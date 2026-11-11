@@ -20,9 +20,10 @@ classics: tertium non datur from proof by contradiction, `→` over `∨`, the d
 * Tap a red circle (something to prove): everything in the picture that fits glows green; tap it to
   draw the line. It also works the other way round (tap an output first).
 * The button ＋ below the picture opens a menu with the rules (and the lemmas), drawn as the very
-  blocks they add, with `?1`, `?2` for arbitrary statements; tapping one adds the block (or drag it
-  onto the board), and the menu closes again. You then connect the block.
-  Unification fills in `?1`, `?2`. Rule blocks you no longer need go into the trash can 🗑, which
+  blocks they add, with coloured boxes (placeholders) for arbitrary statements; tapping one adds the
+  block (or drag it onto the board), and the menu closes again. You then connect the block.
+  Unification fills in the boxes. In the texts of the game and below, `?1`, `?2`, `?3` are the
+  placeholders of a block; the game draws them as orange, green and pink boxes. Rule blocks you no longer need go into the trash can 🗑, which
   appears while you drag a block.
 * Changes of the picture are smooth: a block glides to its new place in a second, a new one fades
   in (not with reduced motion).

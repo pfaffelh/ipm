@@ -472,3 +472,17 @@ main section:has(> ol.section-toc) { display: none; }
 .ipm-tip-sub { font-weight: bold; margin: 0.4rem 0; font-family: var(--verso-structure-font-family, sans-serif); }
 /* a proof done: the board turns green */
 .ipm-canvas.ipm-board-done { background-color: #e9f7ee; border-color: #8cc4a2; }
+
+/* Placeholders (undetermined statements and objects): coloured boxes, one colour per placeholder of a
+   block (1 orange, 2 green, 3 pink, …); in SVG a ■ (a tspan), in HTML a box. */
+.ipm-ph { --ph: #f08c00; }
+.ipm-ph-2 { --ph: #2f9e44; }
+.ipm-ph-3 { --ph: #d6336c; }
+.ipm-ph-4 { --ph: #1098ad; }
+.ipm-ph-5 { --ph: #e0b000; }
+.ipm-ph-6 { --ph: #8d5524; }
+tspan.ipm-ph { fill: var(--ph); font-style: normal; font-size: 1.15em; }
+span.ipm-ph {
+  display: inline-block; width: 0.8em; height: 0.8em; margin: 0 0.08em; vertical-align: -0.05em;
+  border-radius: 0.15em; background: var(--ph);
+}
