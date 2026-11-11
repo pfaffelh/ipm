@@ -11,6 +11,21 @@ in Lean too. Lean is the referee: the fuzzers below collect every proof the game
 | `tests/lemma-fuzz.mjs` | Plays solved proofs (the same kind of file, two of them), so that the lemma levels become lemmas, then adds lemma blocks in later levels and connects at random. Writes `lemma.lean` (check each proof in a `namespace` of its own: they bring the lemma theorems along). |
 | `tests/ui-fuzz.mjs` | Taps at random what a player can tap; collects page errors and lines between ports that do not exist. Writes `fuzz-out/ui.lean`. |
 
+## Playing the whole game
+
+`tests/play-all.mjs` plays the game as a player, from an empty browser: Start on the start page,
+then every level in order (locked until the one before is solved), each by taking the blocks of a
+solution beside the board (＋ on a phone) and tapping an output and an input for each line, then
+Next, also into the next world; at the end the map counts every level and the start page says
+Continue. Its Lean proofs go to `LEANOUT`, for `lake env lean`. The solutions are
+`tests/solutions.json`, one graph per level, made on the branch `incl_tactic_mode` (its search
+`tactics-only.mjs` with `SNAPOUT`, and its `tactic-proofs.mjs` for the levels the search does not
+find). A new level needs a solution there.
+
+```bash
+cd tests && LEANOUT=/tmp/all.lean node play-all.mjs && cd .. && lake env lean /tmp/all.lean   # ~35 min; PHONE=1 for a phone
+```
+
 ```bash
 cd tests && node fuzz.mjs 4 1 && cd .. && lake env lean tests/fuzz-out/accepted.lean
 ```
